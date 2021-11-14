@@ -25,8 +25,8 @@ module MaybeTyped exposing
 
 
 type MaybeTyped isEmpty a
-    = Empty isEmpty
-    | Existing a
+    = NothingTyped isEmpty
+    | JustTyped a
 
 
 type alias MaybeEmpty =
@@ -37,44 +37,54 @@ type alias NotEmpty =
     { empty : Never }
 
 
+nothing : MaybeTyped MaybeEmpty a
+nothing =
+    NothingTyped { empty = () }
+
+
+just : a -> MaybeTyped notEmpty a
+just value_ =
+    JustTyped value_
+
+
 fromMaybe : Maybe a -> MaybeTyped MaybeEmpty a
 fromMaybe coreMaybe =
     case coreMaybe of
         Just val ->
-            Existing val
+            JustTyped val
 
         Nothing ->
-            Empty { empty = () }
+            NothingTyped { empty = () }
 
 
 toMaybe : MaybeTyped empty a -> Maybe a
 toMaybe maybe =
     case maybe of
-        Existing val ->
+        JustTyped val ->
             Just val
 
-        Empty _ ->
+        NothingTyped _ ->
             Nothing
 
 
 value : MaybeTyped { kind | empty : Never } a -> a
 value maybe =
     case maybe of
-        Existing val ->
+        JustTyped val ->
             val
 
-        Empty { empty } ->
+        NothingTyped { empty } ->
             never empty
 
 
 map : (a -> b) -> MaybeTyped empty a -> MaybeTyped empty b
 map change maybe =
     case maybe of
-        Existing val ->
-            change val |> Existing
+        JustTyped val ->
+            change val |> JustTyped
 
-        Empty empty ->
-            Empty empty
+        NothingTyped empty ->
+            NothingTyped empty
 
 
 map2 :
@@ -84,11 +94,11 @@ map2 :
     -> MaybeTyped empty combined
 map2 combine aMaybe bMaybe =
     case ( aMaybe, bMaybe ) of
-        ( Existing a, Existing b ) ->
-            combine a b |> Existing
+        ( JustTyped a, JustTyped b ) ->
+            combine a b |> JustTyped
 
-        ( Empty empty, _ ) ->
-            Empty empty
+        ( NothingTyped empty, _ ) ->
+            NothingTyped empty
 
-        ( _, Empty empty ) ->
-            Empty empty
+        ( _, NothingTyped empty ) ->
+            NothingTyped empty
