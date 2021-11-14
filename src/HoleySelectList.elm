@@ -4,6 +4,7 @@ module HoleySelectList exposing
     , current, before, after, toList
     , next, previous, nextHole, previousHole, first, last, beforeFirst, afterLast, findForward, findBackward
     , map, mapCurrent, mapBefore, mapAfter, mapParts, plug, remove, append, prepend, insertAfter, insertBefore
+    , Full
     )
 
 {-| Like a regular old list-zipper, except it can also focus on a hole
