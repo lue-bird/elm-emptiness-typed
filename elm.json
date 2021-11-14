@@ -1,11 +1,11 @@
 {
     "type": "package",
     "name": "zwilias/elm-holey-zipper",
-    "summary": "A list zipper that can focus on the holes between items",
+    "summary": "A list zipper that can focus on an item or a hole between items",
     "license": "BSD-3-Clause",
     "version": "1.1.1",
     "exposed-modules": [
-        "List.Holey.Zipper"
+        "HoleySelectList"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
     "dependencies": {
