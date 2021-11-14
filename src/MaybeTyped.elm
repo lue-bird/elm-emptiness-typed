@@ -1,10 +1,15 @@
-module TypedMaybe exposing
-    ( fromMaybe
+module MaybeTyped exposing
+    ( MaybeTyped, MaybeEmpty, NotEmpty
+    , fromMaybe
     , map, map2, toMaybe, value
-    , MaybeEmpty, NotEmpty, TypedMaybe
     )
 
 {-|
+
+
+## types
+
+@docs MaybeTyped, MaybeEmpty, NotEmpty
 
 
 ## create
@@ -19,7 +24,7 @@ module TypedMaybe exposing
 -}
 
 
-type TypedMaybe isEmpty a
+type MaybeTyped isEmpty a
     = Empty isEmpty
     | Existing a
 
@@ -32,7 +37,7 @@ type alias NotEmpty =
     { empty : Never }
 
 
-fromMaybe : Maybe a -> TypedMaybe MaybeEmpty a
+fromMaybe : Maybe a -> MaybeTyped MaybeEmpty a
 fromMaybe coreMaybe =
     case coreMaybe of
         Just val ->
@@ -42,7 +47,7 @@ fromMaybe coreMaybe =
             Empty { empty = () }
 
 
-toMaybe : TypedMaybe empty a -> Maybe a
+toMaybe : MaybeTyped empty a -> Maybe a
 toMaybe maybe =
     case maybe of
         Existing val ->
@@ -52,7 +57,7 @@ toMaybe maybe =
             Nothing
 
 
-value : TypedMaybe { kind | empty : Never } a -> a
+value : MaybeTyped { kind | empty : Never } a -> a
 value maybe =
     case maybe of
         Existing val ->
@@ -62,7 +67,7 @@ value maybe =
             never empty
 
 
-map : (a -> b) -> TypedMaybe empty a -> TypedMaybe empty b
+map : (a -> b) -> MaybeTyped empty a -> MaybeTyped empty b
 map change maybe =
     case maybe of
         Existing val ->
@@ -74,9 +79,9 @@ map change maybe =
 
 map2 :
     (a -> b -> combined)
-    -> TypedMaybe empty a
-    -> TypedMaybe empty b
-    -> TypedMaybe empty combined
+    -> MaybeTyped empty a
+    -> MaybeTyped empty b
+    -> MaybeTyped empty combined
 map2 combine aMaybe bMaybe =
     case ( aMaybe, bMaybe ) of
         ( Existing a, Existing b ) ->
