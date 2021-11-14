@@ -1,5 +1,5 @@
 module HoleySelectList exposing
-    ( HoleySelectList, Full, MaybeHole
+    ( HoleySelectList, Item, HoleOrItem
     , empty, singleton, selecting
     , current, before, after, toList
     , next, previous, nextHole, previousHole, first, last, beforeFirst, afterLast, findForward, findBackward
@@ -15,7 +15,7 @@ that hole with a value.
 
 # Types
 
-@docs HoleySelectList, Full, MaybeHole
+@docs HoleySelectList, Item, HoleOrItem
 
 
 # Creation
@@ -39,35 +39,35 @@ that hole with a value.
 
 -}
 
-import MaybeTyped exposing (MaybeEmpty, MaybeTyped(..), NotEmpty, just, nothing)
+import MaybeTyped exposing (Exists, MaybeNothing, MaybeTyped(..), just, nothing)
 
 
-{-| Represents a list with items of type `a`.
+{-| Represents a special kind of list with items of type `a`.
 
-  - When the type `hasHole` is `Full`, an item is focussed.
-  - When it is `MaybeHole`, you're looking at a hole between elements.
+If the type `focus` is `Item`, an item is focussed.
+If not, you're looking at a hole between elements.
 
 -}
-type HoleySelectList hasHole a
-    = HoleySelectList (List a) (MaybeTyped hasHole a) (List a)
+type HoleySelectList focus a
+    = HoleySelectList (List a) (MaybeTyped focus a) (List a)
 
 
-{-| A `Zipper Full a` is pointing at an element of type `a`.
+{-| A `HoleySelectList Item a` is pointing at an element of type `a`.
 -}
-type alias Full =
-    NotEmpty
+type alias Item =
+    Exists
 
 
-{-| A `Zipper MaybeHole a` is pointing at a hole between `a`s.
+{-| A `HoleySelectList HoleOrItem a` could be pointing at a hole between `a`s.
 
 ... Heh.
 
 -}
-type alias MaybeHole =
-    MaybeEmpty
+type alias HoleOrItem =
+    MaybeNothing
 
 
-{-| Get the value the `Zipper` is currently pointing at.
+{-| Get the value the `HoleySelectList` is currently pointing at.
 
 Only applicable to zippers pointing at a value.
 
@@ -82,7 +82,7 @@ Only applicable to zippers pointing at a value.
     --> 4
 
 -}
-current : HoleySelectList Full a -> a
+current : HoleySelectList Item a -> a
 current (HoleySelectList _ focus _) =
     focus |> MaybeTyped.value
 
@@ -94,7 +94,7 @@ and nothing after it. It's the loneliest of all zippers.
     --> []
 
 -}
-empty : HoleySelectList MaybeHole a
+empty : HoleySelectList HoleOrItem a
 empty =
     HoleySelectList [] nothing []
 
@@ -107,7 +107,7 @@ thing.
     --> [ "wat" ]
 
 -}
-singleton : a -> HoleySelectList full a
+singleton : a -> HoleySelectList item a
 singleton v =
     HoleySelectList [] (just v) []
 
@@ -124,7 +124,7 @@ it.
     --> [ 0, 1, 2, 3 ]
 
 -}
-selecting : a -> List a -> HoleySelectList full a
+selecting : a -> List a -> HoleySelectList item a
 selecting v a =
     HoleySelectList [] (just v) a
 
@@ -183,7 +183,7 @@ If there is no `next` thing, `next` is `Nothing`.
     --> Nothing
 
 -}
-next : HoleySelectList hasHole a -> Maybe (HoleySelectList full a)
+next : HoleySelectList focus a -> Maybe (HoleySelectList item a)
 next (HoleySelectList before_ focus after_) =
     case after_ of
         [] ->
@@ -216,7 +216,7 @@ next (HoleySelectList before_ focus after_) =
     --> Just "holey"
 
 -}
-previous : HoleySelectList hasHole a -> Maybe (HoleySelectList full a)
+previous : HoleySelectList focus a -> Maybe (HoleySelectList item a)
 previous ((HoleySelectList before_ _ _) as holeySelectList) =
     case before_ of
         [] ->
@@ -237,7 +237,7 @@ lot of nothingness, so it's always there.
     --> [ "hello", "holey", "world" ]
 
 -}
-nextHole : HoleySelectList Full a -> HoleySelectList MaybeHole a
+nextHole : HoleySelectList Item a -> HoleySelectList HoleOrItem a
 nextHole ((HoleySelectList before_ _ after_) as holeySelectList) =
     HoleySelectList (current holeySelectList :: before_) nothing after_
 
@@ -252,7 +252,7 @@ that hole right up!
     --> [ "hello", "world" ]
 
 -}
-previousHole : HoleySelectList Full a -> HoleySelectList MaybeHole a
+previousHole : HoleySelectList Item a -> HoleySelectList HoleOrItem a
 previousHole ((HoleySelectList before_ _ after_) as holeySelectList) =
     HoleySelectList before_ nothing (current holeySelectList :: after_)
 
@@ -263,7 +263,7 @@ previousHole ((HoleySelectList before_ _ after_) as holeySelectList) =
     --> HoleySelectList.singleton "plug"
 
 -}
-plug : a -> HoleySelectList MaybeHole a -> HoleySelectList full a
+plug : a -> HoleySelectList HoleOrItem a -> HoleySelectList item a
 plug v (HoleySelectList b _ a) =
     HoleySelectList b (just v) a
 
@@ -279,7 +279,7 @@ honestly the holes are everywhere.
     --> Just [ "hello", "world" ]
 
 -}
-remove : HoleySelectList hasHole a -> HoleySelectList MaybeHole a
+remove : HoleySelectList focus a -> HoleySelectList HoleOrItem a
 remove (HoleySelectList b _ a) =
     HoleySelectList b nothing a
 
@@ -298,7 +298,7 @@ remove (HoleySelectList b _ a) =
     --> [ 123, 456, 789 ]
 
 -}
-insertAfter : a -> HoleySelectList hasHole a -> HoleySelectList hasHole a
+insertAfter : a -> HoleySelectList focus a -> HoleySelectList focus a
 insertAfter v (HoleySelectList b c a) =
     HoleySelectList b c (v :: a)
 
@@ -317,7 +317,7 @@ insertAfter v (HoleySelectList b c a) =
     --> [ 456, 123 ]
 
 -}
-insertBefore : a -> HoleySelectList hasHole a -> HoleySelectList hasHole a
+insertBefore : a -> HoleySelectList focus a -> HoleySelectList focus a
 insertBefore v (HoleySelectList b c a) =
     HoleySelectList (v :: b) c a
 
@@ -335,12 +335,12 @@ insertBefore v (HoleySelectList b c a) =
     --> [ 123, 456, 789 ]
 
 -}
-toList : HoleySelectList hasHole a -> List a
+toList : HoleySelectList focus a -> List a
 toList holeySelectList =
     before holeySelectList ++ focusAndAfter holeySelectList
 
 
-focusAndAfter : HoleySelectList hasHole a -> List a
+focusAndAfter : HoleySelectList focus a -> List a
 focusAndAfter (HoleySelectList _ focus after_) =
     case focus of
         NothingTyped _ ->
@@ -358,7 +358,7 @@ focusAndAfter (HoleySelectList _ focus after_) =
     --> [ 123, 456, 789, 0 ]
 
 -}
-append : List a -> HoleySelectList hasHole a -> HoleySelectList hasHole a
+append : List a -> HoleySelectList focus a -> HoleySelectList focus a
 append xs (HoleySelectList b c a) =
     HoleySelectList b c (a ++ xs)
 
@@ -372,7 +372,7 @@ append xs (HoleySelectList b c a) =
     --> [ 5, 6, 7, 1, 2, 3, 4 ]
 
 -}
-prepend : List a -> HoleySelectList hasHole a -> HoleySelectList hasHole a
+prepend : List a -> HoleySelectList focus a -> HoleySelectList focus a
 prepend xs (HoleySelectList b c a) =
     HoleySelectList (b ++ List.reverse xs) c a
 
@@ -386,7 +386,7 @@ prepend xs (HoleySelectList b c a) =
     --> 4
 
 -}
-first : HoleySelectList hasHole a -> HoleySelectList hasHole a
+first : HoleySelectList focus a -> HoleySelectList focus a
 first holeySelectList =
     case before holeySelectList of
         [] ->
@@ -407,7 +407,7 @@ first holeySelectList =
     --> 4
 
 -}
-last : HoleySelectList hasHole a -> HoleySelectList hasHole a
+last : HoleySelectList focus a -> HoleySelectList focus a
 last ((HoleySelectList before_ focus after_) as holeySelectList) =
     case List.reverse after_ of
         [] ->
@@ -446,14 +446,14 @@ everything! They are everywhere.
     --> [ 0, 1, 2, 3, 4 ]
 
 -}
-beforeFirst : HoleySelectList hasHole a -> HoleySelectList MaybeHole a
+beforeFirst : HoleySelectList focus a -> HoleySelectList HoleOrItem a
 beforeFirst holeySelectList =
     HoleySelectList [] nothing (toList holeySelectList)
 
 
 {-| Go to the hole after the end of the `HoleySelectList`. Into the nothingness.
 -}
-afterLast : HoleySelectList hasHole a -> HoleySelectList MaybeHole a
+afterLast : HoleySelectList focus a -> HoleySelectList HoleOrItem a
 afterLast (HoleySelectList before_ focus after_) =
     let
         focusToFirst =
@@ -474,12 +474,12 @@ pointing at a thing, that thing is also checked.
 This start from the current location, and searches towards the end.
 
 -}
-findForward : (a -> Bool) -> HoleySelectList hasHole a -> Maybe (HoleySelectList Full a)
+findForward : (a -> Bool) -> HoleySelectList focus a -> Maybe (HoleySelectList item a)
 findForward predicate z =
     findForwardHelp predicate z
 
 
-findForwardHelp : (a -> Bool) -> HoleySelectList hasHole a -> Maybe (HoleySelectList Full a)
+findForwardHelp : (a -> Bool) -> HoleySelectList focus a -> Maybe (HoleySelectList item a)
 findForwardHelp predicate ((HoleySelectList before_ focus after_) as holeySelectList) =
     let
         goForward () =
@@ -501,12 +501,12 @@ findForwardHelp predicate ((HoleySelectList before_ focus after_) as holeySelect
 {-| Find the first element in the `HoleySelectList` matching a predicate, moving backwards
 from the current position.
 -}
-findBackward : (a -> Bool) -> HoleySelectList hasHole a -> Maybe (HoleySelectList full a)
+findBackward : (a -> Bool) -> HoleySelectList focus a -> Maybe (HoleySelectList item a)
 findBackward predicate z =
     findBackwardHelp predicate z
 
 
-findBackwardHelp : (a -> Bool) -> HoleySelectList hasHole a -> Maybe (HoleySelectList full a)
+findBackwardHelp : (a -> Bool) -> HoleySelectList focus a -> Maybe (HoleySelectList item a)
 findBackwardHelp predicate ((HoleySelectList before_ focus after_) as holeySelectList) =
     let
         goBack () =
@@ -523,15 +523,6 @@ findBackwardHelp predicate ((HoleySelectList before_ focus after_) as holeySelec
 
         NothingTyped _ ->
             goBack ()
-
-
-markFlex : HoleySelectList Full a -> HoleySelectList hasHole a
-markFlex (HoleySelectList before_ focus after_) =
-    let
-        restoredFocus =
-            just (MaybeTyped.value focus)
-    in
-    HoleySelectList before_ restoredFocus after_
 
 
 {-| Execute a function on every item in the `HoleySelectList`.

@@ -1,7 +1,7 @@
 module HoleySelectListTest exposing (emptyTest, nextTest, previousTest, singletonTest, zipperTest)
 
 import Expect
-import HoleySelectList exposing (Full, HoleySelectList, MaybeHole)
+import HoleySelectList exposing (HoleOrItem, HoleySelectList, Item)
 import Test exposing (..)
 
 
@@ -26,7 +26,7 @@ singletonTest =
 zipperTest : Test
 zipperTest =
     let
-        zipper : HoleySelectList Full Int
+        zipper : HoleySelectList Item Int
         zipper =
             HoleySelectList.selecting 1 [ 2, 3, 4, 5 ]
     in
@@ -61,7 +61,7 @@ zipperTest =
 nextTest : Test
 nextTest =
     let
-        zipper : HoleySelectList Full Int
+        zipper : HoleySelectList Item Int
         zipper =
             HoleySelectList.selecting 1 [ 2, 3 ]
     in
@@ -92,7 +92,7 @@ nextTest =
 previousTest : Test
 previousTest =
     let
-        zipper : HoleySelectList Full Int
+        zipper : HoleySelectList Item Int
         zipper =
             HoleySelectList.selecting 1 [ 2, 3 ]
     in
