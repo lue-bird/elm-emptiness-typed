@@ -6,14 +6,14 @@ The basic idea is a zipper that can represent an empty list, can focus before
 and after every item, and doesn't make life hard.
 
 ```elm
-import List.Holey.Zipper as Zipper
+import HoleySelectList
 
-Zipper.empty           -- Zipper Hole a
-    |> Zipper.plug 5   -- Zipper Full Int
-    |> Zipper.append
-        [ 1, 2, 3 ]    -- Zipper Full Int
-    |> Zipper.nextHole -- Zipper Hole Int
-    |> Zipper.toList   -- List Int
+HoleySelectList.empty           -- HoleySelectList Hole a
+    |> HoleySelectList.plug 5   -- HoleySelectList full Int
+    |> HoleySelectList.append
+        [ 1, 2, 3 ]    -- HoleySelectList full Int
+    |> HoleySelectList.nextHole -- HoleySelectList Hole Int
+    |> HoleySelectList.toList   -- List Int
 --> [ 5, 1, 2, 3 ]
 ```
 
