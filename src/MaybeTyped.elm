@@ -1,5 +1,5 @@
 module MaybeTyped exposing
-    ( MaybeTyped(..), MaybeEmpty, NotEmpty
+    ( MaybeTyped(..), Exists, MaybeNothing
     , just, nothing, fromMaybe
     , map, map2, toMaybe, value
     )
@@ -9,7 +9,7 @@ module MaybeTyped exposing
 
 ## types
 
-@docs MaybeTyped, MaybeEmpty, NotEmpty
+@docs MaybeTyped, Exists, MaybeNothing
 
 
 ## create
@@ -29,15 +29,15 @@ type MaybeTyped isEmpty a
     | JustTyped a
 
 
-type alias MaybeEmpty =
+type alias MaybeNothing =
     { empty : () }
 
 
-type alias NotEmpty =
+type alias Exists =
     { empty : Never }
 
 
-nothing : MaybeTyped MaybeEmpty a
+nothing : MaybeTyped MaybeNothing a
 nothing =
     NothingTyped { empty = () }
 
@@ -47,7 +47,7 @@ just value_ =
     JustTyped value_
 
 
-fromMaybe : Maybe a -> MaybeTyped MaybeEmpty a
+fromMaybe : Maybe a -> MaybeTyped MaybeNothing a
 fromMaybe coreMaybe =
     case coreMaybe of
         Just val ->
