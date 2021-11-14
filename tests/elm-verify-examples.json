@@ -1,6 +1,8 @@
 {
   "root": "../src",
   "tests": [
-    "HoleySelectList"
+    "HoleySelectList",
+    "MaybeTyped",
+    "ListTyped"
   ]
 }
