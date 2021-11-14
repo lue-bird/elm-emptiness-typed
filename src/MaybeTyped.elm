@@ -1,5 +1,5 @@
 module MaybeTyped exposing
-    ( MaybeTyped, MaybeEmpty, NotEmpty
+    ( MaybeTyped(..), MaybeEmpty, NotEmpty
     , just, nothing, fromMaybe
     , map, map2, toMaybe, value
     )
