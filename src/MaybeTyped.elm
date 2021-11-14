@@ -1,6 +1,6 @@
 module MaybeTyped exposing
     ( MaybeTyped, MaybeEmpty, NotEmpty
-    , fromMaybe
+    , just, nothing, fromMaybe
     , map, map2, toMaybe, value
     )
 
@@ -14,7 +14,7 @@ module MaybeTyped exposing
 
 ## create
 
-@docs fromMaybe, existing, empty
+@docs just, nothing, fromMaybe
 
 
 ## transform
