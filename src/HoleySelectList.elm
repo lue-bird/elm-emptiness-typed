@@ -39,13 +39,13 @@ that hole with a value.
 
 -}
 
-import MaybeTyped exposing (Exists, MaybeNothing, MaybeTyped(..), just, nothing)
+import MaybeTyped exposing (MaybeTyped(..), just, nothing)
 
 
 {-| Represents a special kind of list with items of type `a`.
 
 If the type `focus` is `Item`, an item is focussed.
-If not, you're looking at a hole between elements.
+If not, you could be looking at a hole between elements.
 
 -}
 type HoleySelectList focus a
@@ -55,7 +55,7 @@ type HoleySelectList focus a
 {-| A `HoleySelectList Item a` is pointing at an element of type `a`.
 -}
 type alias Item =
-    Exists
+    MaybeTyped.Exists
 
 
 {-| A `HoleySelectList HoleOrItem a` could be pointing at a hole between `a`s.
@@ -64,7 +64,7 @@ type alias Item =
 
 -}
 type alias HoleOrItem =
-    MaybeNothing
+    MaybeTyped.MaybeNothing
 
 
 {-| Get the value the `HoleySelectList` is currently pointing at.
