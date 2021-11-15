@@ -4,7 +4,7 @@ Deal with emptiness in a way that doesn't make life hard.
 
 ## `ListTyped`
 
-One way to construct and transform `MaybeEmpty` and `NotEmpty` lists.
+Use the same operations to transform `MaybeEmpty` and `NotEmpty` lists.
 
 ```elm
 import ListTyped
