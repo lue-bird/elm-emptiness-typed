@@ -2,7 +2,7 @@
     "type": "package",
     "name": "lue-bird/elm-emptiness-typed",
     "summary": "adding type information: does something exist?",
-    "license": "BSD-3-Clause",
+    "license": "MIT",
     "version": "1.0.0",
     "exposed-modules": [
         "HoleySelectList",
