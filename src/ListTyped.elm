@@ -2,7 +2,8 @@ module ListTyped exposing
     ( ListTyped, MaybeEmpty, NotEmpty
     , empty, only, fromCons, fromTuple, fromList
     , cons, append, appendNonEmpty
-    , map, toList, toTuple
+    , when
+    , map, fold, foldWith, toList, toTuple
     )
 
 {-|
@@ -23,12 +24,19 @@ module ListTyped exposing
 @docs cons, append, appendNonEmpty
 
 
+### filter
+
+@docs when
+
+
 ## transform
 
-@docs map, toList, toTuple
+@docs map, fold, foldWith, toList, toTuple
 
 -}
 
+import LinearDirection exposing (LinearDirection)
+import List.LinearDirection as List
 import MaybeTyped exposing (MaybeTyped(..), just, nothing)
 
 
@@ -159,8 +167,8 @@ appendNonEmpty nonEmptyToAppend =
 
     ListTyped.fromCons 1 [ 2 ]
         |> ListTyped.append
-            (ListTyped.fromCons [ 3, 4, 5 ])
-    --> ListTyped.fromCons 1 [ 2, 3, 4, 5 ]
+            (ListTyped.fromCons 3 [ 4 ])
+    --> ListTyped.fromCons 1 [ 2, 3, 4 ]
 
 Prefer this over [`appendNonEmpty`](#appendNonEmpty) if the piped `ListTyped` is already known as `NotEmpty`
 or if both are `MaybeEmpty`.
@@ -168,8 +176,8 @@ or if both are `MaybeEmpty`.
 -}
 append :
     ListTyped MaybeEmpty a
-    -> ListTyped isEmpty a
-    -> ListTyped isEmpty a
+    -> ListTyped emptyOrNot a
+    -> ListTyped emptyOrNot a
 append toAppend =
     \list ->
         case ( list, toAppend ) of
@@ -183,6 +191,19 @@ append toAppend =
                 fromCons head (tail ++ toList toAppend)
 
 
+{-| Keep elements that satisfy the test.
+
+    ListTyped.fromCons 1 [ 2, 5, -3, 10 ]
+        |> ListTyped.when (\x -> x < 5)
+    --> ListTyped.fromCons 1 [ 2, -3 ]
+    --: ListTyped MaybeEmpty number
+
+-}
+when : (a -> Bool) -> ListTyped emptyOrNot_ a -> ListTyped MaybeEmpty a
+when isGood =
+    fromList << List.filter isGood << toList
+
+
 
 --
 
@@ -194,9 +215,46 @@ append toAppend =
     --> ListTyped.fromCons -1 [ -4, -9 ]
 
 -}
-map : (a -> b) -> ListTyped isEmpty a -> ListTyped isEmpty b
+map : (a -> b) -> ListTyped emptyOrNot a -> ListTyped emptyOrNot b
 map change =
     MaybeTyped.map (Tuple.mapBoth change (List.map change))
+
+
+{-| Reduce a List in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+
+    import LinearDirection exposing (LinearDirection(..))
+
+    ListTyped.fromCons 'l' [ 'i', 'v', 'e' ]
+        |> ListTyped.fold LastToFirst String.cons ""
+    --> "live"
+
+    ListTyped.fromCons 'l' [ 'i', 'v', 'e' ]
+        |> ListTyped.fold FirstToLast String.cons ""
+    --> "evil"
+
+-}
+fold : LinearDirection -> (a -> b -> b) -> b -> ListTyped emptyOrNot_ a -> b
+fold direction reduce initial =
+    toList
+        >> List.fold direction reduce initial
+
+
+{-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+where the initial result is the first value in the `ListTyped`.
+
+    import LinearDirection exposing (LinearDirection(..))
+
+    ListTyped.foldWith FirstToLast max
+        (ListTyped.fromCons 234 [ 345, 543 ])
+    --> 543
+
+-}
+foldWith : LinearDirection -> (a -> a -> a) -> ListTyped NotEmpty a -> a
+foldWith direction reduce =
+    toTuple
+        >> (\( head, tail ) ->
+                List.fold direction reduce head tail
+           )
 
 
 {-| Convert any `ListTyped` to a `List`.
@@ -207,13 +265,14 @@ map change =
 
 -}
 toList : ListTyped emptyOrNot_ a -> List a
-toList list =
-    case list of
-        JustTyped ( head, tail ) ->
-            head :: tail
+toList =
+    \list ->
+        case list of
+            JustTyped ( head, tail ) ->
+                head :: tail
 
-        NothingTyped _ ->
-            []
+            NothingTyped _ ->
+                []
 
 
 {-| Convert a `ListTyped notEmpty a` to a non-empty list tuple `( a, List a )`.
