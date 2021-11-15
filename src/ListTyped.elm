@@ -1,6 +1,7 @@
 module ListTyped exposing
     ( ListTyped, MaybeEmpty, NotEmpty
     , empty, only, fromCons, fromTuple, fromList
+    , head, length
     , cons, append, appendNonEmpty
     , when, whenJust
     , map, fold, foldWith, toList, toTuple
@@ -17,6 +18,11 @@ module ListTyped exposing
 ## create
 
 @docs empty, only, fromCons, fromTuple, fromList
+
+
+## scan
+
+@docs head, length
 
 
 ## modify
@@ -45,6 +51,8 @@ import MaybeTyped exposing (MaybeTyped(..), just, nothing)
 We can require a [`NotEmpty`](#NotEmpty) for example:
 
     head : ListTyped NotEmpty a -> a
+
+**This is better than any `Nonempty`.**
 
 -}
 type alias ListTyped emptyOrNot a =
@@ -103,15 +111,15 @@ Equivalent to `MaybeTyped.just`.
 
 -}
 fromTuple : ( a, List a ) -> ListTyped notEmpty_ a
-fromTuple nonEmptyList =
-    just nonEmptyList
+fromTuple nonEmptyListAlias =
+    just nonEmptyListAlias
 
 
 {-| Build a `ListTyped notEmpty_ a` from its head and tail.
 -}
 fromCons : a -> List a -> ListTyped notEmpty_ a
-fromCons head tail =
-    fromTuple ( head, tail )
+fromCons head_ tail_ =
+    fromTuple ( head_, tail_ )
 
 
 {-| Convert a `List a` to a `ListTyped MaybeEmpty a`.
@@ -134,8 +142,44 @@ fromList list_ =
         [] ->
             empty
 
-        head :: tail ->
-            fromCons head tail
+        head_ :: tail_ ->
+            fromCons head_ tail_
+
+
+
+--
+
+
+{-| The first value in the `ListTyped`.
+
+    ListTyped.only 3
+        |> ListTyped.cons 2
+        |> ListTyped.head
+    --> 3
+
+-}
+head : ListTyped NotEmpty a -> a
+head =
+    toTuple >> Tuple.first
+
+
+{-| The element count in the `ListTyped`.
+
+    ListTyped.only 3
+        |> ListTyped.cons 2
+        |> ListTyped.length
+    --> 2
+
+-}
+length : ListTyped emptyOrNot_ a_ -> Int
+length =
+    \list ->
+        case list of
+            JustTyped ( _, tail_ ) ->
+                1 + List.length tail_
+
+            NothingTyped _ ->
+                0
 
 
 
@@ -158,8 +202,8 @@ cons toPutBeforeAllOtherElements =
             NothingTyped _ ->
                 only toPutBeforeAllOtherElements
 
-            JustTyped ( head, tail ) ->
-                fromCons toPutBeforeAllOtherElements (head :: tail)
+            JustTyped ( head_, tail_ ) ->
+                fromCons toPutBeforeAllOtherElements (head_ :: tail_)
 
 
 {-| Glue the elements of a `ListTyped NotEmpty ...` to the end of a `ListTyped`.
@@ -185,8 +229,8 @@ appendNonEmpty nonEmptyToAppend =
             NothingTyped _ ->
                 nonEmptyToAppend
 
-            JustTyped ( head, tail ) ->
-                fromCons head (tail ++ toList nonEmptyToAppend)
+            JustTyped ( head_, tail_ ) ->
+                fromCons head_ (tail_ ++ toList nonEmptyToAppend)
 
 
 {-| Glue the elements of a `ListTyped` to the end of a `ListTyped`.
@@ -213,8 +257,8 @@ append toAppend =
             ( NothingTyped _, JustTyped nonEmptyToAppend ) ->
                 fromTuple nonEmptyToAppend
 
-            ( JustTyped ( head, tail ), _ ) ->
-                fromCons head (tail ++ toList toAppend)
+            ( JustTyped ( head_, tail_ ), _ ) ->
+                fromCons head_ (tail_ ++ toList toAppend)
 
 
 {-| Keep elements that satisfy the test.
@@ -287,20 +331,20 @@ where the initial result is the first value in the `ListTyped`.
 
     import LinearDirection exposing (LinearDirection(..))
 
-    ListTyped.foldWith FirstToLast max
-        (ListTyped.fromCons 234 [ 345, 543 ])
+    ListTyped.fromCons 234 [ 345, 543 ]
+        |> ListTyped.foldWith FirstToLast max
     --> 543
 
 -}
 foldWith : LinearDirection -> (a -> a -> a) -> ListTyped NotEmpty a -> a
 foldWith direction reduce =
     toTuple
-        >> (\( head, tail ) ->
-                List.fold direction reduce head tail
+        >> (\( head_, tail_ ) ->
+                List.fold direction reduce head_ tail_
            )
 
 
-{-| Convert any `ListTyped` to a `List`.
+{-| Convert the `ListTyped` to a `List`.
 
     ListTyped.fromCons 1 [ 7 ]
         |> ListTyped.toList
@@ -311,8 +355,8 @@ toList : ListTyped emptyOrNot_ a -> List a
 toList =
     \list ->
         case list of
-            JustTyped ( head, tail ) ->
-                head :: tail
+            JustTyped ( head_, tail_ ) ->
+                head_ :: tail_
 
             NothingTyped _ ->
                 []
