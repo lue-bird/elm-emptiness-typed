@@ -1,7 +1,7 @@
 {
     "type": "package",
     "name": "lue-bird/elm-emptiness-typed",
-    "summary": "adding type information: does something exist?",
+    "summary": "Deal with emptiness in a way that doesn't make life hard",
     "license": "MIT",
     "version": "1.0.0",
     "exposed-modules": [
