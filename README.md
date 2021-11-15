@@ -1,5 +1,7 @@
 # elm-emptiness-typed
 
+Deal with emptiness in a way that doesn't make life hard.
+
 ## `ListTyped`
 
 One way to construct and transform `MaybeEmpty` and `NotEmpty` lists.
@@ -35,6 +37,8 @@ HoleySelectList.empty           -- HoleySelectList Hole a
 --> [ 5, 1, 2, 3 ]
 ```
 
----
+## `MaybeTyped`
 
-Made with love and released under BSD-3.
+`Maybe` + type information: does it exist?
+
+This is the building block for all the data structures in this package.
