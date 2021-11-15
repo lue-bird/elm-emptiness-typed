@@ -1,7 +1,7 @@
 ## contributing 💙
 
 - share your thoughts
-- add useful operations and new data structures, e.g. `ArrayTyped`
+- add useful operations and new data structures, e.g. `StringTyped`
 - suggest smaller changes through a pull request
 - discuss bigger changes in an issue or in a github Discussion 
 
