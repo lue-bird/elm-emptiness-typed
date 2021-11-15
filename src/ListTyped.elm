@@ -1,7 +1,7 @@
 module ListTyped exposing
     ( ListTyped, MaybeEmpty, NotEmpty
-    , empty, fromCons, fromTuple, fromList
-    , appendNonEmpty
+    , empty, only, fromCons, fromTuple, fromList
+    , cons, append, appendNonEmpty
     , map, toList, toTuple
     )
 
@@ -15,12 +15,12 @@ module ListTyped exposing
 
 ## create
 
-@docs empty, fromCons, fromTuple, fromList
+@docs empty, only, fromCons, fromTuple, fromList
 
 
 ## modify
 
-@docs appendNonEmpty
+@docs cons, append, appendNonEmpty
 
 
 ## transform
@@ -44,12 +44,23 @@ type alias MaybeEmpty =
     MaybeTyped.MaybeNothing
 
 
-{-| A list without elements.
+{-| A `ListTyped` without elements.
 Equivalent to `MaybeTyped.nothing`.
 -}
 empty : ListTyped MaybeNothing a
 empty =
     nothing
+
+
+{-| A `ListTyped` with just 1 element.
+
+    ListTyped.only ":)"
+    --> ListTyped.empty |> ListTyped.cons ":)"
+
+-}
+only : a -> ListTyped notEmpty a
+only onlyElement =
+    fromCons onlyElement []
 
 
 {-| Convert a non-empty list tuple `( a, List a )` to a `ListTyped notEmpty a`.
@@ -97,6 +108,26 @@ fromList list_ =
 --
 
 
+{-| Add an element to the front of a list.
+
+    ListTyped.fromCons 2 [ 3 ] |> ListTyped.cons 1
+    --> ListTyped.fromCons 1 [ 2, 3 ]
+
+    ListTyped.empty |>  ListTyped.cons 1
+    --> ListTyped.only 1
+
+-}
+cons : a -> ListTyped isEmpty a -> ListTyped NotEmpty a
+cons toPutBeforeAllOtherElements =
+    \list ->
+        case list of
+            NothingTyped _ ->
+                only toPutBeforeAllOtherElements
+
+            JustTyped ( head, tail ) ->
+                fromCons toPutBeforeAllOtherElements (head :: tail)
+
+
 {-| Glue the elements of a `ListTyped NotEmpty ...` to the end of a `ListTyped`.
 
     ListTyped.empty
@@ -106,18 +137,50 @@ fromList list_ =
             (ListTyped.fromCons 3 [ 4, 5 ])
     --> ListTyped.fromCons 1 [ 2, 3, 4, 5 ]
 
+Prefer [`append`](#append) if the piped `ListTyped` is already known as `NotEmpty`
+or if both are `MaybeEmpty`.
+
 -}
 appendNonEmpty :
     ListTyped NotEmpty a
     -> ListTyped isEmpty a
     -> ListTyped NotEmpty a
-appendNonEmpty nonEmptyToAppend typedList =
-    case typedList of
-        NothingTyped _ ->
-            nonEmptyToAppend
+appendNonEmpty nonEmptyToAppend =
+    \list ->
+        case list of
+            NothingTyped _ ->
+                nonEmptyToAppend
 
-        JustTyped ( head, tail ) ->
-            fromCons head (tail ++ toList nonEmptyToAppend)
+            JustTyped ( head, tail ) ->
+                fromCons head (tail ++ toList nonEmptyToAppend)
+
+
+{-| Glue the elements of a `ListTyped` to the end of a `ListTyped`.
+
+    ListTyped.fromCons 1 [ 2 ]
+        |> ListTyped.append
+            (ListTyped.fromCons [ 3, 4, 5 ])
+    --> ListTyped.fromCons 1 [ 2, 3, 4, 5 ]
+
+Prefer this over [`appendNonEmpty`](#appendNonEmpty) if the piped `ListTyped` is already known as `NotEmpty`
+or if both are `MaybeEmpty`.
+
+-}
+append :
+    ListTyped MaybeEmpty a
+    -> ListTyped isEmpty a
+    -> ListTyped isEmpty a
+append toAppend =
+    \list ->
+        case ( list, toAppend ) of
+            ( NothingTyped is, NothingTyped _ ) ->
+                NothingTyped is
+
+            ( NothingTyped _, JustTyped nonEmptyToAppend ) ->
+                fromTuple nonEmptyToAppend
+
+            ( JustTyped ( head, tail ), _ ) ->
+                fromCons head (tail ++ toList toAppend)
 
 
 
