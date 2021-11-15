@@ -18,6 +18,8 @@ ListTyped.empty           -- ListTyped MaybeEmpty a
 --> ( 5, [ 1, 2, 3 ] )
 ```
 
+**This is better than any `Nonempty`.**
+
 ## `HoleySelectList`
 
 Like a list zipper, but with more holes in it.
