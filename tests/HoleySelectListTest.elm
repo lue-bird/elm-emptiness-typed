@@ -7,7 +7,7 @@ import Test exposing (Test, describe, test)
 
 emptyTest : Test
 emptyTest =
-    test "Empty creates a holeySelectList for an empty list"
+    test "empty creates a HoleySelectList for an empty list"
         (\_ ->
             HoleySelectList.empty
                 |> HoleySelectList.toList
@@ -17,7 +17,7 @@ emptyTest =
 
 singletonTest : Test
 singletonTest =
-    test "Singleton creates a HoleySelectList with a single element"
+    test "singleton creates a HoleySelectList with a single element"
         (\_ ->
             HoleySelectList.singleton 3
                 |> HoleySelectList.toList
