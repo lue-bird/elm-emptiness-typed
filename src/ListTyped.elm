@@ -40,22 +40,48 @@ import List.LinearDirection as List
 import MaybeTyped exposing (MaybeTyped(..), just, nothing)
 
 
-type alias ListTyped emptyOrNot_ a =
-    MaybeTyped emptyOrNot_ ( a, List a )
+{-| Describes an empty or non-empty list.
+
+We can require a [`NotEmpty`](#NotEmpty) for example:
+
+    head : ListTyped NotEmpty a -> a
+
+-}
+type alias ListTyped emptyOrNot a =
+    MaybeTyped emptyOrNot ( a, List a )
 
 
+{-| `ListTyped NotEmpty a` can be used to require a non-empty list as an argument:
+
+    head : ListTyped NotEmpty a -> a
+
+-}
 type alias NotEmpty =
     MaybeTyped.Just { notEmpty : () }
 
 
+{-| `ListTyped MaybeEmpty a` marks lists that could be empty:
+
+    fromList : List a -> ListTyped MaybeEmpty a
+    fromList list =
+        case list of
+            [] ->
+                ListTyped.empty
+
+            head :: tail ->
+                ListTyped.fromCons head tail
+
+-}
 type alias MaybeEmpty =
     MaybeTyped.MaybeNothing { maybeEmpty : () }
 
 
 {-| A `ListTyped` without elements.
+
 Equivalent to `MaybeTyped.nothing`.
+
 -}
-empty : ListTyped MaybeEmpty a
+empty : ListTyped MaybeEmpty a_
 empty =
     nothing
 
@@ -109,7 +135,7 @@ fromList list_ =
             empty
 
         head :: tail ->
-            fromTuple ( head, tail )
+            fromCons head tail
 
 
 
@@ -141,7 +167,7 @@ cons toPutBeforeAllOtherElements =
     ListTyped.empty
         |> ListTyped.appendNonEmpty
             (ListTyped.fromCons 1 [ 2 ])
-        |> ListTyped.appendNonEmpty
+        |> ListTyped.append
             (ListTyped.fromCons 3 [ 4, 5 ])
     --> ListTyped.fromCons 1 [ 2, 3, 4, 5 ]
 
