@@ -55,7 +55,7 @@ type HoleySelectList focus a
 {-| A `HoleySelectList Item a` is pointing at an element of type `a`.
 -}
 type alias Item =
-    MaybeTyped.Exists
+    MaybeTyped.Just { item : () }
 
 
 {-| A `HoleySelectList HoleOrItem a` could be pointing at a hole between `a`s.
@@ -64,7 +64,7 @@ type alias Item =
 
 -}
 type alias HoleOrItem =
-    MaybeTyped.MaybeNothing
+    MaybeTyped.MaybeNothing { holeOrItem : () }
 
 
 {-| Get the value the `HoleySelectList` is currently pointing at.

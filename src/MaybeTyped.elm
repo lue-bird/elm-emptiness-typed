@@ -1,7 +1,7 @@
 module MaybeTyped exposing
-    ( MaybeTyped(..), Exists, MaybeNothing
+    ( MaybeTyped(..), Just, MaybeNothing, CanBeNothing(..)
     , just, nothing, fromMaybe
-    , map, map2, toMaybe, value
+    , map, map2, toMaybe, value, andThen
     )
 
 {-| `Maybe` with the ability to know at the type level whether it exists.
@@ -9,20 +9,34 @@ module MaybeTyped exposing
     import MaybeTyped exposing (just)
 
     [ just 1, just 7 ]
+        -- : List (MaybeTyped notEmpty number)
         |> List.map MaybeTyped.value
     --> [ 1, 7 ]
+
+I don't think `MaybeTyped` will proof any useful just by itself,
+but we can build cool type-safe data structures with it:
 
     type alias ListTyped isEmpty a =
         MaybeTyped isEmpty ( a, List a )
 
-    empty : ListTyped MaybeTyped.MaybeNothing a
+    type alias NotEmpty =
+        MaybeTyped.Just { notEmpty : () }
+
+    type alias MaybeEmpty =
+        MaybeTyped.MaybeNothing { maybeEmpty : () }
+
+    empty : ListTyped MaybeEmpty a
+
     cons : ListTyped isHeadEmpty a -> a -> ListTyped headExists a
-    head : ListTyped MaybeTyped.Exists a a -> a
+
+    head : ListTyped NotEmpty a -> a
+
+This is exactly how [`ListTyped`] is implemented.
 
 
 ## types
 
-@docs MaybeTyped, Exists, MaybeNothing
+@docs MaybeTyped, Just, MaybeNothing, CanBeNothing
 
 
 ## create
@@ -32,7 +46,7 @@ module MaybeTyped exposing
 
 ## transform
 
-@docs map, map2, toMaybe, value
+@docs map, map2, toMaybe, value, andThen
 
 -}
 
@@ -44,32 +58,48 @@ type MaybeTyped isEmpty a
     | JustTyped a
 
 
-{-| `Maybe MaybeNothing a`: The value could exist, could also not exist.
--}
-type alias MaybeNothing =
-    { empty : () }
+{-| A value for when the `MaybeTyped` is `NothingTyped`.
 
+It has a simple type tag to make `MaybeTyped` values distinct:
 
-{-| In
+    type alias NotEmpty =
+        MaybeTyped.Just { notEmpty : () }
 
-    import MaybeTyped exposing (MaybeTyped, Exists)
-
-    f : MaybeTyped Exists a -> a
-    f maybe =
-        |> MaybeTyped.value
-
-only `MaybeTyped`s that certainly exist can be used as arguments.
+    type alias ItemFocussed =
+        MaybeTyped.Just { itemFocussed () }
 
 -}
-type alias Exists =
-    { empty : Never }
+type CanBeNothing valueIfNothing tag
+    = CanBeNothing valueIfNothing
 
 
-{-| Empty.
+{-| `Maybe (MaybeNothing tag) a`: The value could exist, could also not exist.
+See [`CanBeNothing`](#CanBeNothing).
 -}
-nothing : MaybeTyped MaybeNothing a
+type alias MaybeNothing tag =
+    CanBeNothing () tag
+
+
+{-| Only allow `MaybeTyped`s that certainly exist as arguments.
+
+    import MaybeTyped exposing (Just, MaybeTyped)
+
+    head : MaybeTyped (Just tag) ( a, List a ) -> a
+    head maybe =
+        maybe |> MaybeTyped.value |> Tuple.first
+
+See [`CanBeNothing`](#CanBeNothing) and [`ListTyped`](ListTyped).
+
+-}
+type alias Just tag =
+    CanBeNothing Never tag
+
+
+{-| Nothing here.
+-}
+nothing : MaybeTyped (MaybeNothing tag) a
 nothing =
-    NothingTyped { empty = () }
+    NothingTyped (CanBeNothing ())
 
 
 {-| A `MaybeTyped` that certainly exists.
@@ -81,14 +111,14 @@ just value_ =
 
 {-| Convert a `Maybe` to a `MaybeTyped`.
 -}
-fromMaybe : Maybe a -> MaybeTyped MaybeNothing a
+fromMaybe : Maybe a -> MaybeTyped (MaybeNothing tag) a
 fromMaybe coreMaybe =
     case coreMaybe of
         Just val ->
-            JustTyped val
+            just val
 
         Nothing ->
-            NothingTyped { empty = () }
+            nothing
 
 
 {-| Convert a `MaybeTyped` to a `Maybe`.
@@ -103,16 +133,16 @@ toMaybe maybe =
             Nothing
 
 
-{-| Safely extracts the value from every `MaybeTyped Exists a`.
+{-| Safely extracts the value from every `MaybeTyped Just a`.
 -}
-value : MaybeTyped { kind | empty : Never } a -> a
+value : MaybeTyped (Just tag) a -> a
 value maybe =
     case maybe of
         JustTyped val ->
             val
 
-        NothingTyped { empty } ->
-            never empty
+        NothingTyped (CanBeNothing canBeNothing) ->
+            never canBeNothing
 
 
 {-| Transform the value in the `MaybeTyped` using a given function:

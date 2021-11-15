@@ -29,7 +29,7 @@ module ListTyped exposing
 
 -}
 
-import MaybeTyped exposing (MaybeNothing, MaybeTyped(..), just, nothing)
+import MaybeTyped exposing (MaybeTyped(..), just, nothing)
 
 
 type alias ListTyped isEmpty a =
@@ -37,17 +37,17 @@ type alias ListTyped isEmpty a =
 
 
 type alias NotEmpty =
-    MaybeTyped.Exists
+    MaybeTyped.Just { notEmpty : () }
 
 
 type alias MaybeEmpty =
-    MaybeTyped.MaybeNothing
+    MaybeTyped.MaybeNothing { maybeEmpty : () }
 
 
 {-| A `ListTyped` without elements.
 Equivalent to `MaybeTyped.nothing`.
 -}
-empty : ListTyped MaybeNothing a
+empty : ListTyped MaybeEmpty a
 empty =
     nothing
 
@@ -223,9 +223,4 @@ Equivalent to `MaybeTyped.value`.
 -}
 toTuple : ListTyped NotEmpty a -> ( a, List a )
 toTuple typedList =
-    case typedList of
-        JustTyped nonEmpty ->
-            nonEmpty
-
-        NothingTyped is ->
-            is.empty |> never
+    typedList |> MaybeTyped.value
