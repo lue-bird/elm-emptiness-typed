@@ -32,8 +32,8 @@ module ListTyped exposing
 import MaybeTyped exposing (MaybeTyped(..), just, nothing)
 
 
-type alias ListTyped isEmpty a =
-    MaybeTyped isEmpty ( a, List a )
+type alias ListTyped emptyOrNot_ a =
+    MaybeTyped emptyOrNot_ ( a, List a )
 
 
 type alias NotEmpty =
@@ -58,24 +58,24 @@ empty =
     --> ListTyped.empty |> ListTyped.cons ":)"
 
 -}
-only : a -> ListTyped notEmpty a
+only : a -> ListTyped notEmpty_ a
 only onlyElement =
     fromCons onlyElement []
 
 
-{-| Convert a non-empty list tuple `( a, List a )` to a `ListTyped notEmpty a`.
+{-| Convert a non-empty list tuple `( a, List a )` to a `ListTyped notEmpty_ a`.
 
 Equivalent to `MaybeTyped.just`.
 
 -}
-fromTuple : ( a, List a ) -> ListTyped notEmpty a
+fromTuple : ( a, List a ) -> ListTyped notEmpty_ a
 fromTuple nonEmptyList =
     just nonEmptyList
 
 
-{-| Build a `ListTyped notEmpty a` from its head and tail.
+{-| Build a `ListTyped notEmpty_ a` from its head and tail.
 -}
-fromCons : a -> List a -> ListTyped notEmpty a
+fromCons : a -> List a -> ListTyped notEmpty_ a
 fromCons head tail =
     fromTuple ( head, tail )
 
@@ -117,7 +117,7 @@ fromList list_ =
     --> ListTyped.only 1
 
 -}
-cons : a -> ListTyped isEmpty a -> ListTyped NotEmpty a
+cons : a -> ListTyped emptyOrNot_ a -> ListTyped NotEmpty a
 cons toPutBeforeAllOtherElements =
     \list ->
         case list of
@@ -143,7 +143,7 @@ or if both are `MaybeEmpty`.
 -}
 appendNonEmpty :
     ListTyped NotEmpty a
-    -> ListTyped isEmpty a
+    -> ListTyped emptyOrNot_ a
     -> ListTyped NotEmpty a
 appendNonEmpty nonEmptyToAppend =
     \list ->
@@ -206,7 +206,7 @@ map change =
     --> [ 1, 7 ]
 
 -}
-toList : ListTyped isEmpty a -> List a
+toList : ListTyped emptyOrNot_ a -> List a
 toList list =
     case list of
         JustTyped ( head, tail ) ->

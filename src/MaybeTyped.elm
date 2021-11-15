@@ -97,21 +97,21 @@ type alias Just tag =
 
 {-| Nothing here.
 -}
-nothing : MaybeTyped (MaybeNothing tag) a
+nothing : MaybeTyped (MaybeNothing tag_) a_
 nothing =
     NothingTyped (CanBeNothing ())
 
 
 {-| A `MaybeTyped` that certainly exists.
 -}
-just : a -> MaybeTyped notEmpty a
+just : a -> MaybeTyped just_ a
 just value_ =
     JustTyped value_
 
 
 {-| Convert a `Maybe` to a `MaybeTyped`.
 -}
-fromMaybe : Maybe a -> MaybeTyped (MaybeNothing tag) a
+fromMaybe : Maybe a -> MaybeTyped (MaybeNothing tag_) a
 fromMaybe coreMaybe =
     case coreMaybe of
         Just val ->
@@ -123,7 +123,7 @@ fromMaybe coreMaybe =
 
 {-| Convert a `MaybeTyped` to a `Maybe`.
 -}
-toMaybe : MaybeTyped empty a -> Maybe a
+toMaybe : MaybeTyped empty_ a -> Maybe a
 toMaybe maybe =
     case maybe of
         JustTyped val ->
@@ -135,7 +135,7 @@ toMaybe maybe =
 
 {-| Safely extracts the value from every `MaybeTyped Just a`.
 -}
-value : MaybeTyped (Just tag) a -> a
+value : MaybeTyped (Just tag_) a -> a
 value maybe =
     case maybe of
         JustTyped val ->
