@@ -17,9 +17,9 @@ emptyTest =
 
 singletonTest : Test
 singletonTest =
-    test "singleton creates a HoleySelectList with a single element"
+    test "only creates a HoleySelectList with a single element"
         (\_ ->
-            HoleySelectList.singleton 3
+            HoleySelectList.only 3
                 |> HoleySelectList.toList
                 |> Expect.equal [ 3 ]
         )

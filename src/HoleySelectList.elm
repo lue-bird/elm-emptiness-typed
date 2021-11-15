@@ -1,6 +1,6 @@
 module HoleySelectList exposing
     ( HoleySelectList, Item, HoleOrItem
-    , empty, singleton, currentAndAfter
+    , empty, only, currentAndAfter
     , current, before, after, toList
     , next, previous, nextHole, previousHole, first, last, beforeFirst, afterLast, findForward, findBackward
     , map, mapCurrent, mapBefore, mapAfter, mapParts, plug, remove, append, prepend, insertAfter, insertBefore
@@ -20,7 +20,7 @@ that hole with a value.
 
 # Creation
 
-@docs empty, singleton, currentAndAfter
+@docs empty, only, currentAndAfter
 
 
 # Extraction
@@ -71,7 +71,7 @@ type alias HoleOrItem =
 
 Only applicable to zippers pointing at a value.
 
-    HoleySelectList.singleton "hi there"
+    HoleySelectList.only "hi there"
         |> HoleySelectList.current
     --> "hi there"
 
@@ -102,13 +102,13 @@ empty =
 {-| A `HoleySelectList` with a single thing in it. Singleton is just fancy-speak for single
 thing.
 
-    HoleySelectList.singleton "wat"
+    HoleySelectList.only "wat"
         |> HoleySelectList.toList
     --> [ "wat" ]
 
 -}
-singleton : a -> HoleySelectList item a
-singleton v =
+only : a -> HoleySelectList item a
+only v =
     HoleySelectList [] (just v) []
 
 
@@ -116,7 +116,7 @@ singleton v =
 it.
 
     HoleySelectList.currentAndAfter "foo" []
-    --> HoleySelectList.singleton "foo"
+    --> HoleySelectList.only "foo"
 
 
     HoleySelectList.currentAndAfter 0 [ 1, 2, 3 ]
@@ -168,7 +168,7 @@ This also works from within holes:
     HoleySelectList.empty
         |> HoleySelectList.insertAfter "foo"
         |> HoleySelectList.next
-    --> Just <| HoleySelectList.singleton "foo"
+    --> Just <| HoleySelectList.only "foo"
 
 If there is no `next` thing, `next` is `Nothing`.
 
@@ -245,7 +245,7 @@ nextHole ((HoleySelectList before_ _ after_) as holeySelectList) =
 {-| Move the `HoleySelectList` to the hole right before the current item. Feel free to plug
 that hole right up!
 
-    HoleySelectList.singleton "world"
+    HoleySelectList.only "world"
         |> HoleySelectList.previousHole
         |> HoleySelectList.plug "hello"
         |> HoleySelectList.toList
@@ -260,7 +260,7 @@ previousHole ((HoleySelectList before_ _ after_) as holeySelectList) =
 {-| Plug a `HoleySelectList`.
 
     HoleySelectList.plug "plug" HoleySelectList.empty
-    --> HoleySelectList.singleton "plug"
+    --> HoleySelectList.only "plug"
 
 -}
 plug : a -> HoleySelectList HoleOrItem a -> HoleySelectList item a
@@ -311,7 +311,7 @@ insertAfter v (HoleySelectList b c a) =
     --> [ "hello" ]
 
 
-    HoleySelectList.singleton 123
+    HoleySelectList.only 123
         |> HoleySelectList.insertBefore 456
         |> HoleySelectList.toList
     --> [ 456, 123 ]
