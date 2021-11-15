@@ -1,9 +1,10 @@
 module HoleySelectList exposing
     ( HoleySelectList, Item, HoleOrItem
     , empty, only, currentAndAfter
-    , current, before, after, toList
+    , current, before, after
     , next, previous, nextHole, previousHole, first, last, beforeFirst, afterLast, findForward, findBackward
-    , map, mapCurrent, mapBefore, mapAfter, mapParts, plug, remove, append, prepend, insertAfter, insertBefore
+    , mapCurrent, mapBefore, mapAfter, plug, remove, append, prepend, insertAfter, insertBefore
+    , map, mapParts, toList
     )
 
 {-| Like a regular old list-zipper, except it can also focus on a hole
@@ -13,29 +14,34 @@ This means you can represent an empty list, or point between two items and plug
 that hole with a value.
 
 
-# Types
+# types
 
 @docs HoleySelectList, Item, HoleOrItem
 
 
-# Creation
+# create
 
 @docs empty, only, currentAndAfter
 
 
-# Extraction
+# scan
 
-@docs current, before, after, toList
+@docs current, before, after
 
 
-# Navigation
+# navigate
 
 @docs next, previous, nextHole, previousHole, first, last, beforeFirst, afterLast, findForward, findBackward
 
 
-# Modification
+# modify
 
-@docs map, mapCurrent, mapBefore, mapAfter, mapParts, plug, remove, append, prepend, insertAfter, insertBefore
+@docs mapCurrent, mapBefore, mapAfter, plug, remove, append, prepend, insertAfter, insertBefore
+
+
+# transform
+
+@docs map, mapParts, toList
 
 -}
 
