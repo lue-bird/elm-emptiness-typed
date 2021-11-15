@@ -28,10 +28,10 @@ zipperTest =
     let
         holeySelectList : HoleySelectList Item Int
         holeySelectList =
-            HoleySelectList.selecting 1 [ 2, 3, 4, 5 ]
+            HoleySelectList.currentAndAfter 1 [ 2, 3, 4, 5 ]
     in
-    describe "selecting"
-        [ test "selecting creates a HoleySelectList." <|
+    describe "currentAndAfter"
+        [ test "currentAndAfter creates a HoleySelectList." <|
             \_ ->
                 holeySelectList
                     |> HoleySelectList.toList
@@ -63,7 +63,7 @@ nextTest =
     let
         holeySelectList : HoleySelectList Item Int
         holeySelectList =
-            HoleySelectList.selecting 1 [ 2, 3 ]
+            HoleySelectList.currentAndAfter 1 [ 2, 3 ]
     in
     describe "next"
         [ test "next gives the next thing" <|
@@ -96,7 +96,7 @@ previousTest =
     let
         holeySelectList : HoleySelectList Item Int
         holeySelectList =
-            HoleySelectList.selecting 1 [ 2, 3 ]
+            HoleySelectList.currentAndAfter 1 [ 2, 3 ]
     in
     describe "previous"
         [ test "previous gives nothing initially" <|

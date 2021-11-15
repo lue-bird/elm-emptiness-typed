@@ -1,6 +1,6 @@
 module HoleySelectList exposing
     ( HoleySelectList, Item, HoleOrItem
-    , empty, singleton, selecting
+    , empty, singleton, currentAndAfter
     , current, before, after, toList
     , next, previous, nextHole, previousHole, first, last, beforeFirst, afterLast, findForward, findBackward
     , map, mapCurrent, mapBefore, mapAfter, mapParts, plug, remove, append, prepend, insertAfter, insertBefore
@@ -20,7 +20,7 @@ that hole with a value.
 
 # Creation
 
-@docs empty, singleton, selecting
+@docs empty, singleton, currentAndAfter
 
 
 # Extraction
@@ -76,7 +76,7 @@ Only applicable to zippers pointing at a value.
     --> "hi there"
 
 
-    HoleySelectList.selecting 1 [ 2, 3, 4 ]
+    HoleySelectList.currentAndAfter 1 [ 2, 3, 4 ]
         |> HoleySelectList.last
         |> HoleySelectList.current
     --> 4
@@ -115,50 +115,50 @@ singleton v =
 {-| Construct a `HoleySelectList` from the head of a list and some elements to come after
 it.
 
-    HoleySelectList.selecting "foo" []
+    HoleySelectList.currentAndAfter "foo" []
     --> HoleySelectList.singleton "foo"
 
 
-    HoleySelectList.selecting 0 [ 1, 2, 3 ]
+    HoleySelectList.currentAndAfter 0 [ 1, 2, 3 ]
         |> HoleySelectList.toList
     --> [ 0, 1, 2, 3 ]
 
 -}
-selecting : a -> List a -> HoleySelectList item a
-selecting v a =
+currentAndAfter : a -> List a -> HoleySelectList item a
+currentAndAfter v a =
     HoleySelectList [] (just v) a
 
 
 {-| List the things that come before the current location in the `HoleySelectList`.
 
-    HoleySelectList.selecting 0 [ 1, 2, 3 ]
+    HoleySelectList.currentAndAfter 0 [ 1, 2, 3 ]
         |> HoleySelectList.next
         |> Maybe.andThen HoleySelectList.next
         |> Maybe.map HoleySelectList.before
     --> Just [ 0, 1 ]
 
 -}
-before : HoleySelectList t a -> List a
+before : HoleySelectList focus a -> List a
 before (HoleySelectList b _ _) =
     List.reverse b
 
 
 {-| Conversely, list the things that come after the current location.
 
-    HoleySelectList.selecting 0 [ 1, 2, 3 ]
+    HoleySelectList.currentAndAfter 0 [ 1, 2, 3 ]
         |> HoleySelectList.next
         |> Maybe.map HoleySelectList.after
     --> Just [ 2, 3 ]
 
 -}
-after : HoleySelectList t a -> List a
+after : HoleySelectList focus a -> List a
 after (HoleySelectList _ _ a) =
     a
 
 
 {-| Move the `HoleySelectList` to the next item, if there is one.
 
-    HoleySelectList.selecting 0 [ 1, 2, 3 ]
+    HoleySelectList.currentAndAfter 0 [ 1, 2, 3 ]
         |> HoleySelectList.next
         |> Maybe.map HoleySelectList.current
     --> Just 1
@@ -177,7 +177,7 @@ If there is no `next` thing, `next` is `Nothing`.
     --> Nothing
 
 
-    HoleySelectList.selecting 0 [ 1, 2, 3 ]
+    HoleySelectList.currentAndAfter 0 [ 1, 2, 3 ]
         |> HoleySelectList.last
         |> HoleySelectList.next
     --> Nothing
@@ -209,7 +209,7 @@ next (HoleySelectList before_ focus after_) =
     --> Nothing
 
 
-    HoleySelectList.selecting "hello" [ "holey", "world" ]
+    HoleySelectList.currentAndAfter "hello" [ "holey", "world" ]
         |> HoleySelectList.last
         |> HoleySelectList.previous
         |> Maybe.map HoleySelectList.current
@@ -230,7 +230,7 @@ previous ((HoleySelectList before_ _ _) as holeySelectList) =
 {-| Move the `HoleySelectList` to the hole right after the current item. A hole is a whole
 lot of nothingness, so it's always there.
 
-    HoleySelectList.selecting "hello" [ "world" ]
+    HoleySelectList.currentAndAfter "hello" [ "world" ]
         |> HoleySelectList.nextHole
         |> HoleySelectList.plug "holey"
         |> HoleySelectList.toList
@@ -272,7 +272,7 @@ plug v (HoleySelectList b _ a) =
 of this as collapsing the holes around the element into a single hole, but
 honestly the holes are everywhere.
 
-    HoleySelectList.selecting "hello" [ "holey", "world" ]
+    HoleySelectList.currentAndAfter "hello" [ "holey", "world" ]
         |> HoleySelectList.next
         |> Maybe.map HoleySelectList.remove
         |> Maybe.map HoleySelectList.toList
@@ -292,7 +292,7 @@ remove (HoleySelectList b _ a) =
     --> [ "hello" ]
 
 
-    HoleySelectList.selecting 123 [ 789 ]
+    HoleySelectList.currentAndAfter 123 [ 789 ]
         |> HoleySelectList.insertAfter 456
         |> HoleySelectList.toList
     --> [ 123, 456, 789 ]
@@ -328,7 +328,7 @@ insertBefore v (HoleySelectList b c a) =
     --> []
 
 
-    HoleySelectList.selecting 123 [ 789 ]
+    HoleySelectList.currentAndAfter 123 [ 789 ]
         |> HoleySelectList.nextHole
         |> HoleySelectList.plug 456
         |> HoleySelectList.toList
@@ -352,7 +352,7 @@ focusAndAfter (HoleySelectList _ focus after_) =
 
 {-| Append a bunch of items after the `HoleySelectList`. This appends all the way at the end.
 
-    HoleySelectList.selecting 123 [ 456 ]
+    HoleySelectList.currentAndAfter 123 [ 456 ]
         |> HoleySelectList.append [ 789, 0 ]
         |> HoleySelectList.toList
     --> [ 123, 456, 789, 0 ]
@@ -365,7 +365,7 @@ append xs (HoleySelectList b c a) =
 
 {-| Prepend a bunch of things to the `HoleySelectList`. All the way before anything else.
 
-    HoleySelectList.selecting 1 [ 2, 3, 4 ]
+    HoleySelectList.currentAndAfter 1 [ 2, 3, 4 ]
         |> HoleySelectList.last
         |> HoleySelectList.prepend [ 5, 6, 7 ]
         |> HoleySelectList.toList
@@ -379,7 +379,7 @@ prepend xs (HoleySelectList b c a) =
 
 {-| Go to the first element in the `HoleySelectList`.
 
-    HoleySelectList.selecting 1 [ 2, 3, 4 ]
+    HoleySelectList.currentAndAfter 1 [ 2, 3, 4 ]
         |> HoleySelectList.prepend [ 4, 3, 2 ]
         |> HoleySelectList.first
         |> HoleySelectList.current
@@ -401,7 +401,7 @@ first holeySelectList =
 
 {-| Go to the last element in the `HoleySelectList`.
 
-    HoleySelectList.selecting 1 [ 2, 3, 4 ]
+    HoleySelectList.currentAndAfter 1 [ 2, 3, 4 ]
         |> HoleySelectList.last
         |> HoleySelectList.current
     --> 4
@@ -432,16 +432,11 @@ last ((HoleySelectList before_ focus after_) as holeySelectList) =
 {-| Go to the hole before the first element. Remember that holes surround
 everything! They are everywhere.
 
-    HoleySelectList.selecting 1 [ 3, 4 ]
-        -- now we're after 1
-        |> HoleySelectList.nextHole
-        -- plug that hole
-        |> HoleySelectList.plug 2
-        -- back to _before_ the first element
-        |> HoleySelectList.beforeFirst
-        -- put something in that hole
-        |> HoleySelectList.plug 0
-        -- and check the result
+    HoleySelectList.currentAndAfter 1 [ 3, 4 ]
+        |> HoleySelectList.nextHole    -- we're after 1
+        |> HoleySelectList.plug 2      -- plug that hole
+        |> HoleySelectList.beforeFirst -- back to _before_ the first element
+        |> HoleySelectList.plug 0      -- put something in that hole
         |> HoleySelectList.toList
     --> [ 0, 1, 2, 3, 4 ]
 
@@ -527,7 +522,7 @@ findBackwardHelp predicate ((HoleySelectList before_ focus after_) as holeySelec
 
 {-| Execute a function on every item in the `HoleySelectList`.
 
-    HoleySelectList.selecting "first" [ "second", "third" ]
+    HoleySelectList.currentAndAfter "first" [ "second", "third" ]
         |> HoleySelectList.map String.toUpper
         |> HoleySelectList.toList
     --> [ "FIRST", "SECOND", "THIRD" ]
@@ -541,7 +536,7 @@ map f (HoleySelectList b c a) =
 {-| Execute a function on the current item in the `HoleySelectList`, when pointing at an
 item.
 
-    HoleySelectList.selecting "first" [ "second", "third" ]
+    HoleySelectList.currentAndAfter "first" [ "second", "third" ]
         |> HoleySelectList.mapCurrent String.toUpper
         |> HoleySelectList.toList
     --> [ "FIRST", "second", "third" ]
@@ -554,7 +549,7 @@ mapCurrent f (HoleySelectList b c a) =
 
 {-| Execute a function on all the things that came before the current location.
 
-    HoleySelectList.selecting "first" [ "second" ]
+    HoleySelectList.currentAndAfter "first" [ "second" ]
         |> HoleySelectList.nextHole
         |> HoleySelectList.mapBefore String.toUpper
         |> HoleySelectList.toList
@@ -576,7 +571,7 @@ mapAfter f (HoleySelectList b c a) =
 {-| Execute a triplet of functions on the different parts of a `HoleySelectList` - what
 came before, what comes after, and the current thing if there is one.
 
-    HoleySelectList.selecting "first" [ "second" ]
+    HoleySelectList.currentAndAfter "first" [ "second" ]
         |> HoleySelectList.nextHole
         |> HoleySelectList.plug "one-and-a-halfth"
         |> HoleySelectList.mapParts
