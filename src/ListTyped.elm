@@ -2,7 +2,7 @@ module ListTyped exposing
     ( ListTyped, MaybeEmpty, NotEmpty
     , empty, only, fromCons, fromTuple, fromList
     , cons, append, appendNonEmpty
-    , when
+    , when, whenJust
     , map, fold, foldWith, toList, toTuple
     )
 
@@ -26,7 +26,7 @@ module ListTyped exposing
 
 ### filter
 
-@docs when
+@docs when, whenJust
 
 
 ## transform
@@ -228,6 +228,23 @@ append toAppend =
 when : (a -> Bool) -> ListTyped emptyOrNot_ a -> ListTyped MaybeEmpty a
 when isGood =
     fromList << List.filter isGood << toList
+
+
+{-| Keep all `Just` values and drop all `Nothing`s.
+
+    ListTyped.fromCons (Just 1) [ Nothing, Just 3 ]
+        |> ListTyped.whenJust
+    --> ListTyped.fromCons 1 [ 3 ]
+    --: ListTyped MaybeEmpty number
+
+    ListTyped.fromCons Nothing [ Nothing ]
+        |> ListTyped.whenJust
+    --> ListTyped.empty
+
+-}
+whenJust : ListTyped emptyOrNot_ (Maybe value) -> ListTyped MaybeEmpty value
+whenJust maybes =
+    maybes |> toList |> List.filterMap identity |> fromList
 
 
 
