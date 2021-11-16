@@ -64,9 +64,12 @@ type MaybeTyped justOrNothing a
     | JustTyped a
 
 
-{-| A value for when the `MaybeTyped` is `NothingTyped`.
+{-| The value attached to a `NothingTyped`:
 
-It has a simple type tag to make `MaybeTyped` values distinct:
+  - [`Just`](#Just): that value is `Never`
+  - [`Nothingable`](#Nothingable): that value is `()`
+
+It also has a simple type tag to make `MaybeTyped` values distinct:
 
     type alias NotEmpty =
         MaybeTyped.Just { notEmpty : () }
