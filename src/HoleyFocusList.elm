@@ -101,6 +101,8 @@ current (HoleyFocusList _ focus _) =
 {-| An empty `HoleyFocusList` focussed on a hole with nothing before it
 and after it. It's the loneliest of all `HoleyFocusList`s.
 
+    import Lis
+
     HoleyFocusList.empty
         |> HoleyFocusList.joinParts
     --> Lis.empty
@@ -112,6 +114,8 @@ empty =
 
 
 {-| A `HoleyFocusList` with a single focussed item in it, nothing before and after it.
+
+    import Lis
 
     HoleyFocusList.only "wat"
         |> HoleyFocusList.current
@@ -129,6 +133,8 @@ only current_ =
 
 {-| Construct a `HoleyFocusList` from a current item and items that come after it.
 
+    import Lis
+
     HoleyFocusList.currentAndAfter "foo" []
     --> HoleyFocusList.only "foo"
 
@@ -144,6 +150,8 @@ currentAndAfter current_ after_ =
 
 
 {-| Construct a `HoleyFocusList` from a current item and items that come after it.
+
+    import Lis
 
     HoleyFocusList.beforeAndCurrent [] "foo"
     --> HoleyFocusList.only "foo"
@@ -165,12 +173,13 @@ beforeAndCurrent before_ current_ =
         |> HoleyFocusList.next
         |> Maybe.andThen HoleyFocusList.next
         |> Maybe.map HoleyFocusList.before
-    --> [ 0, 1 ]
+    --> Just [ 0, 1 ]
 
 -}
 before : HoleyFocusList focus_ a -> List a
-before (HoleyFocusList before_ _ _) =
-    List.reverse before_
+before =
+    \(HoleyFocusList beforeCurrentUntilHead _ _) ->
+        List.reverse beforeCurrentUntilHead
 
 
 {-| Conversely, list the things that come after the current location.
@@ -235,7 +244,7 @@ next (HoleyFocusList before_ focus after_) =
 
 {-| Move the `HoleyFocusList` to the previous item, if there is one.
 
-    HoleyFocusList.previous HoleyFocusList.empty
+    HoleyFocusList.empty |> HoleyFocusList.previous
     --> Nothing
 
     HoleyFocusList.currentAndAfter "hello" [ "holey", "world" ]
@@ -266,6 +275,8 @@ previous holeyFocusList =
 {-| Move the `HoleyFocusList` to the hole right after the current item. A hole is a whole
 lot of nothingness, so it's always there.
 
+    import Lis
+
     HoleyFocusList.currentAndAfter "hello" [ "world" ]
         |> HoleyFocusList.nextHole
         |> HoleyFocusList.plug "holey"
@@ -285,6 +296,8 @@ nextHole holeyFocusList =
 {-| Move the `HoleyFocusList` to the hole right before the current item. Feel free to plug
 that hole right up!
 
+    import Lis
+
     HoleyFocusList.only "world"
         |> HoleyFocusList.previousHole
         |> HoleyFocusList.plug "hello"
@@ -302,6 +315,8 @@ previousHole holeyFocusList =
 
 
 {-| Fill in or replace the focussed thing in the `HoleyFocusList`.
+
+    import Lis
 
     HoleyFocusList.plug "plug" HoleyFocusList.empty
     --> HoleyFocusList.only "plug"
@@ -330,6 +345,8 @@ remove =
 
 {-| Insert an item after the focussed location.
 
+    import Lis
+
     HoleyFocusList.currentAndAfter 123 [ 789 ]
         |> HoleyFocusList.insertAfter 456
         |> HoleyFocusList.joinParts
@@ -343,6 +360,8 @@ insertAfter toInsertAfterFocus =
 
 
 {-| Insert an item before the focussed location.
+
+    import Lis
 
     HoleyFocusList.only 123
         |> HoleyFocusList.insertBefore 456
@@ -367,6 +386,8 @@ focusAndAfter (HoleyFocusList _ focus after_) =
 
 {-| Put items to the end of the `HoleyFocusList`. After anything else.
 
+    import Lis
+
     HoleyFocusList.currentAndAfter 123 [ 456 ]
         |> HoleyFocusList.append [ 789, 0 ]
         |> HoleyFocusList.joinParts
@@ -380,6 +401,8 @@ append itemsToAppend =
 
 
 {-| Put items to the beginning of the `HoleyFocusList`. Before anything else.
+
+    import Lis
 
     HoleyFocusList.currentAndAfter 1 [ 2, 3, 4 ]
         |> HoleyFocusList.last
@@ -420,6 +443,11 @@ first holeyFocusList =
         |> HoleyFocusList.current
     --> 4
 
+    HoleyFocusList.currentAndAfter 1 [ 2, 3, 4 ]
+        |> HoleyFocusList.last
+        |> HoleyFocusList.before
+    --> [ 1, 2, 3 ]
+
 -}
 last : HoleyFocusList focus a -> HoleyFocusList focus a
 last =
@@ -442,14 +470,15 @@ last =
                             Nothin _ ->
                                 before_
                 in
-                HoleyFocusList
+                beforeAndCurrent
                     (beforeLastUntilCurrent ++ focusToFirst)
-                    (just last_)
-                    []
+                    last_
 
 
 {-| Focus the hole before the first item. Remember that holes surround
 everything! They are everywhere.
+
+    import Lis
 
     HoleyFocusList.currentAndAfter 1 [ 3, 4 ]
         |> HoleyFocusList.nextHole    -- we're after 1
@@ -466,6 +495,8 @@ beforeFirst holeyFocusList =
 
 
 {-| Focus the hole after the end of the `HoleyFocusList`. Into the nothingness.
+
+    import Lis
 
     HoleyFocusList.currentAndAfter 1 [ 2, 3 ]
         |> HoleyFocusList.afterLast -- to _after_ the last item
@@ -557,6 +588,8 @@ findBackwardHelp shouldStop holeyFocusList =
 
 {-| Execute a function on every item in the `HoleyFocusList`.
 
+    import Lis
+
     HoleyFocusList.currentAndAfter "first" [ "second", "third" ]
         |> HoleyFocusList.map String.toUpper
         |> HoleyFocusList.joinParts
@@ -571,6 +604,8 @@ map f (HoleyFocusList b c a) =
 {-| Execute a function on the current item in the `HoleyFocusList`, when pointing at an
 item.
 
+    import Lis
+
     HoleyFocusList.currentAndAfter "first" [ "second", "third" ]
         |> HoleyFocusList.mapCurrent String.toUpper
         |> HoleyFocusList.joinParts
@@ -583,6 +618,8 @@ mapCurrent f (HoleyFocusList b c a) =
 
 
 {-| Execute a function on all the things that came before the current location.
+
+    import Lis
 
     HoleyFocusList.beforeAndCurrent [ "first" ] "second"
         |> HoleyFocusList.mapBefore String.toUpper
@@ -604,6 +641,8 @@ mapAfter f (HoleyFocusList b c a) =
 
 {-| Execute a triplet of functions on the different parts of a `HoleyFocusList` - what
 came before, what comes after, and the current thing if there is one.
+
+    import Lis
 
     HoleyFocusList.currentAndAfter "first" [ "second" ]
         |> HoleyFocusList.nextHole
@@ -656,6 +695,8 @@ toList =
 
 
 {-| Flattens the `HoleyFocusList` into a [`Lis`](Lis):
+
+    import Lis
 
     HoleyFocusList.empty
         |> HoleyFocusList.joinParts
