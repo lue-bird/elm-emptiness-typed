@@ -27,10 +27,10 @@ import HoleyFocusList
 
 HoleyFocusList.empty           -- HoleyFocusList ItemOrHole a_
     |> HoleyFocusList.plug 5   -- HoleyFocusList item_ Int
-    |> HoleyFocusList.append
-        [ 1, 2, 3 ]             -- HoleyFocusList item_ Int
+    |> HoleyFocusList.append [ 1, 2, 3 ]
+                               -- HoleyFocusList item_ Int
     |> HoleyFocusList.nextHole -- HoleyFocusList ItemOrHole Int
-    |> HoleyFocusList.toList   -- List Int
+    |> HoleyFocusList.toList
 --> [ 5, 1, 2, 3 ]
 ```
 
