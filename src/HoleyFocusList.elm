@@ -643,7 +643,7 @@ toList =
 the type information gets carried over, so
 
     Item -> NotEmpty
-    ItemOrHole -> EmptyOrNot
+    HoleOrItem -> EmptyOrNot
 
 -}
 joinParts :

@@ -25,11 +25,11 @@ A list zipper that can also focus before and after every item.
 ```elm
 import HoleyFocusList
 
-HoleyFocusList.empty           -- HoleyFocusList ItemOrHole a_
+HoleyFocusList.empty           -- HoleyFocusList HoleOrItem a_
     |> HoleyFocusList.plug 5   -- HoleyFocusList item_ Int
     |> HoleyFocusList.append [ 1, 2, 3 ]
                                -- HoleyFocusList item_ Int
-    |> HoleyFocusList.nextHole -- HoleyFocusList ItemOrHole Int
+    |> HoleyFocusList.nextHole -- HoleyFocusList HoleOrItem Int
     |> HoleyFocusList.toList
 --> [ 5, 1, 2, 3 ]
 ```
