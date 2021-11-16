@@ -23,10 +23,10 @@ but we can build cool type-safe data structures with it:
     type alias NotEmpty =
         MaybeTyped.Just { notEmpty : () }
 
-    type alias EmptyOrNot =
+    type alias Emptiable =
         MaybeTyped.JustOrNothing { emptyOrNot : () }
 
-    empty : ListTyped EmptyOrNot a_
+    empty : ListTyped Emptiable a_
 
     cons : ListTyped emptyOrNot_ a -> a -> ListTyped notEmpty_ a
 

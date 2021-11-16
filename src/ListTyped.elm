@@ -1,5 +1,5 @@
 module ListTyped exposing
-    ( ListTyped, MaybeEmpty, NotEmpty
+    ( ListTyped, Emptiable, NotEmpty
     , ListWithHeadType
     , empty, only, fromCons, fromTuple, fromList
     , head, tail, length
@@ -13,7 +13,7 @@ module ListTyped exposing
 
 ## types
 
-@docs ListTyped, MaybeEmpty, NotEmpty
+@docs ListTyped, Emptiable, NotEmpty
 @docs ListWithHeadType
 
 
@@ -127,9 +127,9 @@ type alias NotEmpty =
     MaybeTyped.Just { notEmpty : () }
 
 
-{-| `MaybeEmpty` marks lists that could be empty:
+{-| `Emptiable` marks lists that could be empty:
 
-    fromList : List a -> ListTyped MaybeEmpty a
+    fromList : List a -> ListTyped Emptiable a
     fromList list =
         case list of
             [] ->
@@ -139,7 +139,7 @@ type alias NotEmpty =
                 ListTyped.fromCons head tail
 
 -}
-type alias MaybeEmpty =
+type alias Emptiable =
     MaybeTyped.JustOrNothing { maybeEmpty : () }
 
 
@@ -148,7 +148,7 @@ type alias MaybeEmpty =
 Equivalent to `MaybeTyped.nothing`.
 
 -}
-empty : ListWithHeadType head_ MaybeEmpty tailElement_
+empty : ListWithHeadType head_ Emptiable tailElement_
 empty =
     nothing
 
@@ -181,21 +181,21 @@ fromCons head_ tail_ =
     fromTuple ( head_, tail_ )
 
 
-{-| Convert a `List a` to a `ListTyped MaybeEmpty a`.
+{-| Convert a `List a` to a `ListTyped Emptiable a`.
 
     [] |> ListTyped.fromList
     --> ListTyped.empty
 
     [ "hello", "emptiness" ] |> ListTyped.fromList
     --> ListTyped.fromCons "hello" [ "emptiness" ]
-    --: ListTyped MaybeEmpty String
+    --: ListTyped Emptiable String
 
 When constructing from known elements, always prefer
 
     ListTyped.fromCons "hello" [ "emptiness" ]
 
 -}
-fromList : List a -> ListTyped MaybeEmpty a
+fromList : List a -> ListTyped Emptiable a
 fromList list_ =
     case list_ of
         [] ->
@@ -283,7 +283,7 @@ cons toPutBeforeAllOtherElements =
     --> ListTyped.fromCons 1 [ 2, 3, 4, 5 ]
 
 Prefer [`append`](#append) if the piped `ListTyped` is already known as `NotEmpty`
-or if both are `MaybeEmpty`.
+or if both are `Emptiable`.
 
 -}
 appendNonEmpty :
@@ -308,11 +308,11 @@ appendNonEmpty nonEmptyToAppend =
     --> ListTyped.fromCons 1 [ 2, 3, 4 ]
 
 Prefer this over [`appendNonEmpty`](#appendNonEmpty) if the piped `ListTyped` is already known as `NotEmpty`
-or if both are `MaybeEmpty`.
+or if both are `Emptiable`.
 
 -}
 append :
-    ListTyped MaybeEmpty a
+    ListTyped Emptiable a
     -> ListTyped emptyOrNot a
     -> ListTyped emptyOrNot a
 append toAppend =
@@ -333,10 +333,10 @@ append toAppend =
     ListTyped.fromCons 1 [ 2, 5, -3, 10 ]
         |> ListTyped.when (\x -> x < 5)
     --> ListTyped.fromCons 1 [ 2, -3 ]
-    --: ListTyped MaybeEmpty number_
+    --: ListTyped Emptiable number_
 
 -}
-when : (a -> Bool) -> ListTyped emptyOrNot_ a -> ListTyped MaybeEmpty a
+when : (a -> Bool) -> ListTyped emptyOrNot_ a -> ListTyped Emptiable a
 when isGood =
     fromList << List.filter isGood << toList
 
@@ -346,14 +346,14 @@ when isGood =
     ListTyped.fromCons (Just 1) [ Nothing, Just 3 ]
         |> ListTyped.whenJust
     --> ListTyped.fromCons 1 [ 3 ]
-    --: ListTyped MaybeEmpty number
+    --: ListTyped Emptiable number
 
     ListTyped.fromCons Nothing [ Nothing ]
         |> ListTyped.whenJust
     --> ListTyped.empty
 
 -}
-whenJust : ListTyped emptyOrNot_ (Maybe value) -> ListTyped MaybeEmpty value
+whenJust : ListTyped emptyOrNot_ (Maybe value) -> ListTyped Emptiable value
 whenJust maybes =
     maybes |> toList |> List.filterMap identity |> fromList
 

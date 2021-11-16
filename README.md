@@ -4,12 +4,12 @@ Deal with emptiness in a way that doesn't make life hard.
 
 ## `ListTyped`
 
-Handle `MaybeEmpty` and `NotEmpty` lists at once.
+Handle `Emptiable` and `NotEmpty` lists at once.
 
 ```elm
 import ListTyped
 
-ListTyped.empty         -- ListTyped MaybeEmpty a_
+ListTyped.empty         -- ListTyped Emptiable a_
     |> ListTyped.appendNonEmpty
         (ListTyped.fromCons 1 [ 2, 3 ])
                         -- ListTyped notEmpty_ Int
