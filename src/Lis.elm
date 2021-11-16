@@ -69,10 +69,10 @@ This is equivalent to a [`Mayb`](Mayb) of a non-empty list tuple:
     toList : Lis emptyOrNot_ a -> List a
     toList list =
         case list of
-            JustTyped ( head_, tail_ ) ->
+            Jus ( head_, tail_ ) ->
                 head_ :: tail_
 
-            NothingTyped _ ->
+            Nothin _ ->
                 []
 
 -}
@@ -107,10 +107,10 @@ This is equivalent to a [`Mayb`](Mayb) of a `( head, tail )` tuple:
     tail : ListWithHeadType head_ NotEmpty tailElement -> List tailElement
     tail listNotEmpty =
         case listNotEmpty of
-            JustTyped ( _, tailList ) ->
+            Jus ( _, tailList ) ->
                 tailList
 
-            NothingTyped _ ->
+            Nothin _ ->
                 []
 
 -}
@@ -248,10 +248,10 @@ length : ListWithHeadType head_ emptyOrNot_ tailElement_ -> Int
 length =
     \list ->
         case list of
-            JustTyped ( _, tail_ ) ->
+            Jus ( _, tail_ ) ->
                 1 + List.length tail_
 
-            NothingTyped _ ->
+            Nothin _ ->
                 0
 
 
@@ -293,10 +293,10 @@ appendNonEmpty :
 appendNonEmpty nonEmptyToAppend =
     \list ->
         case list of
-            NothingTyped _ ->
+            Nothin _ ->
                 nonEmptyToAppend
 
-            JustTyped ( head_, tail_ ) ->
+            Jus ( head_, tail_ ) ->
                 fromCons head_ (tail_ ++ toList nonEmptyToAppend)
 
 
@@ -318,13 +318,13 @@ append :
 append toAppend =
     \list ->
         case ( list, toAppend ) of
-            ( NothingTyped is, NothingTyped _ ) ->
-                NothingTyped is
+            ( Nothin is, Nothin _ ) ->
+                Nothin is
 
-            ( NothingTyped _, JustTyped nonEmptyToAppend ) ->
+            ( Nothin _, Jus nonEmptyToAppend ) ->
                 fromTuple nonEmptyToAppend
 
-            ( JustTyped ( head_, tail_ ), _ ) ->
+            ( Jus ( head_, tail_ ), _ ) ->
                 fromCons head_ (tail_ ++ toList toAppend)
 
 
@@ -464,10 +464,10 @@ toList : Lis emptyOrNot_ a -> List a
 toList =
     \list ->
         case list of
-            JustTyped ( head_, tail_ ) ->
+            Jus ( head_, tail_ ) ->
                 head_ :: tail_
 
-            NothingTyped _ ->
+            Nothin _ ->
                 []
 
 

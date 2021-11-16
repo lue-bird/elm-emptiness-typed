@@ -60,11 +60,11 @@ This is exactly how [`Lis`] is implemented.
 {-| `Maybe` with the ability to know at the type level whether it exists.
 -}
 type Mayb justOrNothing a
-    = NothingTyped justOrNothing
-    | JustTyped a
+    = Nothin justOrNothing
+    | Jus a
 
 
-{-| The value attached to a `NothingTyped`:
+{-| The value attached to a `Nothin`:
 
   - [`Just`](#Just): that value is `Never`
   - [`Nothingable`](#Nothingable): that value is `()`
@@ -110,7 +110,7 @@ type alias Just tag =
 -}
 nothing : Mayb (Nothingable tag_) a_
 nothing =
-    NothingTyped (CanBeNothing ())
+    Nothin (CanBeNothing ())
 
 
 {-| A `Mayb` that certainly exists.
@@ -121,7 +121,7 @@ nothing =
 -}
 just : value -> Mayb just_ value
 just value_ =
-    JustTyped value_
+    Jus value_
 
 
 {-| Convert a `Maybe` to a `Mayb`.
@@ -146,10 +146,10 @@ toMaybe : Mayb justOrNothing_ a -> Maybe a
 toMaybe =
     \maybe ->
         case maybe of
-            JustTyped val ->
+            Jus val ->
                 Just val
 
-            NothingTyped _ ->
+            Nothin _ ->
                 Nothing
 
 
@@ -167,10 +167,10 @@ toMaybe =
 value : Mayb (Just tag_) value -> value
 value definitelyJust =
     case definitelyJust of
-        JustTyped val ->
+        Jus val ->
             val
 
-        NothingTyped (CanBeNothing canBeNothing) ->
+        Nothin (CanBeNothing canBeNothing) ->
             never canBeNothing
 
 
@@ -192,10 +192,10 @@ withFallback :
 withFallback lazyFallback =
     \maybe ->
         case maybe of
-            JustTyped val ->
+            Jus val ->
                 val
 
-            NothingTyped (CanBeNothing canBeNothing) ->
+            Nothin (CanBeNothing canBeNothing) ->
                 lazyFallback canBeNothing
 
 
@@ -211,11 +211,11 @@ map : (a -> b) -> Mayb justOrNothing a -> Mayb justOrNothing b
 map change =
     \maybe ->
         case maybe of
-            JustTyped val ->
-                change val |> JustTyped
+            Jus val ->
+                change val |> Jus
 
-            NothingTyped canBeNothing ->
-                NothingTyped canBeNothing
+            Nothin canBeNothing ->
+                Nothin canBeNothing
 
 
 {-| If all the arguments exist, combine them using a given function.
@@ -234,14 +234,14 @@ map2 :
     -> Mayb justOrNothing combined
 map2 combine aMaybe bMaybe =
     case ( aMaybe, bMaybe ) of
-        ( JustTyped a, JustTyped b ) ->
-            combine a b |> JustTyped
+        ( Jus a, Jus b ) ->
+            combine a b |> Jus
 
-        ( NothingTyped canBeNothing, _ ) ->
-            NothingTyped canBeNothing
+        ( Nothin canBeNothing, _ ) ->
+            Nothin canBeNothing
 
-        ( _, NothingTyped canBeNothing ) ->
-            NothingTyped canBeNothing
+        ( _, Nothin canBeNothing ) ->
+            Nothin canBeNothing
 
 
 {-| Chain together many computations that may fail.
@@ -261,11 +261,11 @@ andThen :
 andThen tryIfSuccess =
     \maybe ->
         case maybe of
-            JustTyped val ->
+            Jus val ->
                 tryIfSuccess val
 
-            NothingTyped canBeNothing ->
-                NothingTyped canBeNothing
+            Nothin canBeNothing ->
+                Nothin canBeNothing
 
 
 
@@ -283,7 +283,7 @@ andThen tryIfSuccess =
             bList
 
         else
-            -- ↓ is `NotEmpty` but we need `emptyOrNot`
+            -- ↓ `NotEmpty` but we need `emptyOrNot`
             aList
 
 to make both branches return `emptyOrNot`, we could use

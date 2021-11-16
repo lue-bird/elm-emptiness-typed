@@ -225,10 +225,10 @@ next (HoleyFocusList before_ focus after_) =
             let
                 newBefore =
                     case focus of
-                        NothingTyped _ ->
+                        Nothin _ ->
                             before_
 
-                        JustTyped v ->
+                        Jus v ->
                             v :: before_
             in
             HoleyFocusList newBefore (just n) rest
@@ -353,10 +353,10 @@ insertBefore v (HoleyFocusList b c a) =
 focusAndAfter : HoleyFocusList focus_ a -> List a
 focusAndAfter (HoleyFocusList _ focus after_) =
     case focus of
-        NothingTyped _ ->
+        Nothin _ ->
             after_
 
-        JustTyped v ->
+        Jus v ->
             v :: after_
 
 
@@ -427,10 +427,10 @@ last ((HoleyFocusList before_ focus after_) as holeyFocusList) =
             let
                 focusToFirst =
                     case focus of
-                        JustTyped cur ->
+                        Jus cur ->
                             cur :: before_
 
-                        NothingTyped _ ->
+                        Nothin _ ->
                             before_
             in
             HoleyFocusList
@@ -459,24 +459,30 @@ beforeFirst holeyFocusList =
 {-| Go to the hole after the end of the `HoleyFocusList`. Into the nothingness.
 -}
 afterLast : HoleyFocusList focus_ a -> HoleyFocusList HoleOrItem a
-afterLast (HoleyFocusList before_ focus after_) =
-    let
-        focusToFirst =
-            case focus of
-                NothingTyped _ ->
-                    before_
+afterLast holeyFocusList =
+    HoleyFocusList (toReverseList holeyFocusList) nothing []
 
-                JustTyped v ->
-                    v :: before_
-    in
-    HoleyFocusList (List.reverse after_ ++ focusToFirst) nothing []
+
+toReverseList : HoleyFocusList focus_ a -> List a
+toReverseList =
+    \(HoleyFocusList before_ focus after_) ->
+        let
+            focusToFirst =
+                case focus of
+                    Nothin _ ->
+                        before_
+
+                    Jus current_ ->
+                        current_ :: before_
+        in
+        List.reverse after_ ++ focusToFirst
 
 
 {-| Find the first element in the `HoleyFocusList` the matches a predicate, returning a
 `HoleyFocusList` pointing at that thing if it was found. When provided with a `HoleyFocusList`
 pointing at a thing, that thing is also checked.
 
-This start from the current location, and searches towards the end.
+This start from the current focussed location and searches towards the end.
 
 -}
 findForward : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
@@ -492,14 +498,14 @@ findForwardHelp predicate ((HoleyFocusList before_ focus after_) as holeyFocusLi
                 |> Maybe.andThen (findForwardHelp predicate)
     in
     case focus of
-        JustTyped cur ->
+        Jus cur ->
             if predicate cur then
                 Just (HoleyFocusList before_ (just cur) after_)
 
             else
                 goForward ()
 
-        NothingTyped _ ->
+        Nothin _ ->
             goForward ()
 
 
@@ -519,14 +525,14 @@ findBackwardHelp predicate ((HoleyFocusList before_ focus after_) as holeyFocusL
                 |> Maybe.andThen (findBackwardHelp predicate)
     in
     case focus of
-        JustTyped cur ->
+        Jus cur ->
             if predicate cur then
                 Just (HoleyFocusList before_ (just cur) after_)
 
             else
                 goBack ()
 
-        NothingTyped _ ->
+        Nothin _ ->
             goBack ()
 
 
@@ -660,14 +666,14 @@ joinParts =
                 Lis.fromCons head_
                     (afterFirstUntilFocus ++ focusAndAfter holeyFocusList)
 
-            ( [], JustTyped cur, _ ) ->
+            ( [], Jus cur, _ ) ->
                 Lis.fromCons cur after_
 
-            ( [], NothingTyped _, head_ :: tail_ ) ->
+            ( [], Nothin _, head_ :: tail_ ) ->
                 Lis.fromCons head_ tail_
 
-            ( [], NothingTyped (CanBeNothing canBeNothing), [] ) ->
-                NothingTyped (CanBeNothing canBeNothing)
+            ( [], Nothin (CanBeNothing canBeNothing), [] ) ->
+                Nothin (CanBeNothing canBeNothing)
 
 
 
