@@ -214,7 +214,7 @@ fromList list_ =
     Lis.only 3
         |> Lis.cons 2
         |> Lis.head
-    --> 3
+    --> 2
 
 -}
 head : ListWithHeadType head NotEmpty tailElement_ -> head
@@ -224,8 +224,8 @@ head notEmptyList =
 
 {-| Everything after the first value in the `Lis`.
 
-    Lis.only 3
-        |> Lis.cons 2
+    Lis.only 2
+        |> Lis.cons 3
         |> Lis.append (Lis.fromCons 1 [ 0 ])
         |> Lis.tail
     --> [ 2, 1, 0 ]
