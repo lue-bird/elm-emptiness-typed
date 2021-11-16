@@ -72,7 +72,7 @@ It has a simple type tag to make `MaybeTyped` values distinct:
         MaybeTyped.Just { notEmpty : () }
 
     type alias ItemFocussed =
-        MaybeTyped.Just { itemFocussed () }
+        MaybeTyped.Just { itemFocussed : () }
 
 -}
 type CanBeNothing valueIfNothing tag
