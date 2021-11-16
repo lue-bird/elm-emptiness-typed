@@ -12,7 +12,7 @@ import Lis
 Lis.empty         -- Lis Emptiable a_
     |> Lis.appendNonEmpty
         (Lis.fromCons 1 [ 2, 3 ])
-                        -- Lis notEmpty_ Int
+                  -- Lis notEmpty_ Int
     |> Lis.cons 5 -- Lis notEmpty_ Int
     |> Lis.toTuple
 --> ( 5, [ 1, 2, 3 ] )
