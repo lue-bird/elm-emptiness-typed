@@ -4,7 +4,7 @@ Deal with emptiness in a way that doesn't make life hard.
 
 ## `ListTyped`
 
-Handle `MaybeEmpty` and `NotEmpty` lists in one operation.
+Handle `MaybeEmpty` and `NotEmpty` lists at once.
 
 ```elm
 import ListTyped
