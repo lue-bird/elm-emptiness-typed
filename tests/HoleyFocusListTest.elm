@@ -1,9 +1,21 @@
-module HoleyFocusListTest exposing (emptyTest, nextTest, previousTest, singletonTest, zipperTest)
+module HoleyFocusListTest exposing (tests)
 
 import Expect
 import HoleyFocusList exposing (HoleyFocusList, Item)
 import Lis
 import Test exposing (Test, describe, test)
+
+
+tests : Test
+tests =
+    describe "HoleyFocusList"
+        [ describe "create" [ emptyTest, onlyTest, currentAndAfterTest ]
+        , describe "navigate" [ nextTest, previousTest ]
+        ]
+
+
+
+-- create
 
 
 emptyTest : Test
@@ -16,8 +28,8 @@ emptyTest =
         )
 
 
-singletonTest : Test
-singletonTest =
+onlyTest : Test
+onlyTest =
     test "only creates a HoleyFocusList with a single element"
         (\_ ->
             HoleyFocusList.only 3
@@ -26,8 +38,8 @@ singletonTest =
         )
 
 
-zipperTest : Test
-zipperTest =
+currentAndAfterTest : Test
+currentAndAfterTest =
     let
         holeyFocusList : HoleyFocusList Item Int
         holeyFocusList =
@@ -62,7 +74,7 @@ zipperTest =
 
 
 
--- Navigation
+-- navigate
 
 
 nextTest : Test
