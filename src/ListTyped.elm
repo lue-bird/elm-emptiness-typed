@@ -64,7 +64,7 @@ This is equivalent to a [`MaybeTyped`](MaybeTyped) of a non-empty list tuple:
     [ ... ]
         |> ListTyped.fromList
         |> MaybeTyped.map ListTyped.head
-    --: MaybeTyped MaybeNothing head_
+    --: MaybeTyped JustOrNothing head_
 
     toList : ListTyped emptyOrNot_ a -> List a
     toList list =
@@ -102,7 +102,7 @@ This is equivalent to a [`MaybeTyped`](MaybeTyped) of a `( head, tail )` tuple:
 
     MaybeTyped.map ListTyped.head
     --: ListWithHeadType head emptyOrNot_ tailElement_
-    --: -> MaybeTyped MaybeNothing head
+    --: -> MaybeTyped JustOrNothing head
 
     tail : ListWithHeadType head_ NotEmpty tailElement -> List tailElement
     tail listNotEmpty =
@@ -140,7 +140,7 @@ type alias NotEmpty =
 
 -}
 type alias MaybeEmpty =
-    MaybeTyped.MaybeNothing { maybeEmpty : () }
+    MaybeTyped.JustOrNothing { maybeEmpty : () }
 
 
 {-| A `ListTyped` without elements.

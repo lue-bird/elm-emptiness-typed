@@ -1,5 +1,5 @@
 module MaybeTyped exposing
-    ( MaybeTyped(..), Just, MaybeNothing, CanBeNothing(..)
+    ( MaybeTyped(..), Just, JustOrNothing, CanBeNothing(..)
     , just, nothing, fromMaybe
     , map, map2, toMaybe, value, andThen, withFallback
     , branchableType
@@ -24,7 +24,7 @@ but we can build cool type-safe data structures with it:
         MaybeTyped.Just { notEmpty : () }
 
     type alias EmptyOrNot =
-        MaybeTyped.MaybeNothing { emptyOrNot : () }
+        MaybeTyped.JustOrNothing { emptyOrNot : () }
 
     empty : ListTyped EmptyOrNot a_
 
@@ -37,7 +37,7 @@ This is exactly how [`ListTyped`] is implemented.
 
 ## types
 
-@docs MaybeTyped, Just, MaybeNothing, CanBeNothing
+@docs MaybeTyped, Just, JustOrNothing, CanBeNothing
 
 
 ## create
@@ -79,12 +79,12 @@ type CanBeNothing valueIfNothing tag
     = CanBeNothing valueIfNothing
 
 
-{-| `Maybe (MaybeNothing tag) a`: The value could exist, could also not exist.
+{-| `Maybe (JustOrNothing tag) a`: The value could exist, could also not exist.
 
 See [`CanBeNothing`](#CanBeNothing).
 
 -}
-type alias MaybeNothing tag =
+type alias JustOrNothing tag =
     CanBeNothing () tag
 
 
@@ -92,7 +92,7 @@ type alias MaybeNothing tag =
 
     import MaybeTyped exposing (Just, MaybeTyped)
 
-    head : MaybeTyped (Just tag) ( a, List a ) -> a
+    head : MaybeTyped (Just tag_) ( a, List a ) -> a
     head maybe =
         maybe |> MaybeTyped.value |> Tuple.first
 
@@ -105,7 +105,7 @@ type alias Just tag =
 
 {-| Nothing here.
 -}
-nothing : MaybeTyped (MaybeNothing tag_) a_
+nothing : MaybeTyped (JustOrNothing tag_) a_
 nothing =
     NothingTyped (CanBeNothing ())
 
@@ -119,7 +119,7 @@ just value_ =
 
 {-| Convert a `Maybe` to a `MaybeTyped`.
 -}
-fromMaybe : Maybe a -> MaybeTyped (MaybeNothing tag_) a
+fromMaybe : Maybe a -> MaybeTyped (JustOrNothing tag_) a
 fromMaybe coreMaybe =
     case coreMaybe of
         Just val ->
@@ -243,8 +243,8 @@ map2 combine aMaybe bMaybe =
         |> MaybeTyped.andThen parse
         |> MaybeTyped.andThen extraValidation
 
-    parse : String -> MaybeTyped MaybeNothing Parsed
-    extraValidation : Parsed -> MaybeTyped MaybeNothing Validated
+    parse : String -> MaybeTyped JustOrNothing Parsed
+    extraValidation : Parsed -> MaybeTyped JustOrNothing Validated
 
 -}
 andThen :
