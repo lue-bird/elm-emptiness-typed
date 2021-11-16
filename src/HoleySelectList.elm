@@ -538,7 +538,7 @@ findBackwardHelp predicate ((HoleySelectList before_ focus after_) as holeySelec
     --> [ "FIRST", "SECOND", "THIRD" ]
 
 -}
-map : (a -> b) -> HoleySelectList t a -> HoleySelectList t b
+map : (a -> b) -> HoleySelectList focus a -> HoleySelectList focus b
 map f (HoleySelectList b c a) =
     HoleySelectList (List.map f b) (MaybeTyped.map f c) (List.map f a)
 
@@ -552,7 +552,7 @@ item.
     --> [ "FIRST", "second", "third" ]
 
 -}
-mapCurrent : (a -> a) -> HoleySelectList t a -> HoleySelectList t a
+mapCurrent : (a -> a) -> HoleySelectList focus a -> HoleySelectList focus a
 mapCurrent f (HoleySelectList b c a) =
     HoleySelectList b (MaybeTyped.map f c) a
 
@@ -566,14 +566,14 @@ mapCurrent f (HoleySelectList b c a) =
     --> [ "FIRST", "second" ]
 
 -}
-mapBefore : (a -> a) -> HoleySelectList t a -> HoleySelectList t a
+mapBefore : (a -> a) -> HoleySelectList focus a -> HoleySelectList focus a
 mapBefore f (HoleySelectList b c a) =
     HoleySelectList (List.map f b) c a
 
 
 {-| Execute a function on all the things that come after the current location.
 -}
-mapAfter : (a -> a) -> HoleySelectList t a -> HoleySelectList t a
+mapAfter : (a -> a) -> HoleySelectList focus a -> HoleySelectList focus a
 mapAfter f (HoleySelectList b c a) =
     HoleySelectList b c (List.map f a)
 
@@ -601,8 +601,8 @@ mapParts :
     , current : a -> b
     , after : a -> b
     }
-    -> HoleySelectList t a
-    -> HoleySelectList t b
+    -> HoleySelectList focus a
+    -> HoleySelectList focus b
 mapParts conf (HoleySelectList before_ focus after_) =
     HoleySelectList
         (List.map conf.before before_)
