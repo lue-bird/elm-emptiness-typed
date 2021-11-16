@@ -11,4 +11,4 @@
     - renamed `zipper` to `currentAndAfter`
     - renamed `singleton` to `only`
 
-- added module `ListTyped`
+- added module `Lis`

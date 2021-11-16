@@ -2,19 +2,19 @@
 
 Deal with emptiness in a way that doesn't make life hard.
 
-## `ListTyped`
+## `Lis`
 
 Handle `Emptiable` and `NotEmpty` lists at once.
 
 ```elm
-import ListTyped
+import Lis
 
-ListTyped.empty         -- ListTyped Emptiable a_
-    |> ListTyped.appendNonEmpty
-        (ListTyped.fromCons 1 [ 2, 3 ])
-                        -- ListTyped notEmpty_ Int
-    |> ListTyped.cons 5 -- ListTyped notEmpty_ Int
-    |> ListTyped.toTuple
+Lis.empty         -- Lis Emptiable a_
+    |> Lis.appendNonEmpty
+        (Lis.fromCons 1 [ 2, 3 ])
+                        -- Lis notEmpty_ Int
+    |> Lis.cons 5 -- Lis notEmpty_ Int
+    |> Lis.toTuple
 --> ( 5, [ 1, 2, 3 ] )
 ```
 

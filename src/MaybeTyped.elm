@@ -17,7 +17,7 @@ module MaybeTyped exposing
 I don't think `MaybeTyped` will proof any useful just by itself,
 but we can build cool type-safe data structures with it:
 
-    type alias ListTyped isEmpty a =
+    type alias Lis isEmpty a =
         MaybeTyped isEmpty ( a, List a )
 
     type alias NotEmpty =
@@ -26,13 +26,13 @@ but we can build cool type-safe data structures with it:
     type alias Emptiable =
         MaybeTyped.Nothingable { emptyOrNot : () }
 
-    empty : ListTyped Emptiable a_
+    empty : Lis Emptiable a_
 
-    cons : ListTyped emptyOrNot_ a -> a -> ListTyped notEmpty_ a
+    cons : Lis emptyOrNot_ a -> a -> Lis notEmpty_ a
 
-    head : ListTyped NotEmpty a -> a
+    head : Lis NotEmpty a -> a
 
-This is exactly how [`ListTyped`] is implemented.
+This is exactly how [`Lis`] is implemented.
 
 
 ## types
@@ -99,7 +99,7 @@ type alias Nothingable tag =
     head maybe =
         maybe |> MaybeTyped.value |> Tuple.first
 
-See [`CanBeNothing`](#CanBeNothing) and [`ListTyped`](ListTyped).
+See [`CanBeNothing`](#CanBeNothing) and [`Lis`](Lis).
 
 -}
 type alias Just tag =
@@ -271,11 +271,11 @@ andThen tryIfSuccess =
 {-| When using `(Just ...)` for an argument:
 
     theShorter :
-        ListTyped NotEmpty a
-        -> ListTyped emptyOrNot a
-        -> ListTyped emptyOrNot a
+        Lis NotEmpty a
+        -> Lis emptyOrNot a
+        -> Lis emptyOrNot a
     theShorter aList bList =
-        if ListTyped.length bList > ListTyped.length aList then
+        if Lis.length bList > Lis.length aList then
             bList
 
         else
