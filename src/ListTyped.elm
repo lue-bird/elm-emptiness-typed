@@ -5,7 +5,7 @@ module ListTyped exposing
     , head, length
     , cons, append, appendNonEmpty
     , when, whenJust
-    , map, fold, foldWith, toList, toTuple
+    , map, mapHead, mapTail, fold, foldWith, toList, toTuple
     )
 
 {-|
@@ -39,7 +39,7 @@ module ListTyped exposing
 
 ## transform
 
-@docs map, fold, foldWith, toList, toTuple
+@docs map, mapHead, mapTail, fold, foldWith, toList, toTuple
 
 -}
 
@@ -362,8 +362,40 @@ whenJust maybes =
 
 -}
 map : (a -> b) -> ListTyped emptyOrNot a -> ListTyped emptyOrNot b
-map change =
-    MaybeTyped.map (Tuple.mapBoth change (List.map change))
+map changeElement =
+    MaybeTyped.map
+        (Tuple.mapBoth changeElement (List.map changeElement))
+
+
+{-| Apply a function to every element of its tail.
+
+    ListTyped.fromCons 1 [ 4, 9 ]
+        |> ListTyped.mapTail negate
+    --> ListTyped.fromCons 1 [ -4, -9 ]
+
+-}
+mapTail :
+    (tailElement -> mappedTailElement)
+    -> ListWithHeadType head emptyOrNot tailElement
+    -> ListWithHeadType head emptyOrNot mappedTailElement
+mapTail changeTailElement =
+    MaybeTyped.map
+        (Tuple.mapBoth identity (List.map changeTailElement))
+
+
+{-| Apply a function to the head only.
+
+    ListTyped.fromCons 1 [ 4, 9 ]
+        |> ListTyped.mapHead negate
+    --> ListTyped.fromCons -1 [ 4, 9 ]
+
+-}
+mapHead :
+    (head -> mappedHead)
+    -> ListWithHeadType head emptyOrNot tailElement
+    -> ListWithHeadType mappedHead emptyOrNot tailElement
+mapHead changeHead =
+    MaybeTyped.map (Tuple.mapFirst changeHead)
 
 
 {-| Reduce a List in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
