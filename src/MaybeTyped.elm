@@ -2,6 +2,7 @@ module MaybeTyped exposing
     ( MaybeTyped(..), Just, MaybeNothing, CanBeNothing(..)
     , just, nothing, fromMaybe
     , map, map2, toMaybe, value, andThen, withFallback
+    , branchableType
     )
 
 {-| `Maybe` with the ability to know at the type level whether it exists.
@@ -22,12 +23,12 @@ but we can build cool type-safe data structures with it:
     type alias NotEmpty =
         MaybeTyped.Just { notEmpty : () }
 
-    type alias MaybeEmpty =
-        MaybeTyped.MaybeNothing { maybeEmpty : () }
+    type alias EmptyOrNot =
+        MaybeTyped.MaybeNothing { emptyOrNot : () }
 
-    empty : ListTyped MaybeEmpty a
+    empty : ListTyped EmptyOrNot a_
 
-    cons : ListTyped isHeadEmpty a -> a -> ListTyped headExists a
+    cons : ListTyped emptyOrNot_ a -> a -> ListTyped notEmpty_ a
 
     head : ListTyped NotEmpty a -> a
 
@@ -48,13 +49,18 @@ This is exactly how [`ListTyped`] is implemented.
 
 @docs map, map2, toMaybe, value, andThen, withFallback
 
+
+## type-level
+
+@docs branchableType
+
 -}
 
 
 {-| `Maybe` with the ability to know at the type level whether it exists.
 -}
-type MaybeTyped isEmpty a
-    = NothingTyped isEmpty
+type MaybeTyped justOrNothing a
+    = NothingTyped justOrNothing
     | JustTyped a
 
 
@@ -74,7 +80,9 @@ type CanBeNothing valueIfNothing tag
 
 
 {-| `Maybe (MaybeNothing tag) a`: The value could exist, could also not exist.
+
 See [`CanBeNothing`](#CanBeNothing).
+
 -}
 type alias MaybeNothing tag =
     CanBeNothing () tag
@@ -127,21 +135,22 @@ fromMaybe coreMaybe =
 
 {-| Convert a `MaybeTyped` to a `Maybe`.
 -}
-toMaybe : MaybeTyped empty_ a -> Maybe a
-toMaybe maybe =
-    case maybe of
-        JustTyped val ->
-            Just val
+toMaybe : MaybeTyped justOrNothing_ a -> Maybe a
+toMaybe =
+    \maybe ->
+        case maybe of
+            JustTyped val ->
+                Just val
 
-        NothingTyped _ ->
-            Nothing
+            NothingTyped _ ->
+                Nothing
 
 
 {-| Safely extracts the value from every `MaybeTyped Just a`.
 -}
 value : MaybeTyped (Just tag_) a -> a
-value maybe =
-    case maybe of
+value definitelyJust =
+    case definitelyJust of
         JustTyped val ->
             val
 
@@ -178,14 +187,15 @@ withFallback lazyFallback =
     map abs nothing --> nothing
 
 -}
-map : (a -> b) -> MaybeTyped isEmpty a -> MaybeTyped isEmpty b
-map change maybe =
-    case maybe of
-        JustTyped val ->
-            change val |> JustTyped
+map : (a -> b) -> MaybeTyped justOrNothing a -> MaybeTyped justOrNothing b
+map change =
+    \maybe ->
+        case maybe of
+            JustTyped val ->
+                change val |> JustTyped
 
-        NothingTyped empty ->
-            NothingTyped empty
+            NothingTyped canBeNothing ->
+                NothingTyped canBeNothing
 
 
 {-| If all the arguments exist, combine them using a given function.
@@ -199,19 +209,19 @@ map change maybe =
 -}
 map2 :
     (a -> b -> combined)
-    -> MaybeTyped isEmpty a
-    -> MaybeTyped isEmpty b
-    -> MaybeTyped isEmpty combined
+    -> MaybeTyped justOrNothing a
+    -> MaybeTyped justOrNothing b
+    -> MaybeTyped justOrNothing combined
 map2 combine aMaybe bMaybe =
     case ( aMaybe, bMaybe ) of
         ( JustTyped a, JustTyped b ) ->
             combine a b |> JustTyped
 
-        ( NothingTyped empty, _ ) ->
-            NothingTyped empty
+        ( NothingTyped canBeNothing, _ ) ->
+            NothingTyped canBeNothing
 
-        ( _, NothingTyped empty ) ->
-            NothingTyped empty
+        ( _, NothingTyped canBeNothing ) ->
+            NothingTyped canBeNothing
 
 
 {-| Chain together many computations that may fail.
@@ -224,11 +234,53 @@ map2 combine aMaybe bMaybe =
     extraValidation : Parsed -> MaybeTyped MaybeNothing Validated
 
 -}
-andThen : (a -> MaybeTyped isEmpty b) -> MaybeTyped isEmpty a -> MaybeTyped isEmpty b
-andThen tryIfSuccess maybe =
-    case maybe of
-        JustTyped val ->
-            tryIfSuccess val
+andThen :
+    (a -> MaybeTyped justOrNothing b)
+    -> MaybeTyped justOrNothing a
+    -> MaybeTyped justOrNothing b
+andThen tryIfSuccess =
+    \maybe ->
+        case maybe of
+            JustTyped val ->
+                tryIfSuccess val
 
-        NothingTyped empty ->
-            NothingTyped empty
+            NothingTyped canBeNothing ->
+                NothingTyped canBeNothing
+
+
+
+--
+
+
+{-| When using `(Just ...)` for an argument:
+
+    theShorter :
+        ListTyped NotEmpty a
+        -> ListTyped emptyOrNot a
+        -> ListTyped emptyOrNot a
+    theShorter aList bList =
+        if ListTyped.length bList > ListTyped.length aList then
+            bList
+
+        else
+            -- ↓ is `NotEmpty` but we need `emptyOrNot`
+            aList
+
+to make both branches return `emptyOrNot`, we could use
+
+    else
+        aList |> ListType.toTuple |> ListType.fromTuple
+
+also known as: necessary code that nobody will understand.
+
+    else
+        aList |> MaybeTyped.branchableType
+
+is a bit better.
+
+💙 Found a better name? → open an issue.
+
+-}
+branchableType : MaybeTyped (Just tag_) a -> MaybeTyped just_ a
+branchableType =
+    value >> just
