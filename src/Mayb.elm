@@ -77,12 +77,14 @@ It also has a simple type tag to make `Mayb` values distinct:
     type alias ItemFocussed =
         Mayb.Just { itemFocussed : () }
 
+Remember to update the tag after renaming an alias.
+
 -}
 type CanBeNothing valueIfNothing tag
     = CanBeNothing valueIfNothing
 
 
-{-| `Maybe (Nothingable tag) a`: The value could exist, could also not exist.
+{-| `Mayb (Nothingable tag) a`: The value could exist, could also not exist.
 
 See [`CanBeNothing`](#CanBeNothing).
 
@@ -96,8 +98,8 @@ type alias Nothingable tag =
     import Mayb exposing (Just, Mayb)
 
     head : Mayb (Just tag_) ( a, List a ) -> a
-    head maybe =
-        maybe |> Mayb.value |> Tuple.first
+    head =
+        Mayb.value >> Tuple.first
 
 See [`CanBeNothing`](#CanBeNothing) and [`Lis`](Lis).
 
