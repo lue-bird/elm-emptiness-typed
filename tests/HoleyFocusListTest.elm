@@ -2,6 +2,7 @@ module HoleyFocusListTest exposing (emptyTest, nextTest, previousTest, singleton
 
 import Expect
 import HoleyFocusList exposing (HoleyFocusList, Item)
+import ListTyped
 import Test exposing (Test, describe, test)
 
 
@@ -10,8 +11,8 @@ emptyTest =
     test "empty creates a HoleyFocusList for an empty list"
         (\_ ->
             HoleyFocusList.empty
-                |> HoleyFocusList.toList
-                |> Expect.equal []
+                |> HoleyFocusList.joinParts
+                |> Expect.equal ListTyped.empty
         )
 
 
@@ -20,8 +21,8 @@ singletonTest =
     test "only creates a HoleyFocusList with a single element"
         (\_ ->
             HoleyFocusList.only 3
-                |> HoleyFocusList.toList
-                |> Expect.equal [ 3 ]
+                |> HoleyFocusList.joinParts
+                |> Expect.equal (ListTyped.only 3)
         )
 
 
@@ -36,8 +37,8 @@ zipperTest =
         [ test "currentAndAfter creates a HoleyFocusList."
             (\_ ->
                 holeyFocusList
-                    |> HoleyFocusList.toList
-                    |> Expect.equal [ 1, 2, 3, 4, 5 ]
+                    |> HoleyFocusList.joinParts
+                    |> Expect.equal (ListTyped.fromCons 1 [ 2, 3, 4, 5 ])
             )
         , test "nothing before it"
             (\_ ->
