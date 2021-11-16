@@ -1,7 +1,7 @@
 module MaybeTyped exposing
     ( MaybeTyped(..), Just, MaybeNothing, CanBeNothing(..)
     , just, nothing, fromMaybe
-    , map, map2, toMaybe, value, andThen
+    , map, map2, toMaybe, value, andThen, withFallback
     )
 
 {-| `Maybe` with the ability to know at the type level whether it exists.
@@ -46,7 +46,7 @@ This is exactly how [`ListTyped`] is implemented.
 
 ## transform
 
-@docs map, map2, toMaybe, value, andThen
+@docs map, map2, toMaybe, value, andThen, withFallback
 
 -}
 
@@ -121,6 +121,10 @@ fromMaybe coreMaybe =
             nothing
 
 
+
+--
+
+
 {-| Convert a `MaybeTyped` to a `Maybe`.
 -}
 toMaybe : MaybeTyped empty_ a -> Maybe a
@@ -143,6 +147,28 @@ value maybe =
 
         NothingTyped (CanBeNothing canBeNothing) ->
             never canBeNothing
+
+
+{-| Lazily use a fallback value if the `MaybeTyped` is [`nothing`](#nothing).
+
+    Dict.empty
+        |> Dict.get "Tom"
+        |> MaybeTyped.fromMaybe
+        |> MaybeTyped.withFallback (\() -> "unknown")
+    --> "unknown"
+
+Hint: `MaybeTyped.withFallback never` is equivalent to `MaybeTyped.value`.
+
+-}
+withFallback : (canBeNothing -> a) -> MaybeTyped (CanBeNothing canBeNothing tag_) a -> a
+withFallback lazyFallback =
+    \maybe ->
+        case maybe of
+            JustTyped val ->
+                val
+
+            NothingTyped (CanBeNothing canBeNothing) ->
+                lazyFallback canBeNothing
 
 
 {-| Transform the value in the `MaybeTyped` using a given function:
