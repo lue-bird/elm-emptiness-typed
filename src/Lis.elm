@@ -140,7 +140,7 @@ type alias NotEmpty =
 
 -}
 type alias Emptiable =
-    Mayb.Nothingable { maybeEmpty : () }
+    Mayb.Nothingable { emptiable : () }
 
 
 {-| A `Lis` without elements.
