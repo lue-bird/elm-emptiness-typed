@@ -222,7 +222,7 @@ head notEmptyList =
     notEmptyList |> toTuple |> Tuple.first
 
 
-{-| The element count in the `ListTyped`.
+{-| How many element there are.
 
     ListTyped.only 3
         |> ListTyped.cons 2
