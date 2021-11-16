@@ -178,6 +178,8 @@ value definitelyJust =
 
 {-| Lazily use a fallback value if the `Mayb` is [`nothing`](#nothing).
 
+    import Dict
+
     Dict.empty
         |> Dict.get "Tom"
         |> Mayb.fromMaybe
