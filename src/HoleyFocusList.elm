@@ -76,7 +76,7 @@ type alias Item =
 
 -}
 type alias HoleOrItem =
-    MaybeTyped.JustOrNothing { holeOrItem : () }
+    MaybeTyped.Nothingable { holeOrItem : () }
 
 
 {-| Get the value the `HoleyFocusList` is currently pointing at.

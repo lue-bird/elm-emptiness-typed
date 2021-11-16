@@ -1,5 +1,5 @@
 module MaybeTyped exposing
-    ( MaybeTyped(..), Just, JustOrNothing, CanBeNothing(..)
+    ( MaybeTyped(..), Just, Nothingable, CanBeNothing(..)
     , just, nothing, fromMaybe
     , map, map2, toMaybe, value, andThen, withFallback
     , branchableType
@@ -24,7 +24,7 @@ but we can build cool type-safe data structures with it:
         MaybeTyped.Just { notEmpty : () }
 
     type alias Emptiable =
-        MaybeTyped.JustOrNothing { emptyOrNot : () }
+        MaybeTyped.Nothingable { emptyOrNot : () }
 
     empty : ListTyped Emptiable a_
 
@@ -37,7 +37,7 @@ This is exactly how [`ListTyped`] is implemented.
 
 ## types
 
-@docs MaybeTyped, Just, JustOrNothing, CanBeNothing
+@docs MaybeTyped, Just, Nothingable, CanBeNothing
 
 
 ## create
@@ -79,12 +79,12 @@ type CanBeNothing valueIfNothing tag
     = CanBeNothing valueIfNothing
 
 
-{-| `Maybe (JustOrNothing tag) a`: The value could exist, could also not exist.
+{-| `Maybe (Nothingable tag) a`: The value could exist, could also not exist.
 
 See [`CanBeNothing`](#CanBeNothing).
 
 -}
-type alias JustOrNothing tag =
+type alias Nothingable tag =
     CanBeNothing () tag
 
 
@@ -105,7 +105,7 @@ type alias Just tag =
 
 {-| Nothing here.
 -}
-nothing : MaybeTyped (JustOrNothing tag_) a_
+nothing : MaybeTyped (Nothingable tag_) a_
 nothing =
     NothingTyped (CanBeNothing ())
 
@@ -119,7 +119,7 @@ just value_ =
 
 {-| Convert a `Maybe` to a `MaybeTyped`.
 -}
-fromMaybe : Maybe a -> MaybeTyped (JustOrNothing tag_) a
+fromMaybe : Maybe a -> MaybeTyped (Nothingable tag_) a
 fromMaybe coreMaybe =
     case coreMaybe of
         Just val ->
@@ -243,8 +243,8 @@ map2 combine aMaybe bMaybe =
         |> MaybeTyped.andThen parse
         |> MaybeTyped.andThen extraValidation
 
-    parse : String -> MaybeTyped JustOrNothing Parsed
-    extraValidation : Parsed -> MaybeTyped JustOrNothing Validated
+    parse : String -> MaybeTyped Nothingable Parsed
+    extraValidation : Parsed -> MaybeTyped Nothingable Validated
 
 -}
 andThen :
