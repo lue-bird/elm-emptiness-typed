@@ -28,32 +28,32 @@ singletonTest =
 zipperTest : Test
 zipperTest =
     let
-        holeySelectList : HoleyFocusList Item Int
-        holeySelectList =
+        holeyFocusList : HoleyFocusList Item Int
+        holeyFocusList =
             HoleyFocusList.currentAndAfter 1 [ 2, 3, 4, 5 ]
     in
     describe "currentAndAfter"
         [ test "currentAndAfter creates a HoleyFocusList."
             (\_ ->
-                holeySelectList
+                holeyFocusList
                     |> HoleyFocusList.toList
                     |> Expect.equal [ 1, 2, 3, 4, 5 ]
             )
         , test "nothing before it"
             (\_ ->
-                holeySelectList
+                holeyFocusList
                     |> HoleyFocusList.before
                     |> Expect.equal []
             )
         , test "the current thing is the first thing"
             (\_ ->
-                holeySelectList
+                holeyFocusList
                     |> HoleyFocusList.current
                     |> Expect.equal 1
             )
         , test "the current thing is followed by the rest of the things"
             (\_ ->
-                holeySelectList
+                holeyFocusList
                     |> HoleyFocusList.after
                     |> Expect.equal [ 2, 3, 4, 5 ]
             )
@@ -67,34 +67,34 @@ zipperTest =
 nextTest : Test
 nextTest =
     let
-        holeySelectList : HoleyFocusList Item Int
-        holeySelectList =
+        holeyFocusList : HoleyFocusList Item Int
+        holeyFocusList =
             HoleyFocusList.currentAndAfter 1 [ 2, 3 ]
     in
     describe "next"
         [ test "next gives the next thing"
             (\_ ->
-                HoleyFocusList.next holeySelectList
+                HoleyFocusList.next holeyFocusList
                     |> Maybe.map HoleyFocusList.current
                     |> Expect.equal (Just 2)
             )
         , test "next on the next hole gives the next thing"
             (\_ ->
-                HoleyFocusList.nextHole holeySelectList
+                HoleyFocusList.nextHole holeyFocusList
                     |> HoleyFocusList.next
                     |> Maybe.map HoleyFocusList.current
                     |> Expect.equal (Just 2)
             )
         , test "next on last gives nothing"
             (\_ ->
-                HoleyFocusList.last holeySelectList
+                HoleyFocusList.last holeyFocusList
                     |> HoleyFocusList.next
                     |> Expect.equal Nothing
             )
         , test "repeating `next` eventually results in `Nothing`"
             (\_ ->
                 List.foldl Maybe.andThen
-                    (Just holeySelectList)
+                    (Just holeyFocusList)
                     (List.repeat 4 HoleyFocusList.next)
                     |> Expect.equal Nothing
             )
@@ -104,26 +104,26 @@ nextTest =
 previousTest : Test
 previousTest =
     let
-        holeySelectList : HoleyFocusList Item Int
-        holeySelectList =
+        holeyFocusList : HoleyFocusList Item Int
+        holeyFocusList =
             HoleyFocusList.currentAndAfter 1 [ 2, 3 ]
     in
     describe "previous"
         [ test "previous gives nothing initially"
             (\_ ->
-                HoleyFocusList.previous holeySelectList
+                HoleyFocusList.previous holeyFocusList
                     |> Expect.equal Nothing
             )
         , test "previous on the last thing gives the thing before that"
             (\_ ->
-                HoleyFocusList.last holeySelectList
+                HoleyFocusList.last holeyFocusList
                     |> HoleyFocusList.previous
                     |> Maybe.map HoleyFocusList.current
                     |> Expect.equal (Just 2)
             )
         , test "previous after the last hole gives the last thing"
             (\_ ->
-                HoleyFocusList.afterLast holeySelectList
+                HoleyFocusList.afterLast holeyFocusList
                     |> HoleyFocusList.previous
                     |> Maybe.map HoleyFocusList.current
                     |> Expect.equal (Just 3)

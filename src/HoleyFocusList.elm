@@ -233,13 +233,13 @@ next (HoleyFocusList before_ focus after_) =
 
 -}
 previous : HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
-previous ((HoleyFocusList before_ _ _) as holeySelectList) =
+previous ((HoleyFocusList before_ _ _) as holeyFocusList) =
     case before_ of
         [] ->
             Nothing
 
         p :: rest ->
-            HoleyFocusList rest (just p) (focusAndAfter holeySelectList)
+            HoleyFocusList rest (just p) (focusAndAfter holeyFocusList)
                 |> Just
 
 
@@ -254,8 +254,8 @@ lot of nothingness, so it's always there.
 
 -}
 nextHole : HoleyFocusList Item a -> HoleyFocusList HoleOrItem a
-nextHole ((HoleyFocusList before_ _ after_) as holeySelectList) =
-    HoleyFocusList (current holeySelectList :: before_) nothing after_
+nextHole ((HoleyFocusList before_ _ after_) as holeyFocusList) =
+    HoleyFocusList (current holeyFocusList :: before_) nothing after_
 
 
 {-| Move the `HoleyFocusList` to the hole right before the current item. Feel free to plug
@@ -269,8 +269,8 @@ that hole right up!
 
 -}
 previousHole : HoleyFocusList Item a -> HoleyFocusList HoleOrItem a
-previousHole ((HoleyFocusList before_ _ after_) as holeySelectList) =
-    HoleyFocusList before_ nothing (current holeySelectList :: after_)
+previousHole ((HoleyFocusList before_ _ after_) as holeyFocusList) =
+    HoleyFocusList before_ nothing (current holeyFocusList :: after_)
 
 
 {-| Plug a `HoleyFocusList`.
@@ -352,8 +352,8 @@ insertBefore v (HoleyFocusList b c a) =
 
 -}
 toList : HoleyFocusList focus_ a -> List a
-toList holeySelectList =
-    before holeySelectList ++ focusAndAfter holeySelectList
+toList holeyFocusList =
+    before holeyFocusList ++ focusAndAfter holeyFocusList
 
 
 focusAndAfter : HoleyFocusList focus_ a -> List a
@@ -403,16 +403,16 @@ prepend xs (HoleyFocusList b c a) =
 
 -}
 first : HoleyFocusList focus a -> HoleyFocusList focus a
-first holeySelectList =
-    case before holeySelectList of
+first holeyFocusList =
+    case before holeyFocusList of
         [] ->
-            holeySelectList
+            holeyFocusList
 
         head :: afterHeadBeforeCurrent ->
             HoleyFocusList
                 []
                 (just head)
-                (afterHeadBeforeCurrent ++ focusAndAfter holeySelectList)
+                (afterHeadBeforeCurrent ++ focusAndAfter holeyFocusList)
 
 
 {-| Go to the last element in the `HoleyFocusList`.
@@ -424,10 +424,10 @@ first holeySelectList =
 
 -}
 last : HoleyFocusList focus a -> HoleyFocusList focus a
-last ((HoleyFocusList before_ focus after_) as holeySelectList) =
+last ((HoleyFocusList before_ focus after_) as holeyFocusList) =
     case List.reverse after_ of
         [] ->
-            holeySelectList
+            holeyFocusList
 
         last_ :: beforeLastUntilCurrent ->
             let
@@ -458,8 +458,8 @@ everything! They are everywhere.
 
 -}
 beforeFirst : HoleyFocusList focus_ a -> HoleyFocusList HoleOrItem a
-beforeFirst holeySelectList =
-    HoleyFocusList [] nothing (toList holeySelectList)
+beforeFirst holeyFocusList =
+    HoleyFocusList [] nothing (toList holeyFocusList)
 
 
 {-| Go to the hole after the end of the `HoleyFocusList`. Into the nothingness.
@@ -491,10 +491,10 @@ findForward predicate z =
 
 
 findForwardHelp : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
-findForwardHelp predicate ((HoleyFocusList before_ focus after_) as holeySelectList) =
+findForwardHelp predicate ((HoleyFocusList before_ focus after_) as holeyFocusList) =
     let
         goForward () =
-            next holeySelectList
+            next holeyFocusList
                 |> Maybe.andThen (findForwardHelp predicate)
     in
     case focus of
@@ -518,10 +518,10 @@ findBackward predicate z =
 
 
 findBackwardHelp : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
-findBackwardHelp predicate ((HoleyFocusList before_ focus after_) as holeySelectList) =
+findBackwardHelp predicate ((HoleyFocusList before_ focus after_) as holeyFocusList) =
     let
         goBack () =
-            previous holeySelectList
+            previous holeyFocusList
                 |> Maybe.andThen (findBackwardHelp predicate)
     in
     case focus of
