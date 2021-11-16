@@ -112,7 +112,7 @@ nothing =
 
 {-| A `MaybeTyped` that certainly exists.
 -}
-just : a -> MaybeTyped just_ a
+just : value -> MaybeTyped just_ value
 just value_ =
     JustTyped value_
 
@@ -146,9 +146,18 @@ toMaybe =
                 Nothing
 
 
-{-| Safely extracts the value from every `MaybeTyped Just a`.
+{-| Safely extracts the `value` from a `MaybeTyped Just value`.
+
+    import MaybeTyped exposing (just)
+
+    just (just (just "you"))
+        |> MaybeTyped.value
+        |> MaybeTyped.value
+        |> MaybeTyped.value
+    --> "you"
+
 -}
-value : MaybeTyped (Just tag_) a -> a
+value : MaybeTyped (Just tag_) value -> value
 value definitelyJust =
     case definitelyJust of
         JustTyped val ->
@@ -169,7 +178,10 @@ value definitelyJust =
 Hint: `MaybeTyped.withFallback never` is equivalent to `MaybeTyped.value`.
 
 -}
-withFallback : (canBeNothing -> a) -> MaybeTyped (CanBeNothing canBeNothing tag_) a -> a
+withFallback :
+    (canBeNothing -> value)
+    -> MaybeTyped (CanBeNothing canBeNothing tag_) value
+    -> value
 withFallback lazyFallback =
     \maybe ->
         case maybe of
@@ -182,9 +194,10 @@ withFallback lazyFallback =
 
 {-| Transform the value in the `MaybeTyped` using a given function:
 
-    map abs (just -3) --> just 3
+    import MaybeTyped exposing (just, nothing)
 
-    map abs nothing --> nothing
+    MaybeTyped.map abs (just -3) --> just 3
+    MaybeTyped.map abs nothing --> nothing
 
 -}
 map : (a -> b) -> MaybeTyped justOrNothing a -> MaybeTyped justOrNothing b
@@ -200,11 +213,11 @@ map change =
 
 {-| If all the arguments exist, combine them using a given function.
 
-    map2 (+) (just 3) (just 4) --> just 7
+    import MaybeTyped exposing (just, nothing)
 
-    map2 (+) (just 3) nothing --> nothing
-
-    map2 (+) nothing (just 4) --> nothing
+    MaybeTyped.map2 (+) (just 3) (just 4) --> just 7
+    MaybeTyped.map2 (+) (just 3) nothing --> nothing
+    MaybeTyped.map2 (+) nothing (just 4) --> nothing
 
 -}
 map2 :
