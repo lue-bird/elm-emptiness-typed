@@ -45,7 +45,7 @@ module Lis exposing
 
 import LinearDirection exposing (LinearDirection)
 import List.LinearDirection as List
-import MaybeTyped exposing (MaybeTyped(..), just, nothing)
+import Mayb exposing (Mayb(..), just, nothing)
 
 
 {-| Describes an empty or non-empty list. **This is better than any `Nonempty`.**
@@ -54,17 +54,17 @@ We can require a [`NotEmpty`](#NotEmpty) for example:
 
     toNonempty : Lis NotEmpty a -> Nonempty a
 
-This is equivalent to a [`MaybeTyped`](MaybeTyped) of a non-empty list tuple:
+This is equivalent to a [`Mayb`](Mayb) of a non-empty list tuple:
 
-    import MaybeTyped exposing (MaybeTyped(..))
+    import Mayb exposing (Mayb(..))
 
     Lis.empty
-    --> MaybeTyped.nothing
+    --> Mayb.nothing
 
     [ ... ]
         |> Lis.fromList
-        |> MaybeTyped.map Lis.head
-    --: MaybeTyped Nothingable head_
+        |> Mayb.map Lis.head
+    --: Mayb Nothingable head_
 
     toList : Lis emptyOrNot_ a -> List a
     toList list =
@@ -93,16 +93,16 @@ Use [`Lis`](#Lis) if you have matching head and tail element types.
   - [`cons`](#cons)
   - [`mapHead`](#mapHead)
 
-This is equivalent to a [`MaybeTyped`](MaybeTyped) of a `( head, tail )` tuple:
+This is equivalent to a [`Mayb`](Mayb) of a `( head, tail )` tuple:
 
-    import MaybeTyped exposing (MaybeTyped(..))
+    import Mayb exposing (Mayb(..))
 
     Lis.empty
-    --> MaybeTyped.nothing
+    --> Mayb.nothing
 
-    MaybeTyped.map Lis.head
+    Mayb.map Lis.head
     --: ListWithHeadType head emptyOrNot_ tailElement_
-    --: -> MaybeTyped Nothingable head
+    --: -> Mayb Nothingable head
 
     tail : ListWithHeadType head_ NotEmpty tailElement -> List tailElement
     tail listNotEmpty =
@@ -115,7 +115,7 @@ This is equivalent to a [`MaybeTyped`](MaybeTyped) of a `( head, tail )` tuple:
 
 -}
 type alias ListWithHeadType head emptyOrNot tailElement =
-    MaybeTyped emptyOrNot ( head, List tailElement )
+    Mayb emptyOrNot ( head, List tailElement )
 
 
 {-| `NotEmpty` can be used to require a non-empty list as an argument:
@@ -124,7 +124,7 @@ type alias ListWithHeadType head emptyOrNot tailElement =
 
 -}
 type alias NotEmpty =
-    MaybeTyped.Just { notEmpty : () }
+    Mayb.Just { notEmpty : () }
 
 
 {-| `Emptiable` marks lists that could be empty:
@@ -140,12 +140,12 @@ type alias NotEmpty =
 
 -}
 type alias Emptiable =
-    MaybeTyped.Nothingable { maybeEmpty : () }
+    Mayb.Nothingable { maybeEmpty : () }
 
 
 {-| A `Lis` without elements.
 
-Equivalent to `MaybeTyped.nothing`.
+Equivalent to `Mayb.nothing`.
 
 -}
 empty : ListWithHeadType head_ Emptiable tailElement_
@@ -166,7 +166,7 @@ only onlyElement =
 
 {-| Convert a non-empty list tuple `( a, List b )` to a `ListWithHeadType a notEmpty_ b`.
 
-Equivalent to `MaybeTyped.just`.
+Equivalent to `Mayb.just`.
 
 -}
 fromTuple : ( head, List tailElement ) -> ListWithHeadType head notEmpty_ tailElement
@@ -371,7 +371,7 @@ whenJust maybes =
 -}
 map : (a -> b) -> Lis emptyOrNot a -> Lis emptyOrNot b
 map changeElement =
-    MaybeTyped.map
+    Mayb.map
         (Tuple.mapBoth changeElement (List.map changeElement))
 
 
@@ -387,7 +387,7 @@ mapTail :
     -> ListWithHeadType head emptyOrNot tailElement
     -> ListWithHeadType head emptyOrNot mappedTailElement
 mapTail changeTailElement =
-    MaybeTyped.map
+    Mayb.map
         (Tuple.mapBoth identity (List.map changeTailElement))
 
 
@@ -403,7 +403,7 @@ mapHead :
     -> ListWithHeadType head emptyOrNot tailElement
     -> ListWithHeadType mappedHead emptyOrNot tailElement
 mapHead changeHead =
-    MaybeTyped.map (Tuple.mapFirst changeHead)
+    Mayb.map (Tuple.mapFirst changeHead)
 
 
 {-| Reduce a List in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -473,9 +473,9 @@ toList =
 
 {-| Convert a `NotEmpty` to a non-empty list tuple `( a, List a )`.
 
-Equivalent to `MaybeTyped.value`.
+Equivalent to `Mayb.value`.
 
 -}
 toTuple : ListWithHeadType head NotEmpty tailElement -> ( head, List tailElement )
 toTuple listNotEmpty =
-    listNotEmpty |> MaybeTyped.value
+    listNotEmpty |> Mayb.value

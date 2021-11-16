@@ -52,7 +52,7 @@ that hole with a value.
 -}
 
 import Lis exposing (Lis)
-import MaybeTyped exposing (CanBeNothing(..), MaybeTyped(..), just, nothing)
+import Mayb exposing (CanBeNothing(..), Mayb(..), just, nothing)
 
 
 {-| Represents a special kind of list with items of type `a`.
@@ -62,13 +62,13 @@ If not, you could be looking at a hole between elements.
 
 -}
 type HoleyFocusList focus a
-    = HoleyFocusList (List a) (MaybeTyped focus a) (List a)
+    = HoleyFocusList (List a) (Mayb focus a) (List a)
 
 
 {-| A `HoleyFocusList Item a` is pointing at an element of type `a`.
 -}
 type alias Item =
-    MaybeTyped.Just { item : () }
+    Mayb.Just { item : () }
 
 
 {-| A `HoleyFocusList HoleOrItem a` could be pointing at a hole between `a`s.
@@ -77,7 +77,7 @@ type alias Item =
 
 -}
 type alias HoleOrItem =
-    MaybeTyped.Nothingable { holeOrItem : () }
+    Mayb.Nothingable { holeOrItem : () }
 
 
 {-| Get the value the `HoleyFocusList` is currently pointing at.
@@ -97,7 +97,7 @@ Only applicable to zippers pointing at a value.
 -}
 current : HoleyFocusList Item a -> a
 current (HoleyFocusList _ focus _) =
-    focus |> MaybeTyped.value
+    focus |> Mayb.value
 
 
 {-| Create an empty `HoleyFocusList`. It's pointing at a hole with nothing before it
@@ -540,7 +540,7 @@ findBackwardHelp predicate ((HoleyFocusList before_ focus after_) as holeyFocusL
 -}
 map : (a -> b) -> HoleyFocusList focus a -> HoleyFocusList focus b
 map f (HoleyFocusList b c a) =
-    HoleyFocusList (List.map f b) (MaybeTyped.map f c) (List.map f a)
+    HoleyFocusList (List.map f b) (Mayb.map f c) (List.map f a)
 
 
 {-| Execute a function on the current item in the `HoleyFocusList`, when pointing at an
@@ -554,7 +554,7 @@ item.
 -}
 mapCurrent : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
 mapCurrent f (HoleyFocusList b c a) =
-    HoleyFocusList b (MaybeTyped.map f c) a
+    HoleyFocusList b (Mayb.map f c) a
 
 
 {-| Execute a function on all the things that came before the current location.
@@ -606,7 +606,7 @@ mapParts :
 mapParts conf (HoleyFocusList before_ focus after_) =
     HoleyFocusList
         (List.map conf.before before_)
-        (MaybeTyped.map conf.current focus)
+        (Mayb.map conf.current focus)
         (List.map conf.after after_)
 
 
@@ -677,9 +677,9 @@ joinParts =
 {-| When using a `HoleyFocusList Item ...` argument,
 its type can't be unified with non-`Item` lists.
 
-Please read more at [`MaybeTyped.branchableType`](MaybeTyped#branchableType).
+Please read more at [`Mayb.branchableType`](Mayb#branchableType).
 
 -}
 branchableType : HoleyFocusList Item a -> HoleyFocusList item_ a
 branchableType (HoleyFocusList before_ focus after_) =
-    HoleyFocusList before_ (focus |> MaybeTyped.branchableType) after_
+    HoleyFocusList before_ (focus |> Mayb.branchableType) after_
