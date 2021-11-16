@@ -10,21 +10,21 @@ module Mayb exposing
     import Mayb exposing (just)
 
     [ just 1, just 7 ]
-        -- : List (Mayb notEmpty number)
+        -- : List (Mayb just_ number_)
         |> List.map Mayb.value
     --> [ 1, 7 ]
 
 I don't think `Mayb` will proof any useful just by itself,
 but we can build cool type-safe data structures with it:
 
-    type alias Lis isEmpty a =
-        Mayb isEmpty ( a, List a )
+    type alias Lis emptyOrNot a =
+        Mayb emptyOrNot ( a, List a )
 
     type alias NotEmpty =
         Mayb.Just { notEmpty : () }
 
     type alias Emptiable =
-        Mayb.Nothingable { emptyOrNot : () }
+        Mayb.Nothingable { emptiable : () }
 
     empty : Lis Emptiable a_
 
@@ -114,6 +114,10 @@ nothing =
 
 
 {-| A `Mayb` that certainly exists.
+
+    Mayb.just "you" |> Mayb.value
+    --> "you"
+
 -}
 just : value -> Mayb just_ value
 just value_ =
