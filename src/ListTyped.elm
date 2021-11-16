@@ -2,7 +2,7 @@ module ListTyped exposing
     ( ListTyped, MaybeEmpty, NotEmpty
     , ListWithHeadType
     , empty, only, fromCons, fromTuple, fromList
-    , head, length
+    , head, tail, length
     , cons, append, appendNonEmpty
     , when, whenJust
     , map, mapHead, mapTail, fold, foldWith, toList, toTuple
@@ -24,7 +24,7 @@ module ListTyped exposing
 
 ## scan
 
-@docs head, length
+@docs head, tail, length
 
 
 ## modify
@@ -222,6 +222,20 @@ head notEmptyList =
     notEmptyList |> toTuple |> Tuple.first
 
 
+{-| Everything after the first value in the `ListTyped`.
+
+    ListTyped.only 3
+        |> ListTyped.cons 2
+        |> ListTyped.append (ListTyped.fromCons 1 [ 0 ])
+        |> ListTyped.tail
+    --> [ 2, 1, 0 ]
+
+-}
+tail : ListWithHeadType head_ NotEmpty tailElement -> List tailElement
+tail notEmptyList =
+    notEmptyList |> toTuple |> Tuple.second
+
+
 {-| How many element there are.
 
     ListTyped.only 3
@@ -256,13 +270,7 @@ length =
 -}
 cons : consed -> ListTyped emptyOrNot_ a -> ListWithHeadType consed NotEmpty a
 cons toPutBeforeAllOtherElements =
-    \list ->
-        case list of
-            NothingTyped _ ->
-                only toPutBeforeAllOtherElements
-
-            JustTyped ( head_, tail_ ) ->
-                fromCons toPutBeforeAllOtherElements (head_ :: tail_)
+    fromCons toPutBeforeAllOtherElements << toList
 
 
 {-| Glue the elements of a `ListTyped NotEmpty ...` to the end of a `ListTyped`.
