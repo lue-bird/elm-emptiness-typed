@@ -48,7 +48,7 @@ import List.LinearDirection as List
 import Mayb exposing (Mayb(..), just, nothing)
 
 
-{-| Describes an empty or non-empty list. **This is better than any `Nonempty`.**
+{-| Describes an empty or non-empty list, making it more convenient than any `Nonempty`.
 
 We can require a [`NotEmpty`](#NotEmpty) for example:
 
