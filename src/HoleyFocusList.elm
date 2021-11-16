@@ -637,7 +637,8 @@ mapParts conf (HoleyFocusList before_ focus after_) =
 
 {-| Flattens the `HoleyFocusList` into a list:
 
-    HoleyFocusList.joinParts HoleyFocusList.empty
+    HoleyFocusList.empty
+        |> |> HoleyFocusList.toList
     --> []
 
     HoleyFocusList.currentAndAfter 123 [ 789 ]
@@ -656,7 +657,8 @@ toList =
 
 {-| Flattens the `HoleyFocusList` into a [`Lis`](Lis):
 
-    HoleyFocusList.joinParts HoleyFocusList.empty
+    HoleyFocusList.empty
+        |> HoleyFocusList.joinParts
     --> Lis.empty
 
     HoleyFocusList.currentAndAfter 123 [ 789 ]
