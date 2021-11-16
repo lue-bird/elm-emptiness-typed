@@ -9,7 +9,7 @@ module HoleyFocusList exposing
     )
 
 {-| Like a regular old list-zipper, except it can also focus on a hole
-_between_ elements.
+_between_ items.
 
 This means you can represent an empty list, or point between two items and plug
 that hole with a value.
@@ -58,7 +58,7 @@ import Mayb exposing (CanBeNothing(..), Mayb(..), just, nothing)
 {-| Represents a special kind of list with items of type `a`.
 
 If the type `focus` is `Item`, an item is focussed.
-If not, you could be looking at a hole between elements.
+If not, you could be looking at a hole between items.
 
 -}
 type HoleyFocusList focus a
@@ -80,9 +80,7 @@ type alias HoleOrItem =
     Mayb.Nothingable { holeOrItem : () }
 
 
-{-| Get the value the `HoleyFocusList` is currently pointing at.
-
-Only applicable to zippers pointing at a value.
+{-| The current focussed item in the `HoleyFocusList`.
 
     HoleyFocusList.only "hi there"
         |> HoleyFocusList.current
@@ -100,8 +98,8 @@ current (HoleyFocusList _ focus _) =
     focus |> Mayb.value
 
 
-{-| Create an empty `HoleyFocusList`. It's pointing at a hole with nothing before it
-and nothing after it. It's the loneliest of all `HoleyFocusList`s.
+{-| An empty `HoleyFocusList` focussed on a hole with nothing before it
+and after it. It's the loneliest of all `HoleyFocusList`s.
 
     HoleyFocusList.empty
         |> HoleyFocusList.joinParts
@@ -113,7 +111,7 @@ empty =
     HoleyFocusList [] nothing []
 
 
-{-| A `HoleyFocusList` with a single focussed item in it, nothing more.
+{-| A `HoleyFocusList` with a single focussed item in it, nothing before and after it.
 
     HoleyFocusList.only "wat"
         |> HoleyFocusList.current
@@ -125,11 +123,11 @@ empty =
 
 -}
 only : a -> HoleyFocusList item_ a
-only v =
-    HoleyFocusList [] (just v) []
+only current_ =
+    HoleyFocusList [] (just current_) []
 
 
-{-| Construct a `HoleyFocusList` from a current element and elements that come after it.
+{-| Construct a `HoleyFocusList` from a current item and items that come after it.
 
     HoleyFocusList.currentAndAfter "foo" []
     --> HoleyFocusList.only "foo"
@@ -145,7 +143,7 @@ currentAndAfter current_ after_ =
     HoleyFocusList [] (just current_) after_
 
 
-{-| Construct a `HoleyFocusList` from a current element and elements that come after it.
+{-| Construct a `HoleyFocusList` from a current item and items that come after it.
 
     HoleyFocusList.beforeAndCurrent [] "foo"
     --> HoleyFocusList.only "foo"
@@ -200,7 +198,7 @@ This also works from within holes:
     HoleyFocusList.empty
         |> HoleyFocusList.insertAfter "foo"
         |> HoleyFocusList.next
-    --> Just <| HoleyFocusList.only "foo"
+    --> Just (HoleyFocusList.only "foo")
 
 If there is no `next` thing, the result is `Nothing`.
 
@@ -221,17 +219,17 @@ next (HoleyFocusList before_ focus after_) =
         [] ->
             Nothing
 
-        n :: rest ->
+        next_ :: afterNext ->
             let
                 newBefore =
                     case focus of
                         Nothin _ ->
                             before_
 
-                        Jus v ->
-                            v :: before_
+                        Jus oldCurrent ->
+                            oldCurrent :: before_
             in
-            HoleyFocusList newBefore (just n) rest
+            HoleyFocusList newBefore (just next_) afterNext
                 |> Just
 
 
@@ -239,7 +237,6 @@ next (HoleyFocusList before_ focus after_) =
 
     HoleyFocusList.previous HoleyFocusList.empty
     --> Nothing
-
 
     HoleyFocusList.currentAndAfter "hello" [ "holey", "world" ]
         |> HoleyFocusList.last
@@ -249,13 +246,20 @@ next (HoleyFocusList before_ focus after_) =
 
 -}
 previous : HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
-previous ((HoleyFocusList before_ _ _) as holeyFocusList) =
+previous holeyFocusList =
+    let
+        (HoleyFocusList before_ _ _) =
+            holeyFocusList
+    in
     case before_ of
         [] ->
             Nothing
 
-        p :: rest ->
-            HoleyFocusList rest (just p) (focusAndAfter holeyFocusList)
+        previous_ :: beforePreviousToHead ->
+            HoleyFocusList
+                beforePreviousToHead
+                (just previous_)
+                (focusAndAfter holeyFocusList)
                 |> Just
 
 
@@ -297,20 +301,19 @@ previousHole holeyFocusList =
     HoleyFocusList before_ nothing (current holeyFocusList :: after_)
 
 
-{-| Plug a `HoleyFocusList`.
+{-| Fill in or replace the focussed thing in the `HoleyFocusList`.
 
     HoleyFocusList.plug "plug" HoleyFocusList.empty
     --> HoleyFocusList.only "plug"
 
 -}
 plug : a -> HoleyFocusList HoleOrItem a -> HoleyFocusList item_ a
-plug v (HoleyFocusList b _ a) =
-    HoleyFocusList b (just v) a
+plug newCurrent =
+    \(HoleyFocusList before_ _ after_) ->
+        HoleyFocusList before_ (just newCurrent) after_
 
 
-{-| Punch a hole into the `HoleyFocusList` by removing an element entirely. You can think
-of this as collapsing the holes around the element into a single hole, but
-honestly the holes are everywhere.
+{-| Punch a hole into the `HoleyFocusList` by removing the focussed thing.
 
     HoleyFocusList.currentAndAfter "hello" [ "holey", "world" ]
         |> HoleyFocusList.next
@@ -320,8 +323,9 @@ honestly the holes are everywhere.
 
 -}
 remove : HoleyFocusList focus_ a -> HoleyFocusList HoleOrItem a
-remove (HoleyFocusList b _ a) =
-    HoleyFocusList b nothing a
+remove =
+    \(HoleyFocusList before_ _ after_) ->
+        HoleyFocusList before_ nothing after_
 
 
 {-| Insert an item after the focussed location.
@@ -333,8 +337,9 @@ remove (HoleyFocusList b _ a) =
 
 -}
 insertAfter : a -> HoleyFocusList focus a -> HoleyFocusList focus a
-insertAfter v (HoleyFocusList b c a) =
-    HoleyFocusList b c (v :: a)
+insertAfter toInsertAfterFocus =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList before_ focus (toInsertAfterFocus :: after_)
 
 
 {-| Insert an item before the focussed location.
@@ -356,8 +361,8 @@ focusAndAfter (HoleyFocusList _ focus after_) =
         Nothin _ ->
             after_
 
-        Jus v ->
-            v :: after_
+        Jus current_ ->
+            current_ :: after_
 
 
 {-| Put items to the end of the `HoleyFocusList`. After anything else.
@@ -369,8 +374,9 @@ focusAndAfter (HoleyFocusList _ focus after_) =
 
 -}
 append : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
-append xs (HoleyFocusList b c a) =
-    HoleyFocusList b c (a ++ xs)
+append itemsToAppend =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList before_ focus (after_ ++ itemsToAppend)
 
 
 {-| Put items to the beginning of the `HoleyFocusList`. Before anything else.
@@ -387,7 +393,7 @@ prepend xs (HoleyFocusList b c a) =
     HoleyFocusList (b ++ List.reverse xs) c a
 
 
-{-| Go to the first element in the `HoleyFocusList`.
+{-| Focus the first item in the `HoleyFocusList`.
 
     HoleyFocusList.currentAndAfter 1 [ 2, 3, 4 ]
         |> HoleyFocusList.prepend [ 4, 3, 2 ]
@@ -403,13 +409,11 @@ first holeyFocusList =
             holeyFocusList
 
         head :: afterHeadBeforeCurrent ->
-            HoleyFocusList
-                []
-                (just head)
+            currentAndAfter head
                 (afterHeadBeforeCurrent ++ focusAndAfter holeyFocusList)
 
 
-{-| Go to the last element in the `HoleyFocusList`.
+{-| Focus the last item in the `HoleyFocusList`.
 
     HoleyFocusList.currentAndAfter 1 [ 2, 3, 4 ]
         |> HoleyFocusList.last
@@ -418,34 +422,39 @@ first holeyFocusList =
 
 -}
 last : HoleyFocusList focus a -> HoleyFocusList focus a
-last ((HoleyFocusList before_ focus after_) as holeyFocusList) =
-    case List.reverse after_ of
-        [] ->
-            holeyFocusList
+last =
+    \holeyFocusList ->
+        let
+            (HoleyFocusList before_ focus after_) =
+                holeyFocusList
+        in
+        case List.reverse after_ of
+            [] ->
+                holeyFocusList
 
-        last_ :: beforeLastUntilCurrent ->
-            let
-                focusToFirst =
-                    case focus of
-                        Jus cur ->
-                            cur :: before_
+            last_ :: beforeLastUntilCurrent ->
+                let
+                    focusToFirst =
+                        case focus of
+                            Jus current_ ->
+                                current_ :: before_
 
-                        Nothin _ ->
-                            before_
-            in
-            HoleyFocusList
-                (beforeLastUntilCurrent ++ focusToFirst)
-                (just last_)
-                []
+                            Nothin _ ->
+                                before_
+                in
+                HoleyFocusList
+                    (beforeLastUntilCurrent ++ focusToFirst)
+                    (just last_)
+                    []
 
 
-{-| Go to the hole before the first element. Remember that holes surround
+{-| Focus the hole before the first item. Remember that holes surround
 everything! They are everywhere.
 
     HoleyFocusList.currentAndAfter 1 [ 3, 4 ]
         |> HoleyFocusList.nextHole    -- we're after 1
         |> HoleyFocusList.plug 2      -- plug that hole
-        |> HoleyFocusList.beforeFirst -- back to _before_ the first element
+        |> HoleyFocusList.beforeFirst -- back to _before_ the first item
         |> HoleyFocusList.plug 0      -- put something in that hole
         |> HoleyFocusList.joinParts
     --> Lis.fromCons 0 [ 1, 2, 3, 4 ]
@@ -456,7 +465,14 @@ beforeFirst holeyFocusList =
     HoleyFocusList [] nothing (holeyFocusList |> toList)
 
 
-{-| Go to the hole after the end of the `HoleyFocusList`. Into the nothingness.
+{-| Focus the hole after the end of the `HoleyFocusList`. Into the nothingness.
+
+    HoleyFocusList.currentAndAfter 1 [ 2, 3 ]
+        |> HoleyFocusList.afterLast -- to _after_ the last item
+        |> HoleyFocusList.plug 4    -- put something in that hole
+        |> HoleyFocusList.joinParts
+    --> Lis.fromCons 1 [ 2, 3, 4 ]
+
 -}
 afterLast : HoleyFocusList focus_ a -> HoleyFocusList HoleOrItem a
 afterLast holeyFocusList =
@@ -478,7 +494,7 @@ toReverseList =
         List.reverse after_ ++ focusToFirst
 
 
-{-| Find the first element in the `HoleyFocusList` the matches a predicate, returning a
+{-| Find the first item in the `HoleyFocusList` the matches a predicate, returning a
 `HoleyFocusList` pointing at that thing if it was found. When provided with a `HoleyFocusList`
 pointing at a thing, that thing is also checked.
 
@@ -509,24 +525,27 @@ findForwardHelp predicate ((HoleyFocusList before_ focus after_) as holeyFocusLi
             goForward ()
 
 
-{-| Find the first element in the `HoleyFocusList` matching a predicate, moving backwards
+{-| Find the first item in the `HoleyFocusList` matching a predicate, moving backwards
 from the current position.
 -}
 findBackward : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
-findBackward predicate z =
-    findBackwardHelp predicate z
+findBackward shouldStop =
+    findBackwardHelp shouldStop
 
 
 findBackwardHelp : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
-findBackwardHelp predicate ((HoleyFocusList before_ focus after_) as holeyFocusList) =
+findBackwardHelp shouldStop holeyFocusList =
     let
+        (HoleyFocusList before_ focus after_) =
+            holeyFocusList
+
         goBack () =
             previous holeyFocusList
-                |> Maybe.andThen (findBackwardHelp predicate)
+                |> Maybe.andThen (findBackwardHelp shouldStop)
     in
     case focus of
         Jus cur ->
-            if predicate cur then
+            if shouldStop cur then
                 Just (HoleyFocusList before_ (just cur) after_)
 
             else
