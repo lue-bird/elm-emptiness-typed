@@ -1,5 +1,6 @@
 module ListTyped exposing
     ( ListTyped, MaybeEmpty, NotEmpty
+    , ListWithHeadType
     , empty, only, fromCons, fromTuple, fromList
     , head, length
     , cons, append, appendNonEmpty
@@ -13,6 +14,7 @@ module ListTyped exposing
 ## types
 
 @docs ListTyped, MaybeEmpty, NotEmpty
+@docs ListWithHeadType
 
 
 ## create
@@ -46,29 +48,86 @@ import List.LinearDirection as List
 import MaybeTyped exposing (MaybeTyped(..), just, nothing)
 
 
-{-| Describes an empty or non-empty list.
+{-| Describes an empty or non-empty list. **This is better than any `Nonempty`.**
 
 We can require a [`NotEmpty`](#NotEmpty) for example:
 
-    head : ListTyped NotEmpty a -> a
+    toNonempty : ListTyped NotEmpty a -> Nonempty a
 
-**This is better than any `Nonempty`.**
+This is equivalent to a [`MaybeTyped`](MaybeTyped) of a non-empty list tuple:
+
+    import MaybeTyped exposing (MaybeTyped(..))
+
+    ListTyped.empty
+    --> MaybeTyped.nothing
+
+    [ ... ]
+        |> ListTyped.fromList
+        |> MaybeTyped.map ListTyped.head
+    --: MaybeTyped MaybeNothing head_
+
+    toList : ListTyped emptyOrNot_ a -> List a
+    toList list =
+        case list of
+            JustTyped ( head_, tail_ ) ->
+                head_ :: tail_
+
+            NothingTyped _ ->
+                []
 
 -}
 type alias ListTyped emptyOrNot a =
-    MaybeTyped emptyOrNot ( a, List a )
+    ListWithHeadType a emptyOrNot a
 
 
-{-| `ListTyped NotEmpty a` can be used to require a non-empty list as an argument:
+{-| Describes an empty or non-empty list where the head type can be different from the tail element type.
 
-    head : ListTyped NotEmpty a -> a
+Use [`ListTyped`](#ListTyped) if you have matching head and tail element types.
+
+`ListWithHeadType` is the result of:
+
+  - [`empty`](#empty)
+  - [`only`](#only)
+  - [`fromCons`](#fromCons)
+  - [`fromTuple`](#fromTuple)
+  - [`cons`](#cons)
+  - [`mapHead`](#mapHead)
+
+This is equivalent to a [`MaybeTyped`](MaybeTyped) of a `( head, tail )` tuple:
+
+    import MaybeTyped exposing (MaybeTyped(..))
+
+    ListTyped.empty
+    --> MaybeTyped.nothing
+
+    MaybeTyped.map ListTyped.head
+    --: ListWithHeadType head emptyOrNot_ tailElement_
+    --: -> MaybeTyped MaybeNothing head
+
+    tail : ListWithHeadType head_ NotEmpty tailElement -> List tailElement
+    tail listNotEmpty =
+        case listNotEmpty of
+            JustTyped ( _, tailList ) ->
+                tailList
+
+            NothingTyped _ ->
+                []
+
+-}
+type alias ListWithHeadType head emptyOrNot tailElement =
+    MaybeTyped emptyOrNot ( head, List tailElement )
+
+
+{-| `NotEmpty` can be used to require a non-empty list as an argument:
+
+    head : ListWithHeadType head NotEmpty tailElement_ -> head
 
 -}
 type alias NotEmpty =
     MaybeTyped.Just { notEmpty : () }
 
 
-{-| `ListTyped MaybeEmpty a` marks lists that could be empty:
+{-| `MaybeEmpty` marks lists that could be empty:
 
     fromList : List a -> ListTyped MaybeEmpty a
     fromList list =
@@ -89,7 +148,7 @@ type alias MaybeEmpty =
 Equivalent to `MaybeTyped.nothing`.
 
 -}
-empty : ListTyped MaybeEmpty a_
+empty : ListWithHeadType head_ MaybeEmpty tailElement_
 empty =
     nothing
 
@@ -100,24 +159,24 @@ empty =
     --> ListTyped.empty |> ListTyped.cons ":)"
 
 -}
-only : a -> ListTyped notEmpty_ a
+only : head -> ListWithHeadType head notEmpty_ tailElement_
 only onlyElement =
     fromCons onlyElement []
 
 
-{-| Convert a non-empty list tuple `( a, List a )` to a `ListTyped notEmpty_ a`.
+{-| Convert a non-empty list tuple `( a, List b )` to a `ListWithHeadType a notEmpty_ b`.
 
 Equivalent to `MaybeTyped.just`.
 
 -}
-fromTuple : ( a, List a ) -> ListTyped notEmpty_ a
-fromTuple nonEmptyListAlias =
-    just nonEmptyListAlias
+fromTuple : ( head, List tailElement ) -> ListWithHeadType head notEmpty_ tailElement
+fromTuple headAndTailTuple =
+    just headAndTailTuple
 
 
-{-| Build a `ListTyped notEmpty_ a` from its head and tail.
+{-| Build a `notEmpty_` from its head and tail.
 -}
-fromCons : a -> List a -> ListTyped notEmpty_ a
+fromCons : head -> List tailElement -> ListWithHeadType head notEmpty_ tailElement
 fromCons head_ tail_ =
     fromTuple ( head_, tail_ )
 
@@ -158,9 +217,9 @@ fromList list_ =
     --> 3
 
 -}
-head : ListTyped NotEmpty a -> a
-head =
-    toTuple >> Tuple.first
+head : ListWithHeadType head NotEmpty tailElement_ -> head
+head notEmptyList =
+    notEmptyList |> toTuple |> Tuple.first
 
 
 {-| The element count in the `ListTyped`.
@@ -171,7 +230,7 @@ head =
     --> 2
 
 -}
-length : ListTyped emptyOrNot_ a_ -> Int
+length : ListWithHeadType head_ emptyOrNot_ tailElement_ -> Int
 length =
     \list ->
         case list of
@@ -191,11 +250,11 @@ length =
     ListTyped.fromCons 2 [ 3 ] |> ListTyped.cons 1
     --> ListTyped.fromCons 1 [ 2, 3 ]
 
-    ListTyped.empty |>  ListTyped.cons 1
+    ListTyped.empty |> ListTyped.cons 1
     --> ListTyped.only 1
 
 -}
-cons : a -> ListTyped emptyOrNot_ a -> ListTyped NotEmpty a
+cons : consed -> ListTyped emptyOrNot_ a -> ListWithHeadType consed NotEmpty a
 cons toPutBeforeAllOtherElements =
     \list ->
         case list of
@@ -266,7 +325,7 @@ append toAppend =
     ListTyped.fromCons 1 [ 2, 5, -3, 10 ]
         |> ListTyped.when (\x -> x < 5)
     --> ListTyped.fromCons 1 [ 2, -3 ]
-    --: ListTyped MaybeEmpty number
+    --: ListTyped MaybeEmpty number_
 
 -}
 when : (a -> Bool) -> ListTyped emptyOrNot_ a -> ListTyped MaybeEmpty a
@@ -320,7 +379,12 @@ map change =
     --> "evil"
 
 -}
-fold : LinearDirection -> (a -> b -> b) -> b -> ListTyped emptyOrNot_ a -> b
+fold :
+    LinearDirection
+    -> (a -> acc -> acc)
+    -> acc
+    -> ListTyped emptyOrNot_ a
+    -> acc
 fold direction reduce initial =
     toList
         >> List.fold direction reduce initial
@@ -336,12 +400,17 @@ where the initial result is the first value in the `ListTyped`.
     --> 543
 
 -}
-foldWith : LinearDirection -> (a -> a -> a) -> ListTyped NotEmpty a -> a
-foldWith direction reduce =
-    toTuple
-        >> (\( head_, tail_ ) ->
-                List.fold direction reduce head_ tail_
-           )
+foldWith :
+    LinearDirection
+    -> (tailElement -> acc -> acc)
+    -> ListWithHeadType acc NotEmpty tailElement
+    -> acc
+foldWith direction reduce listNotEmpty =
+    let
+        ( head_, tail_ ) =
+            toTuple listNotEmpty
+    in
+    List.fold direction reduce head_ tail_
 
 
 {-| Convert the `ListTyped` to a `List`.
@@ -362,11 +431,11 @@ toList =
                 []
 
 
-{-| Convert a `ListTyped notEmpty a` to a non-empty list tuple `( a, List a )`.
+{-| Convert a `NotEmpty` to a non-empty list tuple `( a, List a )`.
 
 Equivalent to `MaybeTyped.value`.
 
 -}
-toTuple : ListTyped NotEmpty a -> ( a, List a )
-toTuple typedList =
-    typedList |> MaybeTyped.value
+toTuple : ListWithHeadType head NotEmpty tailElement -> ( head, List tailElement )
+toTuple listNotEmpty =
+    listNotEmpty |> MaybeTyped.value
