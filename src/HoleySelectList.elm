@@ -5,6 +5,7 @@ module HoleySelectList exposing
     , next, previous, nextHole, previousHole, first, last, beforeFirst, afterLast, findForward, findBackward
     , mapCurrent, mapBefore, mapAfter, plug, remove, append, prepend, insertAfter, insertBefore
     , map, mapParts, toList
+    , branchableType
     )
 
 {-| Like a regular old list-zipper, except it can also focus on a hole
@@ -14,34 +15,39 @@ This means you can represent an empty list, or point between two items and plug
 that hole with a value.
 
 
-# types
+## types
 
 @docs HoleySelectList, Item, HoleOrItem
 
 
-# create
+## create
 
 @docs empty, only, currentAndAfter
 
 
-# scan
+## scan
 
 @docs current, before, after
 
 
-# navigate
+## navigate
 
 @docs next, previous, nextHole, previousHole, first, last, beforeFirst, afterLast, findForward, findBackward
 
 
-# modify
+## modify
 
 @docs mapCurrent, mapBefore, mapAfter, plug, remove, append, prepend, insertAfter, insertBefore
 
 
-# transform
+## transform
 
 @docs map, mapParts, toList
+
+
+## type-level
+
+@docs branchableType
 
 -}
 
@@ -608,3 +614,18 @@ mapParts conf (HoleySelectList before_ focus after_) =
         (List.map conf.before before_)
         (MaybeTyped.map conf.current focus)
         (List.map conf.after after_)
+
+
+
+--
+
+
+{-| When using a `HoleySelectList Item ...` argument,
+its type can't be unified with non-`Item` lists.
+
+Please read more at [`MaybeTyped.branchableType`](MaybeTyped#branchableType).
+
+-}
+branchableType : HoleySelectList Item a -> HoleySelectList item_ a
+branchableType (HoleySelectList before_ focus after_) =
+    HoleySelectList before_ (focus |> MaybeTyped.branchableType) after_
