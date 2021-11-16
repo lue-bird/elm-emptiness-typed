@@ -1,4 +1,4 @@
-module HoleySelectListTest exposing (emptyTest, nextTest, previousTest, singletonTest, zipperTest)
+module HoleyFocusListTest exposing (emptyTest, nextTest, previousTest, singletonTest, zipperTest)
 
 import Expect
 import HoleyFocusList exposing (HoleyFocusList, Item)
