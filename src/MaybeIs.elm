@@ -10,7 +10,7 @@ module MaybeIs exposing
     import MaybeIs exposing (just)
 
     [ just 1, just 7 ]
-        -- : List (MaybeIs just_ number_)
+        --: List (MaybeIs just_ number_)
         |> List.map MaybeIs.value
     --> [ 1, 7 ]
 
@@ -287,7 +287,7 @@ andThen tryIfSuccess =
             bList
 
         else
-            -- ↓ `NotEmpty` but we need `emptyOrNot`
+            --↓ `NotEmpty` but we need `emptyOrNot`
             aList
 
 to make both branches return `emptyOrNot`, we could use
