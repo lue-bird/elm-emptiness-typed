@@ -3,7 +3,8 @@ module ListIs exposing
     , ListWithHeadType
     , empty, only, fromCons, fromTuple, fromList
     , head, tail, length
-    , cons, append, appendNonEmpty
+    , cons
+    , append, appendNonEmpty, concat
     , when, whenJust
     , map, mapHead, mapTail, fold, foldWith, toList, toTuple
     )
@@ -29,7 +30,12 @@ module ListIs exposing
 
 ## modify
 
-@docs cons, append, appendNonEmpty
+@docs cons
+
+
+## glue
+
+@docs append, appendNonEmpty, concat
 
 
 ### filter
@@ -326,6 +332,50 @@ append toAppend =
 
             ( IsJust ( head_, tail_ ), _ ) ->
                 fromCons head_ (tail_ ++ toList toAppend)
+
+
+{-| Glue together a bunch of lists.
+
+    ListIs.fromCons
+        (ListIs.fromCons 0 [ 1 ])
+        [ ListIs.fromCons 10 [ 11 ]
+        , ListIs.empty
+        , ListIs.fromCons 20 [ 21, 22 ]
+        ]
+        |> ListIs.concat
+    --> ListIs.fromCons 0 [ 1, 10, 11, 20, 21, 22 ]
+
+For this to return a `ListIs notEmpty`, there must be a non-empty first list.
+
+-}
+concat :
+    ListWithHeadType
+        (ListIs emptyOrNot a)
+        emptyOrNot
+        (ListIs tailListsEmptyOrNot_ a)
+    -> ListIs emptyOrNot a
+concat listOfLists =
+    case listOfLists of
+        IsNothing canBeNothing ->
+            IsNothing canBeNothing
+
+        IsJust ( IsJust ( head_, firstListTail ), afterFirstList ) ->
+            fromCons head_
+                (firstListTail
+                    ++ (afterFirstList |> List.concatMap toList)
+                )
+
+        IsJust ( IsNothing canBeNothing, lists ) ->
+            case lists |> List.concatMap toList of
+                [] ->
+                    IsNothing canBeNothing
+
+                head_ :: tail__ ->
+                    fromCons head_ tail__
+
+
+
+--
 
 
 {-| Keep elements that satisfy the test.
