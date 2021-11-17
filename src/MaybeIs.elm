@@ -32,7 +32,7 @@ but we can build cool type-safe data structures with it:
 
     head : ListIs NotEmpty a -> a
 
-This is exactly how [`ListIs`] is implemented.
+This is exactly how [`ListIs`](ListIs) is implemented.
 
 
 ## types
