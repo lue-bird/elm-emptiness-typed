@@ -57,7 +57,7 @@ This is exactly how [`Lis`] is implemented.
 -}
 
 
-{-| `Maybe` with the ability to know at the type level whether it exists.
+{-| Like `Maybe` with type level information whether it exists.
 -}
 type Mayb justOrNothing a
     = Nothin justOrNothing
