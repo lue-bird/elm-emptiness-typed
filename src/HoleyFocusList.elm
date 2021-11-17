@@ -185,8 +185,8 @@ current =
 -}
 before : HoleyFocusList focus_ a -> List a
 before =
-    \(HoleyFocusList beforeCurrentUntilHead _ _) ->
-        List.reverse beforeCurrentUntilHead
+    \(HoleyFocusList beforeFocusUntilHead _ _) ->
+        List.reverse beforeFocusUntilHead
 
 
 {-| The items after the current focussed location in the `HoleyFocusList`.
@@ -204,8 +204,9 @@ before =
 
 -}
 after : HoleyFocusList focus_ a -> List a
-after (HoleyFocusList _ _ after_) =
-    after_
+after =
+    \(HoleyFocusList _ _ after_) ->
+        after_
 
 
 
@@ -246,22 +247,22 @@ If there is no `next` thing, the result is `Nothing`.
 
 -}
 next : HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
-next (HoleyFocusList before_ focus after_) =
+next (HoleyFocusList beforeFocusUntilHead focus after_) =
     case after_ of
         [] ->
             Nothing
 
         next_ :: afterNext ->
             let
-                newBefore =
+                newBeforeReversed =
                     case focus of
                         Nothin _ ->
-                            before_
+                            beforeFocusUntilHead
 
                         Jus oldCurrent ->
-                            oldCurrent :: before_
+                            oldCurrent :: beforeFocusUntilHead
             in
-            HoleyFocusList newBefore (just next_) afterNext
+            HoleyFocusList newBeforeReversed (just next_) afterNext
                 |> Just
 
 
@@ -285,10 +286,10 @@ next (HoleyFocusList before_ focus after_) =
 previous : HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
 previous holeyFocusList =
     let
-        (HoleyFocusList before_ _ _) =
+        (HoleyFocusList beforeFocusUntilHead _ _) =
             holeyFocusList
     in
-    case before_ of
+    case beforeFocusUntilHead of
         [] ->
             Nothing
 
@@ -320,10 +321,13 @@ lot of nothingness, so it's always there.
 nextHole : HoleyFocusList Item a -> HoleyFocusList HoleOrItem a
 nextHole holeyFocusList =
     let
-        (HoleyFocusList before_ _ after_) =
+        (HoleyFocusList beforeFocusUntilHead _ after_) =
             holeyFocusList
     in
-    HoleyFocusList (current holeyFocusList :: before_) nothing after_
+    HoleyFocusList
+        (current holeyFocusList :: beforeFocusUntilHead)
+        nothing
+        after_
 
 
 {-| Move the `HoleyFocusList` to the hole right before the current item. Feel free to plug
@@ -436,18 +440,23 @@ Insert multiple items using [`squeezeInBefore`](#squeezeInBefore).
 
 -}
 insertBefore : a -> HoleyFocusList focus a -> HoleyFocusList focus a
-insertBefore v (HoleyFocusList b c a) =
-    HoleyFocusList (v :: b) c a
+insertBefore itemToInsertBefore =
+    \(HoleyFocusList beforeFocusUntilHead focus after_) ->
+        HoleyFocusList
+            (itemToInsertBefore :: beforeFocusUntilHead)
+            focus
+            after_
 
 
 focusAndAfter : HoleyFocusList focus_ a -> List a
-focusAndAfter (HoleyFocusList _ focus after_) =
-    case focus of
-        Nothin _ ->
-            after_
+focusAndAfter =
+    \(HoleyFocusList _ focus after_) ->
+        case focus of
+            Nothin _ ->
+                after_
 
-        Jus current_ ->
-            current_ :: after_
+            Jus current_ ->
+                current_ :: after_
 
 
 {-| Append items directly after the focussed location in the `HoleyFocusList`.
@@ -490,9 +499,9 @@ squeezeInAfter toAppendDirectlyAfterFocus =
 -}
 squeezeInBefore : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
 squeezeInBefore toPrependDirectlyBeforeFocus =
-    \(HoleyFocusList before_ focus after_) ->
+    \(HoleyFocusList beforeFocusUntilHead focus after_) ->
         HoleyFocusList
-            (List.reverse toPrependDirectlyBeforeFocus ++ before_)
+            (List.reverse toPrependDirectlyBeforeFocus ++ beforeFocusUntilHead)
             focus
             after_
 
@@ -537,8 +546,12 @@ append itemsToAppend =
 
 -}
 prepend : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
-prepend xs (HoleyFocusList b c a) =
-    HoleyFocusList (b ++ List.reverse xs) c a
+prepend itemsToPrepend =
+    \(HoleyFocusList beforeFocusUntilHead focus after_) ->
+        HoleyFocusList
+            (beforeFocusUntilHead ++ List.reverse itemsToPrepend)
+            focus
+            after_
 
 
 {-| Focus the first item in the `HoleyFocusList`.
@@ -660,15 +673,15 @@ afterLast holeyFocusList =
 
 toReverseList : HoleyFocusList focus_ a -> List a
 toReverseList =
-    \(HoleyFocusList before_ focus after_) ->
+    \(HoleyFocusList beforeFocusUntilHead focus after_) ->
         let
             focusToFirst =
                 case focus of
                     Nothin _ ->
-                        before_
+                        beforeFocusUntilHead
 
                     Jus current_ ->
-                        current_ :: before_
+                        current_ :: beforeFocusUntilHead
         in
         List.reverse after_ ++ focusToFirst
 
@@ -692,8 +705,11 @@ findForward predicate z =
 
 
 findForwardHelp : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
-findForwardHelp predicate ((HoleyFocusList before_ focus after_) as holeyFocusList) =
+findForwardHelp predicate holeyFocusList =
     let
+        (HoleyFocusList before_ focus after_) =
+            holeyFocusList
+
         goForward () =
             next holeyFocusList
                 |> Maybe.andThen (findForwardHelp predicate)
@@ -760,8 +776,12 @@ findBackwardHelp shouldStop holeyFocusList =
 
 -}
 map : (a -> b) -> HoleyFocusList focus a -> HoleyFocusList focus b
-map f (HoleyFocusList b c a) =
-    HoleyFocusList (List.map f b) (Mayb.map f c) (List.map f a)
+map changeItem =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList
+            (List.map changeItem before_)
+            (Mayb.map changeItem focus)
+            (List.map changeItem after_)
 
 
 {-| If an item is focussed in the `HoleyFocusList`, apply a function to it.
@@ -777,8 +797,9 @@ map f (HoleyFocusList b c a) =
 
 -}
 mapCurrent : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
-mapCurrent f (HoleyFocusList b c a) =
-    HoleyFocusList b (Mayb.map f c) a
+mapCurrent updateCurrent =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList before_ (Mayb.map updateCurrent focus) after_
 
 
 {-| Execute a function on all the things that came before the current location.
@@ -793,8 +814,9 @@ mapCurrent f (HoleyFocusList b c a) =
 
 -}
 mapBefore : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
-mapBefore f (HoleyFocusList b c a) =
-    HoleyFocusList (List.map f b) c a
+mapBefore updateItemBefore =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList (List.map updateItemBefore before_) focus after_
 
 
 {-| Execute a function on all the things that come after the current location.
@@ -809,8 +831,9 @@ mapBefore f (HoleyFocusList b c a) =
 
 -}
 mapAfter : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
-mapAfter f (HoleyFocusList b c a) =
-    HoleyFocusList b c (List.map f a)
+mapAfter updateItemAfter =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList before_ focus (List.map updateItemAfter after_)
 
 
 {-| Execute a triplet of functions on the different parts of a `HoleyFocusList` - what
@@ -842,11 +865,12 @@ mapParts :
     }
     -> HoleyFocusList focus a
     -> HoleyFocusList focus b
-mapParts conf (HoleyFocusList before_ focus after_) =
-    HoleyFocusList
-        (List.map conf.before before_)
-        (Mayb.map conf.current focus)
-        (List.map conf.after after_)
+mapParts changePart =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList
+            (List.map changePart.before before_)
+            (Mayb.map changePart.current focus)
+            (List.map changePart.after after_)
 
 
 {-| Flattens the `HoleyFocusList` into a list:
@@ -923,5 +947,6 @@ Please read more at [`Mayb.branchableType`](Mayb#branchableType).
 
 -}
 branchableType : HoleyFocusList Item a -> HoleyFocusList item_ a
-branchableType (HoleyFocusList before_ focus after_) =
-    HoleyFocusList before_ (focus |> Mayb.branchableType) after_
+branchableType =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList before_ (focus |> Mayb.branchableType) after_
