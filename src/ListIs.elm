@@ -6,7 +6,7 @@ module ListIs exposing
     , cons
     , append, appendNonEmpty, concat
     , when, whenJust
-    , map, mapHead, mapTail, fold, foldWith, toList, toTuple
+    , map, map2, mapHead, mapTail, fold, foldWith, toList, toTuple
     )
 
 {-|
@@ -45,7 +45,7 @@ module ListIs exposing
 
 ## transform
 
-@docs map, mapHead, mapTail, fold, foldWith, toList, toTuple
+@docs map, map2, mapHead, mapTail, fold, foldWith, toList, toTuple
 
 -}
 
@@ -423,6 +423,31 @@ map : (a -> b) -> ListIs emptyOrNot a -> ListIs emptyOrNot b
 map changeElement =
     MaybeIs.map
         (Tuple.mapBoth changeElement (List.map changeElement))
+
+
+{-| Combine 2 `ListIs`s with a given function.
+If one list is longer, its extra elements are dropped.
+
+    ListIs.map2 (+)
+        (ListIs.fromCons 1 [ 2, 3 ])
+        (ListIs.fromCons 4 [ 5, 6, 7 ])
+    --> List.fromCons 5 [ 7, 9 ]
+
+-}
+map2 :
+    (a -> b -> combined)
+    -> ListIs emptyOrNot a
+    -> ListIs emptyOrNot b
+    -> ListIs emptyOrNot combined
+map2 combineAB aList bList =
+    MaybeIs.map2
+        (\( aHead, aTail ) ( bHead, bTail ) ->
+            ( combineAB aHead bHead
+            , List.map2 combineAB aTail bTail
+            )
+        )
+        aList
+        bList
 
 
 {-| Apply a function to every element of its tail.
