@@ -1,9 +1,9 @@
 ## changes from holey-zipper
 
-- added module `Mayb`
+- added module `MaybeIs`
 
 - renamed module `List.Holey.Zipper` to `HoleyFocusList`
-    - switched to type-safe implementation using `Mayb`
+    - switched to type-safe implementation using `MaybeIs`
         - removed type `Hole`
         - added type `HoleOrItem`
     - removed `zipper`

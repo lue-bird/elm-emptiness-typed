@@ -1,5 +1,5 @@
-module Mayb exposing
-    ( Mayb(..), Just, Nothingable, CanBeNothing(..)
+module MaybeIs exposing
+    ( MaybeIs(..), Just, Nothingable, CanBeNothing(..)
     , just, nothing, fromMaybe
     , map, map2, toMaybe, value, andThen, withFallback
     , branchableType
@@ -7,24 +7,24 @@ module Mayb exposing
 
 {-| `Maybe` with the ability to know at the type level whether it exists.
 
-    import Mayb exposing (just)
+    import MaybeIs exposing (just)
 
     [ just 1, just 7 ]
-        -- : List (Mayb just_ number_)
-        |> List.map Mayb.value
+        -- : List (MaybeIs just_ number_)
+        |> List.map MaybeIs.value
     --> [ 1, 7 ]
 
-I don't think `Mayb` will proof any useful just by itself,
+I don't think `MaybeIs` will proof any useful just by itself,
 but we can build cool type-safe data structures with it:
 
     type alias Lis emptyOrNot a =
-        Mayb emptyOrNot ( a, List a )
+        MaybeIs emptyOrNot ( a, List a )
 
     type alias NotEmpty =
-        Mayb.Just { notEmpty : () }
+        MaybeIs.Just { notEmpty : () }
 
     type alias Emptiable =
-        Mayb.Nothingable { emptiable : () }
+        MaybeIs.Nothingable { emptiable : () }
 
     empty : Lis Emptiable a_
 
@@ -37,7 +37,7 @@ This is exactly how [`Lis`] is implemented.
 
 ## types
 
-@docs Mayb, Just, Nothingable, CanBeNothing
+@docs MaybeIs, Just, Nothingable, CanBeNothing
 
 
 ## create
@@ -59,7 +59,7 @@ This is exactly how [`Lis`] is implemented.
 
 {-| Like `Maybe` with type level information whether it exists.
 -}
-type Mayb justOrNothing a
+type MaybeIs justOrNothing a
     = Nothin justOrNothing
     | Jus a
 
@@ -69,13 +69,13 @@ type Mayb justOrNothing a
   - [`Just`](#Just): that value is `Never`
   - [`Nothingable`](#Nothingable): that value is `()`
 
-It also has a simple type tag to make `Mayb` values distinct:
+It also has a simple type tag to make `MaybeIs` values distinct:
 
     type alias NotEmpty =
-        Mayb.Just { notEmpty : () }
+        MaybeIs.Just { notEmpty : () }
 
     type alias ItemFocussed =
-        Mayb.Just { itemFocussed : () }
+        MaybeIs.Just { itemFocussed : () }
 
 Remember to update the tag after renaming an alias.
 
@@ -84,7 +84,7 @@ type CanBeNothing valueIfNothing tag
     = CanBeNothing valueIfNothing
 
 
-{-| `Mayb (Nothingable tag) a`: The value could exist, could also not exist.
+{-| `MaybeIs (Nothingable tag) a`: The value could exist, could also not exist.
 
 See [`CanBeNothing`](#CanBeNothing).
 
@@ -93,13 +93,13 @@ type alias Nothingable tag =
     CanBeNothing () tag
 
 
-{-| Only allow `Mayb`s that certainly exist as arguments.
+{-| Only allow `MaybeIs`s that certainly exist as arguments.
 
-    import Mayb exposing (Just, Mayb)
+    import MaybeIs exposing (Just, MaybeIs)
 
-    head : Mayb (Just tag_) ( a, List a ) -> a
+    head : MaybeIs (Just tag_) ( a, List a ) -> a
     head =
-        Mayb.value >> Tuple.first
+        MaybeIs.value >> Tuple.first
 
 See [`CanBeNothing`](#CanBeNothing) and [`Lis`](Lis).
 
@@ -110,25 +110,25 @@ type alias Just tag =
 
 {-| Nothing here.
 -}
-nothing : Mayb (Nothingable tag_) a_
+nothing : MaybeIs (Nothingable tag_) a_
 nothing =
     Nothin (CanBeNothing ())
 
 
-{-| A `Mayb` that certainly exists.
+{-| A `MaybeIs` that certainly exists.
 
-    Mayb.just "you" |> Mayb.value
+    MaybeIs.just "you" |> MaybeIs.value
     --> "you"
 
 -}
-just : value -> Mayb just_ value
+just : value -> MaybeIs just_ value
 just value_ =
     Jus value_
 
 
-{-| Convert a `Maybe` to a `Mayb`.
+{-| Convert a `Maybe` to a `MaybeIs`.
 -}
-fromMaybe : Maybe a -> Mayb (Nothingable tag_) a
+fromMaybe : Maybe a -> MaybeIs (Nothingable tag_) a
 fromMaybe coreMaybe =
     case coreMaybe of
         Just val ->
@@ -142,9 +142,9 @@ fromMaybe coreMaybe =
 --
 
 
-{-| Convert a `Mayb` to a `Maybe`.
+{-| Convert a `MaybeIs` to a `Maybe`.
 -}
-toMaybe : Mayb justOrNothing_ a -> Maybe a
+toMaybe : MaybeIs justOrNothing_ a -> Maybe a
 toMaybe =
     \maybe ->
         case maybe of
@@ -155,18 +155,18 @@ toMaybe =
                 Nothing
 
 
-{-| Safely extracts the `value` from a `Mayb Just value`.
+{-| Safely extracts the `value` from a `MaybeIs Just value`.
 
-    import Mayb exposing (just)
+    import MaybeIs exposing (just)
 
     just (just (just "you"))
-        |> Mayb.value
-        |> Mayb.value
-        |> Mayb.value
+        |> MaybeIs.value
+        |> MaybeIs.value
+        |> MaybeIs.value
     --> "you"
 
 -}
-value : Mayb (Just tag_) value -> value
+value : MaybeIs (Just tag_) value -> value
 value definitelyJust =
     case definitelyJust of
         Jus val ->
@@ -176,22 +176,22 @@ value definitelyJust =
             never canBeNothing
 
 
-{-| Lazily use a fallback value if the `Mayb` is [`nothing`](#nothing).
+{-| Lazily use a fallback value if the `MaybeIs` is [`nothing`](#nothing).
 
     import Dict
 
     Dict.empty
         |> Dict.get "Tom"
-        |> Mayb.fromMaybe
-        |> Mayb.withFallback (\() -> "unknown")
+        |> MaybeIs.fromMaybe
+        |> MaybeIs.withFallback (\() -> "unknown")
     --> "unknown"
 
-Hint: `Mayb.withFallback never` is equivalent to `Mayb.value`.
+Hint: `MaybeIs.withFallback never` is equivalent to `MaybeIs.value`.
 
 -}
 withFallback :
     (canBeNothing -> value)
-    -> Mayb (CanBeNothing canBeNothing tag_) value
+    -> MaybeIs (CanBeNothing canBeNothing tag_) value
     -> value
 withFallback lazyFallback =
     \maybe ->
@@ -203,15 +203,15 @@ withFallback lazyFallback =
                 lazyFallback canBeNothing
 
 
-{-| Transform the value in the `Mayb` using a given function:
+{-| Transform the value in the `MaybeIs` using a given function:
 
-    import Mayb exposing (just, nothing)
+    import MaybeIs exposing (just, nothing)
 
-    Mayb.map abs (just -3) --> just 3
-    Mayb.map abs nothing --> nothing
+    MaybeIs.map abs (just -3) --> just 3
+    MaybeIs.map abs nothing --> nothing
 
 -}
-map : (a -> b) -> Mayb justOrNothing a -> Mayb justOrNothing b
+map : (a -> b) -> MaybeIs justOrNothing a -> MaybeIs justOrNothing b
 map change =
     \maybe ->
         case maybe of
@@ -224,18 +224,18 @@ map change =
 
 {-| If all the arguments exist, combine them using a given function.
 
-    import Mayb exposing (just, nothing)
+    import MaybeIs exposing (just, nothing)
 
-    Mayb.map2 (+) (just 3) (just 4) --> just 7
-    Mayb.map2 (+) (just 3) nothing --> nothing
-    Mayb.map2 (+) nothing (just 4) --> nothing
+    MaybeIs.map2 (+) (just 3) (just 4) --> just 7
+    MaybeIs.map2 (+) (just 3) nothing --> nothing
+    MaybeIs.map2 (+) nothing (just 4) --> nothing
 
 -}
 map2 :
     (a -> b -> combined)
-    -> Mayb justOrNothing a
-    -> Mayb justOrNothing b
-    -> Mayb justOrNothing combined
+    -> MaybeIs justOrNothing a
+    -> MaybeIs justOrNothing b
+    -> MaybeIs justOrNothing combined
 map2 combine aMaybe bMaybe =
     case ( aMaybe, bMaybe ) of
         ( Jus a, Jus b ) ->
@@ -251,17 +251,17 @@ map2 combine aMaybe bMaybe =
 {-| Chain together many computations that may fail.
 
     maybeString
-        |> Mayb.andThen parse
-        |> Mayb.andThen extraValidation
+        |> MaybeIs.andThen parse
+        |> MaybeIs.andThen extraValidation
 
-    parse : String -> Mayb Nothingable Parsed
-    extraValidation : Parsed -> Mayb Nothingable Validated
+    parse : String -> MaybeIs Nothingable Parsed
+    extraValidation : Parsed -> MaybeIs Nothingable Validated
 
 -}
 andThen :
-    (a -> Mayb justOrNothing b)
-    -> Mayb justOrNothing a
-    -> Mayb justOrNothing b
+    (a -> MaybeIs justOrNothing b)
+    -> MaybeIs justOrNothing a
+    -> MaybeIs justOrNothing b
 andThen tryIfSuccess =
     \maybe ->
         case maybe of
@@ -298,13 +298,13 @@ to make both branches return `emptyOrNot`, we could use
 also known as: necessary code that nobody will understand.
 
     else
-        aList |> Mayb.branchableType
+        aList |> MaybeIs.branchableType
 
 is a bit better.
 
 💙 Found a better name? → open an issue.
 
 -}
-branchableType : Mayb (Just tag_) a -> Mayb just_ a
+branchableType : MaybeIs (Just tag_) a -> MaybeIs just_ a
 branchableType =
     value >> just

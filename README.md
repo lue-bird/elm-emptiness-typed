@@ -34,7 +34,7 @@ HoleyFocusList.empty           -- HoleyFocusList HoleOrItem a_
 --> [ 5, 1, 2, 3 ]
 ```
 
-## `Mayb`
+## `MaybeIs`
 
 `Maybe` + type information: does it exist?
 
