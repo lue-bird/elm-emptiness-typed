@@ -14,11 +14,11 @@ module HoleyFocusList exposing
     , branchableType
     )
 
-{-| Like a regular old list-zipper, except it can also focus on a hole
-_between_ items.
+{-| A list zipper which can also focus on a hole _between_ items.
 
-This means you can represent an empty list, or point between two items and plug
-that hole with a value.
+1.  🔎 focus on a hole between two items
+2.  🔌 plug that hole with a value
+3.  💰 profit
 
 
 ## types
@@ -73,8 +73,10 @@ import Mayb exposing (CanBeNothing(..), Mayb(..), just, nothing)
 
 {-| Represents a special kind of list with items of type `a`.
 
-If the type `focus` is [`Item`](#Item), an item is focussed.
-If not, you could be looking at a hole between items.
+Is the type `focus`
+
+  - [`Item`](#Item): 🍍 🍓 <🍊> 🍉 🍇
+  - [`HoleOrItem`](#HoleOrItem): 🍍 🍓 <?> 🍊 🍉 🍇 → you could also be looking at a hole between items
 
 -}
 type HoleyFocusList focus a
@@ -82,22 +84,28 @@ type HoleyFocusList focus a
 
 
 {-| A `HoleyFocusList Item a` is focussed on an element of type `a`.
+
+    🍍 🍓 <🍊> 🍉 🍇
+
 -}
 type alias Item =
     Mayb.Just { item : () }
 
 
-{-| A `HoleyFocusList HoleOrItem a` could also be focussed on a hole between `a`s.
+{-| A `HoleyFocusList HoleOrItem a` could be focussed on a hole between `a`s.
 
 ... Heh.
+
+    🍍 🍓 <?> 🍊 🍉 🍇
 
 -}
 type alias HoleOrItem =
     Mayb.Nothingable { holeOrItem : () }
 
 
-{-| An empty `HoleyFocusList` focussed on a hole with nothing before it
-and after it. It's the loneliest of all `HoleyFocusList`s.
+{-| An empty `HoleyFocusList` focussed on a hole with nothing before
+and after it.
+It's the loneliest of all `HoleyFocusList`s.
 
     import Lis
 
@@ -112,6 +120,10 @@ empty =
 
 
 {-| A `HoleyFocusList` with a single focussed item in it, nothing before and after it.
+
+```monospace
+🍊  ->  <🍊>
+```
 
     import Lis
 
@@ -135,6 +147,10 @@ only current_ =
 
 {-| The current focussed item in the `HoleyFocusList`.
 
+```monospace
+🍍 🍓 <🍊> 🍉 🍇  ->  🍊
+```
+
     HoleyFocusList.only "hi there"
         |> HoleyFocusList.current
     --> "hi there"
@@ -147,11 +163,17 @@ only current_ =
 
 -}
 current : HoleyFocusList Item a -> a
-current (HoleyFocusList _ focus _) =
-    focus |> Mayb.value
+current =
+    \(HoleyFocusList _ focus _) ->
+        focus |> Mayb.value
 
 
-{-| Everything that's before the location of the focus in the `HoleyFocusList`.
+{-| The items before the location of the focus in the `HoleyFocusList`.
+
+```monospace
+🍍 🍓 <🍊> 🍉 🍇
+🢓🢓🢓🢓🢓🢓
+```
 
     HoleyFocusList.only 0
         |> HoleyFocusList.append [ 1, 2, 3 ]
@@ -167,7 +189,12 @@ before =
         List.reverse beforeCurrentUntilHead
 
 
-{-| Conversely, list the things that come after the current location.
+{-| The items after the current focussed location in the `HoleyFocusList`.
+
+```monospace
+🍍 🍓 <🍊> 🍉 🍇
+           🢓🢓🢓🢓🢓🢓
+```
 
     HoleyFocusList.only 0
         |> HoleyFocusList.append [ 1, 2, 3 ]
@@ -185,44 +212,11 @@ after (HoleyFocusList _ _ after_) =
 --
 
 
-{-| Append items directly after the focussed location in the `HoleyFocusList`.
+{-| Move the focus of the `HoleyFocusList` to the next item, if there is one.
 
-    import Lis
-
-    HoleyFocusList.only 0
-        |> HoleyFocusList.squeezeInAfter [ 4, 5 ]
-        |> HoleyFocusList.squeezeInAfter [ 1, 2, 3 ]
-        |> HoleyFocusList.joinParts
-    --> Lis.fromCons 0 [ 1, 2, 3, 4, 5 ]
-
--}
-squeezeInAfter : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
-squeezeInAfter toAppendDirectlyAfterFocus =
-    \(HoleyFocusList before_ focus after_) ->
-        HoleyFocusList before_ focus (toAppendDirectlyAfterFocus ++ after_)
-
-
-{-| Prepend items directly before the focussed location in the `HoleyFocusList`.
-
-    import Lis
-
-    HoleyFocusList.only 0
-        |> HoleyFocusList.squeezeInBefore [ -5, -4 ]
-        |> HoleyFocusList.squeezeInBefore [ -3, -2, -1 ]
-        |> HoleyFocusList.joinParts
-    --> Lis.fromCons -5 [ -4, -3, -2, -1, 0 ]
-
--}
-squeezeInBefore : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
-squeezeInBefore toPrependDirectlyBeforeFocus =
-    \(HoleyFocusList before_ focus after_) ->
-        HoleyFocusList
-            (List.reverse toPrependDirectlyBeforeFocus ++ before_)
-            focus
-            after_
-
-
-{-| Move the `HoleyFocusList` to the next item, if there is one.
+```monospace
+<🍊> 🍉 🍇  ->  🍊 <🍉> 🍇
+```
 
     HoleyFocusList.only 0
         |> HoleyFocusList.append [ 1, 2, 3 ]
@@ -271,7 +265,11 @@ next (HoleyFocusList before_ focus after_) =
                 |> Just
 
 
-{-| Move the `HoleyFocusList` to the previous item, if there is one.
+{-| Move the focus of the `HoleyFocusList` to the previous item, if there is one.
+
+```monospace
+🍍 <🍊> 🍉  ->  <🍍> 🍊 🍉
+```
 
     HoleyFocusList.empty |> HoleyFocusList.previous
     --> Nothing
@@ -305,6 +303,10 @@ previous holeyFocusList =
 {-| Move the `HoleyFocusList` to the hole right after the current item. A hole is a whole
 lot of nothingness, so it's always there.
 
+```monospace
+🍍 <🍊> 🍉  ->  🍍 🍊 <> 🍉
+```
+
     import Lis
 
     HoleyFocusList.only "hello"
@@ -327,6 +329,10 @@ nextHole holeyFocusList =
 {-| Move the `HoleyFocusList` to the hole right before the current item. Feel free to plug
 that hole right up!
 
+```monospace
+🍍 <🍊> 🍉  ->  🍍 <> 🍊 🍉
+```
+
     import Lis
 
     HoleyFocusList.only "world"
@@ -345,7 +351,16 @@ previousHole holeyFocusList =
     HoleyFocusList before_ nothing (current holeyFocusList :: after_)
 
 
+
+--
+
+
 {-| Fill in or replace the focussed thing in the `HoleyFocusList`.
+
+```monospace
+       🍒
+🍍 🍓 <🡇> 🍉 🍇
+```
 
     import Lis
 
@@ -360,6 +375,10 @@ plug newCurrent =
 
 
 {-| Punch a hole into the `HoleyFocusList` by removing the focussed thing.
+
+```monospace
+🍓 <?> 🍉  ->  🍓 <> 🍉
+```
 
     HoleyFocusList.only "hello"
         |> HoleyFocusList.append [ "holey", "world" ]
@@ -376,6 +395,11 @@ remove =
 
 
 {-| Insert an item after the focussed location.
+
+```monospace
+           🍒
+🍍 🍓 <🍊> ↓ 🍉 🍇
+```
 
     import Lis
 
@@ -395,6 +419,11 @@ insertAfter toInsertAfterFocus =
 
 
 {-| Insert an item before the focussed location.
+
+```monospace
+      🍒
+🍍 🍓 ↓ <🍊> 🍉 🍇
+```
 
     import Lis
 
@@ -421,7 +450,59 @@ focusAndAfter (HoleyFocusList _ focus after_) =
             current_ :: after_
 
 
+{-| Append items directly after the focussed location in the `HoleyFocusList`.
+
+```monospace
+           🍒🍋
+🍍 🍓 <🍊> \↓/ 🍉 🍇
+```
+
+    import Lis
+
+    HoleyFocusList.only 0
+        |> HoleyFocusList.squeezeInAfter [ 4, 5 ]
+        |> HoleyFocusList.squeezeInAfter [ 1, 2, 3 ]
+        |> HoleyFocusList.joinParts
+    --> Lis.fromCons 0 [ 1, 2, 3, 4, 5 ]
+
+-}
+squeezeInAfter : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
+squeezeInAfter toAppendDirectlyAfterFocus =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList before_ focus (toAppendDirectlyAfterFocus ++ after_)
+
+
+{-| Prepend items directly before the focussed location in the `HoleyFocusList`.
+
+```monospace
+      🍒🍋
+🍍 🍓 \↓/ <🍊> 🍉 🍇
+```
+
+    import Lis
+
+    HoleyFocusList.only 0
+        |> HoleyFocusList.squeezeInBefore [ -5, -4 ]
+        |> HoleyFocusList.squeezeInBefore [ -3, -2, -1 ]
+        |> HoleyFocusList.joinParts
+    --> Lis.fromCons -5 [ -4, -3, -2, -1, 0 ]
+
+-}
+squeezeInBefore : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
+squeezeInBefore toPrependDirectlyBeforeFocus =
+    \(HoleyFocusList before_ focus after_) ->
+        HoleyFocusList
+            (List.reverse toPrependDirectlyBeforeFocus ++ before_)
+            focus
+            after_
+
+
 {-| Put items to the end of the `HoleyFocusList`. After anything else.
+
+```monospace
+                 🍒🍋
+🍍 🍓 <🍊> 🍉 🍇 ↓/
+```
 
     import Lis
 
@@ -440,6 +521,11 @@ append itemsToAppend =
 
 {-| Put items to the beginning of the `HoleyFocusList`. Before anything else.
 
+```monospace
+🍒🍋
+ \↓ 🍍 🍓 <🍊> 🍉 🍇
+```
+
     import Lis
 
     HoleyFocusList.only 1
@@ -456,6 +542,10 @@ prepend xs (HoleyFocusList b c a) =
 
 
 {-| Focus the first item in the `HoleyFocusList`.
+
+```monospace
+🍍 🍓 <🍊> 🍉  ->  <🍍> 🍓 🍊 🍉
+```
 
     HoleyFocusList.only 1
         |> HoleyFocusList.append [ 2, 3, 4 ]
@@ -478,6 +568,10 @@ first holeyFocusList =
 
 
 {-| Focus the last item in the `HoleyFocusList`.
+
+```monospace
+🍓 <🍊> 🍉 🍇  ->  🍓 🍊 🍉 <🍇>
+```
 
     HoleyFocusList.only 1
         |> HoleyFocusList.append [ 2, 3, 4 ]
@@ -522,6 +616,10 @@ last =
 {-| Focus the hole before the first item.
 Remember that holes surround everything!
 
+```monospace
+🍍 🍓 <🍊> 🍉  ->  <> 🍍 🍓 🍊 🍉
+```
+
     import Lis
 
     HoleyFocusList.only 1                 -- <1>
@@ -540,6 +638,10 @@ beforeFirst holeyFocusList =
 
 
 {-| Focus the hole after the end of the `HoleyFocusList`. Into the nothingness.
+
+```monospace
+🍍 🍓 <🍊> 🍉  ->  🍍 🍓 🍊 🍉 <>
+```
 
     import Lis
 
