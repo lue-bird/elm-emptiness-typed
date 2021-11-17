@@ -11,7 +11,7 @@ module HoleyFocusList exposing
     , insertAfter, insertBefore
     , squeezeInBefore, squeezeInAfter
     , map, mapParts, joinParts, toList
-    , branchableType
+    , focussesItem, branchableType
     )
 
 {-| A list zipper which can also focus on a hole _between_ items.
@@ -63,7 +63,7 @@ module HoleyFocusList exposing
 
 ## type-level
 
-@docs branchableType
+@docs focussesItem, branchableType
 
 -}
 
@@ -73,10 +73,16 @@ import MaybeIs exposing (CanBeNothing(..), MaybeIs(..), just, nothing)
 
 {-| Represents a special kind of list with items of type `a`.
 
-Is the type `focus`
+The type `focus` can be
 
-  - [`Item`](#Item): 🍍 🍓 <🍊> 🍉 🍇
-  - [`HoleOrItem`](#HoleOrItem): 🍍 🍓 <?> 🍊 🍉 🍇 → you could also be looking at a hole between items
+  - [`Item`](#Item): `🍍 🍓 <🍊> 🍉 🍇`
+
+  - [`HoleOrItem`](#HoleOrItem): `🍍 🍓 <?> 🍉 🍇`
+
+    `<?>` means both are possible:
+
+      - `🍍 🍓 <> 🍉 🍇`: a hole between items
+      - `🍍 🍓 <🍊> 🍉 🍇`
 
 -}
 type HoleyFocusList focus a
@@ -85,7 +91,9 @@ type HoleyFocusList focus a
 
 {-| A `HoleyFocusList Item a` is focussed on an element of type `a`.
 
-    🍍 🍓 <🍊> 🍉 🍇
+```monospace
+🍍 🍓 <🍊> 🍉 🍇
+```
 
 -}
 type alias Item =
@@ -96,7 +104,14 @@ type alias Item =
 
 ... Heh.
 
-    🍍 🍓 <?> 🍊 🍉 🍇
+```monospace
+🍍 🍓 <?> 🍊 🍉 🍇
+```
+
+`<?>` means both are possible:
+
+    - `🍍 🍓 <> 🍉 🍇`: a hole between items
+    - `🍍 🍓 <🍊> 🍉 🍇`
 
 -}
 type alias HoleOrItem =
@@ -106,6 +121,10 @@ type alias HoleOrItem =
 {-| An empty `HoleyFocusList` focussed on a hole with nothing before
 and after it.
 It's the loneliest of all `HoleyFocusList`s.
+
+```monospace
+<>
+```
 
     import ListIs
 
@@ -122,7 +141,7 @@ empty =
 {-| A `HoleyFocusList` with a single focussed item in it, nothing before and after it.
 
 ```monospace
-🍊  ->  <🍊>
+<🍊>
 ```
 
     import ListIs
@@ -171,8 +190,7 @@ current =
 {-| The items before the location of the focus in the `HoleyFocusList`.
 
 ```monospace
-🍍 🍓 <🍊> 🍉 🍇
-🢓🢓🢓🢓🢓🢓
+🍍 🍓) <🍊> 🍉 🍇
 ```
 
     HoleyFocusList.only 0
@@ -192,8 +210,7 @@ before =
 {-| The items after the current focussed location in the `HoleyFocusList`.
 
 ```monospace
-🍍 🍓 <🍊> 🍉 🍇
-           🢓🢓🢓🢓🢓🢓
+🍍 🍓 <🍊> (🍉 🍇
 ```
 
     HoleyFocusList.only 0
@@ -943,6 +960,33 @@ joinParts =
 
 
 --
+
+
+{-| Find out if the current focussed thing is an item.
+
+    HoleyFocusList.only 3
+        |> HoleyFocusList.append [ 2, 1 ]
+        |> HoleyFocusList.nextHole
+        |> HoleyFocusList.focussesItem
+    --> MaybeIs.nothing
+
+-}
+focussesItem :
+    HoleyFocusList (CanBeNothing valueIfNothing focusTag_) a
+    -> MaybeIs (CanBeNothing valueIfNothing emptyOrNotTag_) (HoleyFocusList item_ a)
+focussesItem =
+    \holeyFocusList ->
+        let
+            (HoleyFocusList before_ focus after_) =
+                holeyFocusList
+        in
+        case focus of
+            IsNothing (CanBeNothing canBeNothing) ->
+                IsNothing (CanBeNothing canBeNothing)
+
+            IsJust current_ ->
+                HoleyFocusList before_ (just current_) after_
+                    |> just
 
 
 {-| When using a `HoleyFocusList Item ...` argument,
