@@ -61,7 +61,7 @@ This is exactly how [`ListIs`] is implemented.
 -}
 type MaybeIs justOrNothing a
     = IsNothing justOrNothing
-    | Jus a
+    | IsJust a
 
 
 {-| The value attached to a `IsNothing`:
@@ -123,7 +123,7 @@ nothing =
 -}
 just : value -> MaybeIs just_ value
 just value_ =
-    Jus value_
+    IsJust value_
 
 
 {-| Convert a `Maybe` to a `MaybeIs`.
@@ -148,7 +148,7 @@ toMaybe : MaybeIs justOrNothing_ a -> Maybe a
 toMaybe =
     \maybe ->
         case maybe of
-            Jus val ->
+            IsJust val ->
                 Just val
 
             IsNothing _ ->
@@ -169,7 +169,7 @@ toMaybe =
 value : MaybeIs (Just tag_) value -> value
 value definitelyJust =
     case definitelyJust of
-        Jus val ->
+        IsJust val ->
             val
 
         IsNothing (CanBeNothing canBeNothing) ->
@@ -196,7 +196,7 @@ withFallback :
 withFallback lazyFallback =
     \maybe ->
         case maybe of
-            Jus val ->
+            IsJust val ->
                 val
 
             IsNothing (CanBeNothing canBeNothing) ->
@@ -215,8 +215,8 @@ map : (a -> b) -> MaybeIs justOrNothing a -> MaybeIs justOrNothing b
 map change =
     \maybe ->
         case maybe of
-            Jus val ->
-                change val |> Jus
+            IsJust val ->
+                change val |> IsJust
 
             IsNothing canBeNothing ->
                 IsNothing canBeNothing
@@ -238,8 +238,8 @@ map2 :
     -> MaybeIs justOrNothing combined
 map2 combine aMaybe bMaybe =
     case ( aMaybe, bMaybe ) of
-        ( Jus a, Jus b ) ->
-            combine a b |> Jus
+        ( IsJust a, IsJust b ) ->
+            combine a b |> IsJust
 
         ( IsNothing canBeNothing, _ ) ->
             IsNothing canBeNothing
@@ -265,7 +265,7 @@ andThen :
 andThen tryIfSuccess =
     \maybe ->
         case maybe of
-            Jus val ->
+            IsJust val ->
                 tryIfSuccess val
 
             IsNothing canBeNothing ->

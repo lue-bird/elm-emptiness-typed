@@ -69,7 +69,7 @@ This is equivalent to a [`MaybeIs`](MaybeIs) of a non-empty list tuple:
     toList : ListIs emptyOrNot_ a -> List a
     toList list =
         case list of
-            Jus ( head_, tail_ ) ->
+            IsJust ( head_, tail_ ) ->
                 head_ :: tail_
 
             IsNothing _ ->
@@ -107,7 +107,7 @@ This is equivalent to a [`MaybeIs`](MaybeIs) of a `( head, tail )` tuple:
     tail : ListWithHeadType head_ NotEmpty tailElement -> List tailElement
     tail listNotEmpty =
         case listNotEmpty of
-            Jus ( _, tailList ) ->
+            IsJust ( _, tailList ) ->
                 tailList
 
             IsNothing _ ->
@@ -248,7 +248,7 @@ length : ListWithHeadType head_ emptyOrNot_ tailElement_ -> Int
 length =
     \list ->
         case list of
-            Jus ( _, tail_ ) ->
+            IsJust ( _, tail_ ) ->
                 1 + List.length tail_
 
             IsNothing _ ->
@@ -296,7 +296,7 @@ appendNonEmpty nonEmptyToAppend =
             IsNothing _ ->
                 nonEmptyToAppend
 
-            Jus ( head_, tail_ ) ->
+            IsJust ( head_, tail_ ) ->
                 fromCons head_ (tail_ ++ toList nonEmptyToAppend)
 
 
@@ -321,10 +321,10 @@ append toAppend =
             ( IsNothing is, IsNothing _ ) ->
                 IsNothing is
 
-            ( IsNothing _, Jus nonEmptyToAppend ) ->
+            ( IsNothing _, IsJust nonEmptyToAppend ) ->
                 fromTuple nonEmptyToAppend
 
-            ( Jus ( head_, tail_ ), _ ) ->
+            ( IsJust ( head_, tail_ ), _ ) ->
                 fromCons head_ (tail_ ++ toList toAppend)
 
 
@@ -464,7 +464,7 @@ toList : ListIs emptyOrNot_ a -> List a
 toList =
     \list ->
         case list of
-            Jus ( head_, tail_ ) ->
+            IsJust ( head_, tail_ ) ->
                 head_ :: tail_
 
             IsNothing _ ->

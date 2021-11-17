@@ -259,7 +259,7 @@ next (HoleyFocusList beforeFocusUntilHead focus after_) =
                         IsNothing _ ->
                             beforeFocusUntilHead
 
-                        Jus oldCurrent ->
+                        IsJust oldCurrent ->
                             oldCurrent :: beforeFocusUntilHead
             in
             HoleyFocusList newBeforeReversed (just next_) afterNext
@@ -455,7 +455,7 @@ focusAndAfter =
             IsNothing _ ->
                 after_
 
-            Jus current_ ->
+            IsJust current_ ->
                 current_ :: after_
 
 
@@ -614,7 +614,7 @@ last =
                 let
                     focusToFirst =
                         case focus of
-                            Jus current_ ->
+                            IsJust current_ ->
                                 current_ :: before_
 
                             IsNothing _ ->
@@ -680,7 +680,7 @@ toReverseList =
                     IsNothing _ ->
                         beforeFocusUntilHead
 
-                    Jus current_ ->
+                    IsJust current_ ->
                         current_ :: beforeFocusUntilHead
         in
         List.reverse after_ ++ focusToFirst
@@ -715,7 +715,7 @@ findForwardHelp predicate holeyFocusList =
                 |> Maybe.andThen (findForwardHelp predicate)
     in
     case focus of
-        Jus cur ->
+        IsJust cur ->
             if predicate cur then
                 Just (HoleyFocusList before_ (just cur) after_)
 
@@ -752,7 +752,7 @@ findBackwardHelp shouldStop holeyFocusList =
                 |> Maybe.andThen (findBackwardHelp shouldStop)
     in
     case focus of
-        Jus cur ->
+        IsJust cur ->
             if shouldStop cur then
                 Just (HoleyFocusList before_ (just cur) after_)
 
@@ -926,7 +926,7 @@ joinParts =
                 ListIs.fromCons head_
                     (afterFirstUntilFocus ++ focusAndAfter holeyFocusList)
 
-            ( [], Jus cur, _ ) ->
+            ( [], IsJust cur, _ ) ->
                 ListIs.fromCons cur after_
 
             ( [], IsNothing _, head_ :: tail_ ) ->
