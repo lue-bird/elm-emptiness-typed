@@ -810,7 +810,7 @@ mapCurrent updateCurrent =
         |> HoleyFocusList.prepend [ "zeroth", "first" ]
         |> HoleyFocusList.mapBefore String.toUpper
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons "FIRST" [ "ZEROTH", "second" ]
+    --> Lis.fromCons "ZEROTH" [ "FIRST", "second" ]
 
 -}
 mapBefore : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
