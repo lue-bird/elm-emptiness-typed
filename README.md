@@ -12,7 +12,7 @@ import ListIs
 ListIs.empty         -- ListIs Emptiable a_
     |> ListIs.appendNonEmpty
         (ListIs.fromCons 1 [ 2, 3 ])
-                  -- ListIs notEmpty_ Int
+                     -- ListIs notEmpty_ Int
     |> ListIs.cons 5 -- ListIs notEmpty_ Int
     |> ListIs.toTuple
 --> ( 5, [ 1, 2, 3 ] )
