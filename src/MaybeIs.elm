@@ -87,7 +87,7 @@ type CanBeNothing valueIfNothing tag
     = CanBeNothing valueIfNothing
 
 
-{-| `MaybeIs (Nothingable tag) a`: The value could exist, could also not exist.
+{-| `MaybeIs (Nothingable tag)`: The value could exist, could also not exist.
 
 See [`CanBeNothing`](#CanBeNothing).
 
