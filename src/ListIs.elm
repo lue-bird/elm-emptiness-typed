@@ -1,5 +1,5 @@
-module Lis exposing
-    ( Lis, Emptiable, NotEmpty
+module ListIs exposing
+    ( ListIs, Emptiable, NotEmpty
     , ListWithHeadType
     , empty, only, fromCons, fromTuple, fromList
     , head, tail, length
@@ -13,7 +13,7 @@ module Lis exposing
 
 ## types
 
-@docs Lis, Emptiable, NotEmpty
+@docs ListIs, Emptiable, NotEmpty
 @docs ListWithHeadType
 
 
@@ -52,21 +52,21 @@ import MaybeIs exposing (MaybeIs(..), just, nothing)
 
 We can require a [`NotEmpty`](#NotEmpty) for example:
 
-    toNonempty : Lis NotEmpty a -> Nonempty a
+    toNonempty : ListIs NotEmpty a -> Nonempty a
 
 This is equivalent to a [`MaybeIs`](MaybeIs) of a non-empty list tuple:
 
     import MaybeIs exposing (MaybeIs(..))
 
-    Lis.empty
+    ListIs.empty
     --> MaybeIs.nothing
 
     [ ... ]
-        |> Lis.fromList
-        |> MaybeIs.map Lis.head
+        |> ListIs.fromList
+        |> MaybeIs.map ListIs.head
     --: MaybeIs Nothingable head_
 
-    toList : Lis emptyOrNot_ a -> List a
+    toList : ListIs emptyOrNot_ a -> List a
     toList list =
         case list of
             Jus ( head_, tail_ ) ->
@@ -76,13 +76,13 @@ This is equivalent to a [`MaybeIs`](MaybeIs) of a non-empty list tuple:
                 []
 
 -}
-type alias Lis emptyOrNot a =
+type alias ListIs emptyOrNot a =
     ListWithHeadType a emptyOrNot a
 
 
 {-| Describes an empty or non-empty list where the head type can be different from the tail element type.
 
-Use [`Lis`](#Lis) if you have matching head and tail element types.
+Use [`ListIs`](#ListIs) if you have matching head and tail element types.
 
 `ListWithHeadType` is the result of:
 
@@ -97,10 +97,10 @@ This is equivalent to a [`MaybeIs`](MaybeIs) of a `( head, tail )` tuple:
 
     import MaybeIs exposing (MaybeIs(..))
 
-    Lis.empty
+    ListIs.empty
     --> MaybeIs.nothing
 
-    MaybeIs.map Lis.head
+    MaybeIs.map ListIs.head
     --: ListWithHeadType head emptyOrNot_ tailElement_
     --: -> MaybeIs Nothingable head
 
@@ -129,21 +129,21 @@ type alias NotEmpty =
 
 {-| `Emptiable` marks lists that could be empty:
 
-    fromList : List a -> Lis Emptiable a
+    fromList : List a -> ListIs Emptiable a
     fromList list =
         case list of
             [] ->
-                Lis.empty
+                ListIs.empty
 
             head :: tail ->
-                Lis.fromCons head tail
+                ListIs.fromCons head tail
 
 -}
 type alias Emptiable =
     MaybeIs.Nothingable { emptiable : () }
 
 
-{-| A `Lis` without elements.
+{-| A `ListIs` without elements.
 
 Equivalent to `MaybeIs.nothing`.
 
@@ -153,10 +153,10 @@ empty =
     nothing
 
 
-{-| A `Lis` with just 1 element.
+{-| A `ListIs` with just 1 element.
 
-    Lis.only ":)"
-    --> Lis.empty |> Lis.cons ":)"
+    ListIs.only ":)"
+    --> ListIs.empty |> ListIs.cons ":)"
 
 -}
 only : head -> ListWithHeadType head notEmpty_ tailElement_
@@ -181,21 +181,21 @@ fromCons head_ tail_ =
     fromTuple ( head_, tail_ )
 
 
-{-| Convert a `List a` to a `Lis Emptiable a`.
+{-| Convert a `List a` to a `ListIs Emptiable a`.
 
-    [] |> Lis.fromList
-    --> Lis.empty
+    [] |> ListIs.fromList
+    --> ListIs.empty
 
-    [ "hello", "emptiness" ] |> Lis.fromList
-    --> Lis.fromCons "hello" [ "emptiness" ]
-    --: Lis Emptiable String
+    [ "hello", "emptiness" ] |> ListIs.fromList
+    --> ListIs.fromCons "hello" [ "emptiness" ]
+    --: ListIs Emptiable String
 
 When constructing from known elements, always prefer
 
-    Lis.fromCons "hello" [ "emptiness" ]
+    ListIs.fromCons "hello" [ "emptiness" ]
 
 -}
-fromList : List a -> Lis Emptiable a
+fromList : List a -> ListIs Emptiable a
 fromList list_ =
     case list_ of
         [] ->
@@ -209,11 +209,11 @@ fromList list_ =
 --
 
 
-{-| The first value in the `Lis`.
+{-| The first value in the `ListIs`.
 
-    Lis.only 3
-        |> Lis.cons 2
-        |> Lis.head
+    ListIs.only 3
+        |> ListIs.cons 2
+        |> ListIs.head
     --> 2
 
 -}
@@ -222,12 +222,12 @@ head notEmptyList =
     notEmptyList |> toTuple |> Tuple.first
 
 
-{-| Everything after the first value in the `Lis`.
+{-| Everything after the first value in the `ListIs`.
 
-    Lis.only 2
-        |> Lis.cons 3
-        |> Lis.append (Lis.fromCons 1 [ 0 ])
-        |> Lis.tail
+    ListIs.only 2
+        |> ListIs.cons 3
+        |> ListIs.append (ListIs.fromCons 1 [ 0 ])
+        |> ListIs.tail
     --> [ 2, 1, 0 ]
 
 -}
@@ -238,9 +238,9 @@ tail notEmptyList =
 
 {-| How many element there are.
 
-    Lis.only 3
-        |> Lis.cons 2
-        |> Lis.length
+    ListIs.only 3
+        |> ListIs.cons 2
+        |> ListIs.length
     --> 2
 
 -}
@@ -261,35 +261,35 @@ length =
 
 {-| Add an element to the front of a list.
 
-    Lis.fromCons 2 [ 3 ] |> Lis.cons 1
-    --> Lis.fromCons 1 [ 2, 3 ]
+    ListIs.fromCons 2 [ 3 ] |> ListIs.cons 1
+    --> ListIs.fromCons 1 [ 2, 3 ]
 
-    Lis.empty |> Lis.cons 1
-    --> Lis.only 1
+    ListIs.empty |> ListIs.cons 1
+    --> ListIs.only 1
 
 -}
-cons : consed -> Lis emptyOrNot_ a -> ListWithHeadType consed NotEmpty a
+cons : consed -> ListIs emptyOrNot_ a -> ListWithHeadType consed NotEmpty a
 cons toPutBeforeAllOtherElements =
     fromCons toPutBeforeAllOtherElements << toList
 
 
-{-| Glue the elements of a `Lis NotEmpty ...` to the end of a `Lis`.
+{-| Glue the elements of a `ListIs NotEmpty ...` to the end of a `ListIs`.
 
-    Lis.empty
-        |> Lis.appendNonEmpty
-            (Lis.fromCons 1 [ 2 ])
-        |> Lis.append
-            (Lis.fromCons 3 [ 4, 5 ])
-    --> Lis.fromCons 1 [ 2, 3, 4, 5 ]
+    ListIs.empty
+        |> ListIs.appendNonEmpty
+            (ListIs.fromCons 1 [ 2 ])
+        |> ListIs.append
+            (ListIs.fromCons 3 [ 4, 5 ])
+    --> ListIs.fromCons 1 [ 2, 3, 4, 5 ]
 
-Prefer [`append`](#append) if the piped `Lis` is already known as `NotEmpty`
+Prefer [`append`](#append) if the piped `ListIs` is already known as `NotEmpty`
 or if both are `Emptiable`.
 
 -}
 appendNonEmpty :
-    Lis NotEmpty a
-    -> Lis emptyOrNot_ a
-    -> Lis NotEmpty a
+    ListIs NotEmpty a
+    -> ListIs emptyOrNot_ a
+    -> ListIs NotEmpty a
 appendNonEmpty nonEmptyToAppend =
     \list ->
         case list of
@@ -300,21 +300,21 @@ appendNonEmpty nonEmptyToAppend =
                 fromCons head_ (tail_ ++ toList nonEmptyToAppend)
 
 
-{-| Glue the elements of a `Lis` to the end of a `Lis`.
+{-| Glue the elements of a `ListIs` to the end of a `ListIs`.
 
-    Lis.fromCons 1 [ 2 ]
-        |> Lis.append
-            (Lis.fromCons 3 [ 4 ])
-    --> Lis.fromCons 1 [ 2, 3, 4 ]
+    ListIs.fromCons 1 [ 2 ]
+        |> ListIs.append
+            (ListIs.fromCons 3 [ 4 ])
+    --> ListIs.fromCons 1 [ 2, 3, 4 ]
 
-Prefer this over [`appendNonEmpty`](#appendNonEmpty) if the piped `Lis` is already known as `NotEmpty`
+Prefer this over [`appendNonEmpty`](#appendNonEmpty) if the piped `ListIs` is already known as `NotEmpty`
 or if both are `Emptiable`.
 
 -}
 append :
-    Lis Emptiable a
-    -> Lis emptyOrNot a
-    -> Lis emptyOrNot a
+    ListIs Emptiable a
+    -> ListIs emptyOrNot a
+    -> ListIs emptyOrNot a
 append toAppend =
     \list ->
         case ( list, toAppend ) of
@@ -330,30 +330,30 @@ append toAppend =
 
 {-| Keep elements that satisfy the test.
 
-    Lis.fromCons 1 [ 2, 5, -3, 10 ]
-        |> Lis.when (\x -> x < 5)
-    --> Lis.fromCons 1 [ 2, -3 ]
-    --: Lis Emptiable number_
+    ListIs.fromCons 1 [ 2, 5, -3, 10 ]
+        |> ListIs.when (\x -> x < 5)
+    --> ListIs.fromCons 1 [ 2, -3 ]
+    --: ListIs Emptiable number_
 
 -}
-when : (a -> Bool) -> Lis emptyOrNot_ a -> Lis Emptiable a
+when : (a -> Bool) -> ListIs emptyOrNot_ a -> ListIs Emptiable a
 when isGood =
     fromList << List.filter isGood << toList
 
 
 {-| Keep all `Just` values and drop all `Nothing`s.
 
-    Lis.fromCons (Just 1) [ Nothing, Just 3 ]
-        |> Lis.whenJust
-    --> Lis.fromCons 1 [ 3 ]
-    --: Lis Emptiable number
+    ListIs.fromCons (Just 1) [ Nothing, Just 3 ]
+        |> ListIs.whenJust
+    --> ListIs.fromCons 1 [ 3 ]
+    --: ListIs Emptiable number
 
-    Lis.fromCons Nothing [ Nothing ]
-        |> Lis.whenJust
-    --> Lis.empty
+    ListIs.fromCons Nothing [ Nothing ]
+        |> ListIs.whenJust
+    --> ListIs.empty
 
 -}
-whenJust : Lis emptyOrNot_ (Maybe value) -> Lis Emptiable value
+whenJust : ListIs emptyOrNot_ (Maybe value) -> ListIs Emptiable value
 whenJust maybes =
     maybes |> toList |> List.filterMap identity |> fromList
 
@@ -364,12 +364,12 @@ whenJust maybes =
 
 {-| Apply a function to every element.
 
-    Lis.fromCons 1 [ 4, 9 ]
-        |> Lis.map negate
-    --> Lis.fromCons -1 [ -4, -9 ]
+    ListIs.fromCons 1 [ 4, 9 ]
+        |> ListIs.map negate
+    --> ListIs.fromCons -1 [ -4, -9 ]
 
 -}
-map : (a -> b) -> Lis emptyOrNot a -> Lis emptyOrNot b
+map : (a -> b) -> ListIs emptyOrNot a -> ListIs emptyOrNot b
 map changeElement =
     MaybeIs.map
         (Tuple.mapBoth changeElement (List.map changeElement))
@@ -377,9 +377,9 @@ map changeElement =
 
 {-| Apply a function to every element of its tail.
 
-    Lis.fromCons 1 [ 4, 9 ]
-        |> Lis.mapTail negate
-    --> Lis.fromCons 1 [ -4, -9 ]
+    ListIs.fromCons 1 [ 4, 9 ]
+        |> ListIs.mapTail negate
+    --> ListIs.fromCons 1 [ -4, -9 ]
 
 -}
 mapTail :
@@ -393,9 +393,9 @@ mapTail changeTailElement =
 
 {-| Apply a function to the head only.
 
-    Lis.fromCons 1 [ 4, 9 ]
-        |> Lis.mapHead negate
-    --> Lis.fromCons -1 [ 4, 9 ]
+    ListIs.fromCons 1 [ 4, 9 ]
+        |> ListIs.mapHead negate
+    --> ListIs.fromCons -1 [ 4, 9 ]
 
 -}
 mapHead :
@@ -410,12 +410,12 @@ mapHead changeHead =
 
     import LinearDirection exposing (LinearDirection(..))
 
-    Lis.fromCons 'l' [ 'i', 'v', 'e' ]
-        |> Lis.fold LastToFirst String.cons ""
+    ListIs.fromCons 'l' [ 'i', 'v', 'e' ]
+        |> ListIs.fold LastToFirst String.cons ""
     --> "live"
 
-    Lis.fromCons 'l' [ 'i', 'v', 'e' ]
-        |> Lis.fold FirstToLast String.cons ""
+    ListIs.fromCons 'l' [ 'i', 'v', 'e' ]
+        |> ListIs.fold FirstToLast String.cons ""
     --> "evil"
 
 -}
@@ -423,7 +423,7 @@ fold :
     LinearDirection
     -> (a -> acc -> acc)
     -> acc
-    -> Lis emptyOrNot_ a
+    -> ListIs emptyOrNot_ a
     -> acc
 fold direction reduce initial =
     toList
@@ -431,12 +431,12 @@ fold direction reduce initial =
 
 
 {-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-where the initial result is the first value in the `Lis`.
+where the initial result is the first value in the `ListIs`.
 
     import LinearDirection exposing (LinearDirection(..))
 
-    Lis.fromCons 234 [ 345, 543 ]
-        |> Lis.foldWith FirstToLast max
+    ListIs.fromCons 234 [ 345, 543 ]
+        |> ListIs.foldWith FirstToLast max
     --> 543
 
 -}
@@ -453,14 +453,14 @@ foldWith direction reduce listNotEmpty =
     List.fold direction reduce head_ tail_
 
 
-{-| Convert the `Lis` to a `List`.
+{-| Convert the `ListIs` to a `List`.
 
-    Lis.fromCons 1 [ 7 ]
-        |> Lis.toList
+    ListIs.fromCons 1 [ 7 ]
+        |> ListIs.toList
     --> [ 1, 7 ]
 
 -}
-toList : Lis emptyOrNot_ a -> List a
+toList : ListIs emptyOrNot_ a -> List a
 toList =
     \list ->
         case list of

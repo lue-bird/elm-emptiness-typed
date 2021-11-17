@@ -3,6 +3,6 @@
   "tests": [
     "HoleyFocusList",
     "MaybeIs",
-    "Lis"
+    "ListIs"
   ]
 }

@@ -2,7 +2,7 @@ module HoleyFocusListTest exposing (tests)
 
 import Expect
 import HoleyFocusList exposing (HoleyFocusList, Item)
-import Lis
+import ListIs
 import Test exposing (Test, describe, test)
 
 
@@ -24,7 +24,7 @@ emptyTest =
         (\_ ->
             HoleyFocusList.empty
                 |> HoleyFocusList.joinParts
-                |> Expect.equal Lis.empty
+                |> Expect.equal ListIs.empty
         )
 
 
@@ -34,7 +34,7 @@ onlyTest =
         (\_ ->
             HoleyFocusList.only 3
                 |> HoleyFocusList.joinParts
-                |> Expect.equal (Lis.only 3)
+                |> Expect.equal (ListIs.only 3)
         )
 
 
@@ -55,7 +55,7 @@ appendTest =
             (\_ ->
                 holeyFocusList
                     |> HoleyFocusList.joinParts
-                    |> Expect.equal (Lis.fromCons 1 [ 2, 3, 4, 5 ])
+                    |> Expect.equal (ListIs.fromCons 1 [ 2, 3, 4, 5 ])
             )
         ]
 

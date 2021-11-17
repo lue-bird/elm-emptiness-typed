@@ -17,7 +17,7 @@ module MaybeIs exposing
 I don't think `MaybeIs` will proof any useful just by itself,
 but we can build cool type-safe data structures with it:
 
-    type alias Lis emptyOrNot a =
+    type alias ListIs emptyOrNot a =
         MaybeIs emptyOrNot ( a, List a )
 
     type alias NotEmpty =
@@ -26,13 +26,13 @@ but we can build cool type-safe data structures with it:
     type alias Emptiable =
         MaybeIs.Nothingable { emptiable : () }
 
-    empty : Lis Emptiable a_
+    empty : ListIs Emptiable a_
 
-    cons : Lis emptyOrNot_ a -> a -> Lis notEmpty_ a
+    cons : ListIs emptyOrNot_ a -> a -> ListIs notEmpty_ a
 
-    head : Lis NotEmpty a -> a
+    head : ListIs NotEmpty a -> a
 
-This is exactly how [`Lis`] is implemented.
+This is exactly how [`ListIs`] is implemented.
 
 
 ## types
@@ -101,7 +101,7 @@ type alias Nothingable tag =
     head =
         MaybeIs.value >> Tuple.first
 
-See [`CanBeNothing`](#CanBeNothing) and [`Lis`](Lis).
+See [`CanBeNothing`](#CanBeNothing) and [`ListIs`](ListIs).
 
 -}
 type alias Just tag =
@@ -279,11 +279,11 @@ andThen tryIfSuccess =
 {-| When using `(Just ...)` for an argument:
 
     theShorter :
-        Lis NotEmpty a
-        -> Lis emptyOrNot a
-        -> Lis emptyOrNot a
+        ListIs NotEmpty a
+        -> ListIs emptyOrNot a
+        -> ListIs emptyOrNot a
     theShorter aList bList =
-        if Lis.length bList > Lis.length aList then
+        if ListIs.length bList > ListIs.length aList then
             bList
 
         else

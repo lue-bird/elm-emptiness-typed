@@ -67,7 +67,7 @@ module HoleyFocusList exposing
 
 -}
 
-import Lis exposing (Lis)
+import ListIs exposing (ListIs)
 import MaybeIs exposing (CanBeNothing(..), MaybeIs(..), just, nothing)
 
 
@@ -107,11 +107,11 @@ type alias HoleOrItem =
 and after it.
 It's the loneliest of all `HoleyFocusList`s.
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.empty
         |> HoleyFocusList.joinParts
-    --> Lis.empty
+    --> ListIs.empty
 
 -}
 empty : HoleyFocusList HoleOrItem a_
@@ -125,7 +125,7 @@ empty =
 🍊  ->  <🍊>
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only "wat"
         |> HoleyFocusList.current
@@ -133,7 +133,7 @@ empty =
 
     HoleyFocusList.only "wat"
         |> HoleyFocusList.joinParts
-    --> Lis.only "wat"
+    --> ListIs.only "wat"
 
 -}
 only : a -> HoleyFocusList item_ a
@@ -308,14 +308,14 @@ lot of nothingness, so it's always there.
 🍍 <🍊> 🍉  ->  🍍 🍊 <> 🍉
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only "hello"
         |> HoleyFocusList.append [ "world" ]
         |> HoleyFocusList.nextHole
         |> HoleyFocusList.plug "holey"
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons "hello" [ "holey", "world" ]
+    --> ListIs.fromCons "hello" [ "holey", "world" ]
 
 -}
 nextHole : HoleyFocusList Item a -> HoleyFocusList HoleOrItem a
@@ -337,13 +337,13 @@ that hole right up!
 🍍 <🍊> 🍉  ->  🍍 <> 🍊 🍉
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only "world"
         |> HoleyFocusList.previousHole
         |> HoleyFocusList.plug "hello"
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons "hello" [ "world" ]
+    --> ListIs.fromCons "hello" [ "world" ]
 
 -}
 previousHole : HoleyFocusList Item a -> HoleyFocusList HoleOrItem a
@@ -366,7 +366,7 @@ previousHole holeyFocusList =
 🍍 🍓 <🡇> 🍉 🍇
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.plug "plug" HoleyFocusList.empty
     --> HoleyFocusList.only "plug"
@@ -405,13 +405,13 @@ remove =
 🍍 🍓 <🍊> ↓ 🍉 🍇
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only 123
         |> HoleyFocusList.append [ 789 ]
         |> HoleyFocusList.insertAfter 456
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons 123 [ 456, 789 ]
+    --> ListIs.fromCons 123 [ 456, 789 ]
 
 Insert multiple items using [`squeezeInAfter`](#squeezeInAfter).
 
@@ -429,12 +429,12 @@ insertAfter toInsertAfterFocus =
 🍍 🍓 ↓ <🍊> 🍉 🍇
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only 123
         |> HoleyFocusList.insertBefore 456
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons 456 [ 123 ]
+    --> ListIs.fromCons 456 [ 123 ]
 
 Insert multiple items using [`squeezeInBefore`](#squeezeInBefore).
 
@@ -466,13 +466,13 @@ focusAndAfter =
 🍍 🍓 <🍊> \↓/ 🍉 🍇
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only 0
         |> HoleyFocusList.squeezeInAfter [ 4, 5 ]
         |> HoleyFocusList.squeezeInAfter [ 1, 2, 3 ]
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons 0 [ 1, 2, 3, 4, 5 ]
+    --> ListIs.fromCons 0 [ 1, 2, 3, 4, 5 ]
 
 -}
 squeezeInAfter : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
@@ -488,13 +488,13 @@ squeezeInAfter toAppendDirectlyAfterFocus =
 🍍 🍓 \↓/ <🍊> 🍉 🍇
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only 0
         |> HoleyFocusList.squeezeInBefore [ -5, -4 ]
         |> HoleyFocusList.squeezeInBefore [ -3, -2, -1 ]
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons -5 [ -4, -3, -2, -1, 0 ]
+    --> ListIs.fromCons -5 [ -4, -3, -2, -1, 0 ]
 
 -}
 squeezeInBefore : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
@@ -513,13 +513,13 @@ squeezeInBefore toPrependDirectlyBeforeFocus =
 🍍 🍓 <🍊> 🍉 🍇 ↓/
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only 123
         |> HoleyFocusList.append [ 456 ]
         |> HoleyFocusList.append [ 789, 0 ]
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons 123 [ 456, 789, 0 ]
+    --> ListIs.fromCons 123 [ 456, 789, 0 ]
 
 -}
 append : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
@@ -535,14 +535,14 @@ append itemsToAppend =
  \↓ 🍍 🍓 <🍊> 🍉 🍇
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only 1
         |> HoleyFocusList.append [ 2, 3, 4 ]
         |> HoleyFocusList.last
         |> HoleyFocusList.prepend [ 5, 6, 7 ]
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons 5 [ 6, 7, 1, 2, 3, 4 ]
+    --> ListIs.fromCons 5 [ 6, 7, 1, 2, 3, 4 ]
 
 -}
 prepend : List a -> HoleyFocusList focus a -> HoleyFocusList focus a
@@ -633,7 +633,7 @@ Remember that holes surround everything!
 🍍 🍓 <🍊> 🍉  ->  <> 🍍 🍓 🍊 🍉
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only 1                 -- <1>
         |> HoleyFocusList.append [ 3, 4 ] -- <1> 3 4
@@ -642,7 +642,7 @@ Remember that holes surround everything!
         |> HoleyFocusList.beforeFirst     -- <> 1 2 3 4
         |> HoleyFocusList.plug 0          -- <0> 1 2 3 4
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons 0 [ 1, 2, 3, 4 ]
+    --> ListIs.fromCons 0 [ 1, 2, 3, 4 ]
 
 -}
 beforeFirst : HoleyFocusList focus_ a -> HoleyFocusList HoleOrItem a
@@ -656,14 +656,14 @@ beforeFirst holeyFocusList =
 🍍 🍓 <🍊> 🍉  ->  🍍 🍓 🍊 🍉 <>
 ```
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only 1                 -- <1>
         |> HoleyFocusList.append [ 2, 3 ] -- <1> 2 3
         |> HoleyFocusList.afterLast       -- 1 2 3 <>
         |> HoleyFocusList.plug 4          -- 1 2 3 <4>
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons 1 [ 2, 3, 4 ]
+    --> ListIs.fromCons 1 [ 2, 3, 4 ]
 
 -}
 afterLast : HoleyFocusList focus_ a -> HoleyFocusList HoleOrItem a
@@ -765,14 +765,14 @@ findBackwardHelp shouldStop holeyFocusList =
 
 {-| Execute a function on every item in the `HoleyFocusList`.
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only "first"
         |> HoleyFocusList.prepend [ "zeroth" ]
         |> HoleyFocusList.append [ "second", "third" ]
         |> HoleyFocusList.map String.toUpper
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons "ZEROTH" [ "FIRST", "SECOND", "THIRD" ]
+    --> ListIs.fromCons "ZEROTH" [ "FIRST", "SECOND", "THIRD" ]
 
 -}
 map : (a -> b) -> HoleyFocusList focus a -> HoleyFocusList focus b
@@ -786,14 +786,14 @@ map changeItem =
 
 {-| If an item is focussed in the `HoleyFocusList`, apply a function to it.
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only "first"
         |> HoleyFocusList.prepend [ "zeroth" ]
         |> HoleyFocusList.append [ "second", "third" ]
         |> HoleyFocusList.mapCurrent String.toUpper
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons "zeroth" [ "FIRST", "second", "third" ]
+    --> ListIs.fromCons "zeroth" [ "FIRST", "second", "third" ]
 
 -}
 mapCurrent : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
@@ -802,15 +802,15 @@ mapCurrent updateCurrent =
         HoleyFocusList before_ (MaybeIs.map updateCurrent focus) after_
 
 
-{-| Execute a function on all the things that came before the current location.
+{-| Apply a function to all items coming before the current focussed location.
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only "second"
         |> HoleyFocusList.prepend [ "zeroth", "first" ]
         |> HoleyFocusList.mapBefore String.toUpper
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons "ZEROTH" [ "FIRST", "second" ]
+    --> ListIs.fromCons "ZEROTH" [ "FIRST", "second" ]
 
 -}
 mapBefore : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
@@ -819,15 +819,15 @@ mapBefore updateItemBefore =
         HoleyFocusList (List.map updateItemBefore before_) focus after_
 
 
-{-| Execute a function on all the things that come after the current location.
+{-| Apply a function to all items coming after the current focussed location.
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only "zeroth"
         |> HoleyFocusList.append [ "first", "second" ]
         |> HoleyFocusList.mapAfter String.toUpper
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons "zeroth" [ "FIRST", "SECOND" ]
+    --> ListIs.fromCons "zeroth" [ "FIRST", "SECOND" ]
 
 -}
 mapAfter : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
@@ -839,7 +839,7 @@ mapAfter updateItemAfter =
 {-| Execute a triplet of functions on the different parts of a `HoleyFocusList` - what
 came before, what comes after, and the current thing if there is one.
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.only "first"
         |> HoleyFocusList.append [ "second" ]
@@ -851,7 +851,7 @@ came before, what comes after, and the current thing if there is one.
             , after = (++) "after: "
             }
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons
+    --> ListIs.fromCons
     -->     "before: first"
     -->     [ "current: one-and-a-halfth"
     -->     , "after: second"
@@ -891,30 +891,30 @@ toList =
         before holeyFocusList ++ focusAndAfter holeyFocusList
 
 
-{-| Flattens the `HoleyFocusList` into a [`Lis`](Lis):
+{-| Flattens the `HoleyFocusList` into a [`ListIs`](ListIs):
 
-    import Lis
+    import ListIs
 
     HoleyFocusList.empty
         |> HoleyFocusList.joinParts
-    --> Lis.empty
+    --> ListIs.empty
 
     HoleyFocusList.only 123
         |> HoleyFocusList.append [ 789 ]
         |> HoleyFocusList.nextHole
         |> HoleyFocusList.plug 456
         |> HoleyFocusList.joinParts
-    --> Lis.fromCons 123 [ 456, 789 ]
+    --> ListIs.fromCons 123 [ 456, 789 ]
 
 the type information gets carried over, so
 
-    Item -> Lis.NotEmpty
-    HoleOrItem -> Lis.Emptiable
+    Item -> ListIs.NotEmpty
+    HoleOrItem -> ListIs.Emptiable
 
 -}
 joinParts :
     HoleyFocusList (CanBeNothing valueIfNothing focusTag_) a
-    -> Lis (CanBeNothing valueIfNothing emptyOrNotTag_) a
+    -> ListIs (CanBeNothing valueIfNothing emptyOrNotTag_) a
 joinParts =
     \holeyFocusList ->
         let
@@ -923,14 +923,14 @@ joinParts =
         in
         case ( before holeyFocusList, focus, after_ ) of
             ( head_ :: afterFirstUntilFocus, _, _ ) ->
-                Lis.fromCons head_
+                ListIs.fromCons head_
                     (afterFirstUntilFocus ++ focusAndAfter holeyFocusList)
 
             ( [], Jus cur, _ ) ->
-                Lis.fromCons cur after_
+                ListIs.fromCons cur after_
 
             ( [], Nothin _, head_ :: tail_ ) ->
-                Lis.fromCons head_ tail_
+                ListIs.fromCons head_ tail_
 
             ( [], Nothin (CanBeNothing canBeNothing), [] ) ->
                 Nothin (CanBeNothing canBeNothing)

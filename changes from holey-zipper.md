@@ -14,4 +14,4 @@
     - added `squeezeInAfter`
     - added `joinParts`
 
-- added module `Lis`
+- added module `ListIs`
