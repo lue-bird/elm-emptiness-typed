@@ -232,7 +232,7 @@ This also works from within holes:
         |> HoleyFocusList.next
     --> Just (HoleyFocusList.only "foo")
 
-If there is no `next` thing, the result is `Nothing`.
+If there is no `next` item, the result is `Nothing`.
 
     HoleyFocusList.empty
         |> HoleyFocusList.next
@@ -687,8 +687,7 @@ toReverseList =
 
 
 {-| Find the first item in the `HoleyFocusList` the matches a predicate, returning a
-`HoleyFocusList` pointing at that thing if it was found. When provided with a `HoleyFocusList`
-pointing at a thing, that thing is also checked.
+`HoleyFocusList` focussed on that item if it was found.
 
 This start from the current focussed location and searches towards the end.
 
@@ -697,6 +696,12 @@ This start from the current focussed location and searches towards the end.
         |> HoleyFocusList.findForward (\item -> item < 0)
         |> Maybe.map HoleyFocusList.current
     --> Just -1
+
+    HoleyFocusList.only -4
+        |> HoleyFocusList.append [ 2, -1, 0, 3 ]
+        |> HoleyFocusList.findForward (\item -> item < 0)
+        |> Maybe.map HoleyFocusList.current
+    --> Just -4
 
 -}
 findForward : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
@@ -836,8 +841,8 @@ mapAfter updateItemAfter =
         HoleyFocusList before_ focus (List.map updateItemAfter after_)
 
 
-{-| Execute a triplet of functions on the different parts of a `HoleyFocusList` - what
-came before, what comes after, and the current thing if there is one.
+{-| Apply multiple different functions on the parts of a `HoleyFocusList` - what
+comes before, what comes after, and the current item if there is one.
 
     import ListIs
 
