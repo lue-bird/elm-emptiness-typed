@@ -72,7 +72,7 @@ This is equivalent to a [`MaybeIs`](MaybeIs) of a non-empty list tuple:
             Jus ( head_, tail_ ) ->
                 head_ :: tail_
 
-            Nothin _ ->
+            IsNothing _ ->
                 []
 
 -}
@@ -110,7 +110,7 @@ This is equivalent to a [`MaybeIs`](MaybeIs) of a `( head, tail )` tuple:
             Jus ( _, tailList ) ->
                 tailList
 
-            Nothin _ ->
+            IsNothing _ ->
                 []
 
 -}
@@ -251,7 +251,7 @@ length =
             Jus ( _, tail_ ) ->
                 1 + List.length tail_
 
-            Nothin _ ->
+            IsNothing _ ->
                 0
 
 
@@ -293,7 +293,7 @@ appendNonEmpty :
 appendNonEmpty nonEmptyToAppend =
     \list ->
         case list of
-            Nothin _ ->
+            IsNothing _ ->
                 nonEmptyToAppend
 
             Jus ( head_, tail_ ) ->
@@ -318,10 +318,10 @@ append :
 append toAppend =
     \list ->
         case ( list, toAppend ) of
-            ( Nothin is, Nothin _ ) ->
-                Nothin is
+            ( IsNothing is, IsNothing _ ) ->
+                IsNothing is
 
-            ( Nothin _, Jus nonEmptyToAppend ) ->
+            ( IsNothing _, Jus nonEmptyToAppend ) ->
                 fromTuple nonEmptyToAppend
 
             ( Jus ( head_, tail_ ), _ ) ->
@@ -467,7 +467,7 @@ toList =
             Jus ( head_, tail_ ) ->
                 head_ :: tail_
 
-            Nothin _ ->
+            IsNothing _ ->
                 []
 
 

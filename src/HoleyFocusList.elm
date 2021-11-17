@@ -256,7 +256,7 @@ next (HoleyFocusList beforeFocusUntilHead focus after_) =
             let
                 newBeforeReversed =
                     case focus of
-                        Nothin _ ->
+                        IsNothing _ ->
                             beforeFocusUntilHead
 
                         Jus oldCurrent ->
@@ -452,7 +452,7 @@ focusAndAfter : HoleyFocusList focus_ a -> List a
 focusAndAfter =
     \(HoleyFocusList _ focus after_) ->
         case focus of
-            Nothin _ ->
+            IsNothing _ ->
                 after_
 
             Jus current_ ->
@@ -617,7 +617,7 @@ last =
                             Jus current_ ->
                                 current_ :: before_
 
-                            Nothin _ ->
+                            IsNothing _ ->
                                 before_
                 in
                 HoleyFocusList
@@ -677,7 +677,7 @@ toReverseList =
         let
             focusToFirst =
                 case focus of
-                    Nothin _ ->
+                    IsNothing _ ->
                         beforeFocusUntilHead
 
                     Jus current_ ->
@@ -722,7 +722,7 @@ findForwardHelp predicate holeyFocusList =
             else
                 goForward ()
 
-        Nothin _ ->
+        IsNothing _ ->
             goForward ()
 
 
@@ -759,7 +759,7 @@ findBackwardHelp shouldStop holeyFocusList =
             else
                 goBack ()
 
-        Nothin _ ->
+        IsNothing _ ->
             goBack ()
 
 
@@ -929,11 +929,11 @@ joinParts =
             ( [], Jus cur, _ ) ->
                 ListIs.fromCons cur after_
 
-            ( [], Nothin _, head_ :: tail_ ) ->
+            ( [], IsNothing _, head_ :: tail_ ) ->
                 ListIs.fromCons head_ tail_
 
-            ( [], Nothin (CanBeNothing canBeNothing), [] ) ->
-                Nothin (CanBeNothing canBeNothing)
+            ( [], IsNothing (CanBeNothing canBeNothing), [] ) ->
+                IsNothing (CanBeNothing canBeNothing)
 
 
 

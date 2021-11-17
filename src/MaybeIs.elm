@@ -60,11 +60,11 @@ This is exactly how [`ListIs`] is implemented.
 {-| Like `Maybe` with type level information whether it exists.
 -}
 type MaybeIs justOrNothing a
-    = Nothin justOrNothing
+    = IsNothing justOrNothing
     | Jus a
 
 
-{-| The value attached to a `Nothin`:
+{-| The value attached to a `IsNothing`:
 
   - [`Just`](#Just): that value is `Never`
   - [`Nothingable`](#Nothingable): that value is `()`
@@ -112,7 +112,7 @@ type alias Just tag =
 -}
 nothing : MaybeIs (Nothingable tag_) a_
 nothing =
-    Nothin (CanBeNothing ())
+    IsNothing (CanBeNothing ())
 
 
 {-| A `MaybeIs` that certainly exists.
@@ -151,7 +151,7 @@ toMaybe =
             Jus val ->
                 Just val
 
-            Nothin _ ->
+            IsNothing _ ->
                 Nothing
 
 
@@ -172,7 +172,7 @@ value definitelyJust =
         Jus val ->
             val
 
-        Nothin (CanBeNothing canBeNothing) ->
+        IsNothing (CanBeNothing canBeNothing) ->
             never canBeNothing
 
 
@@ -199,7 +199,7 @@ withFallback lazyFallback =
             Jus val ->
                 val
 
-            Nothin (CanBeNothing canBeNothing) ->
+            IsNothing (CanBeNothing canBeNothing) ->
                 lazyFallback canBeNothing
 
 
@@ -218,8 +218,8 @@ map change =
             Jus val ->
                 change val |> Jus
 
-            Nothin canBeNothing ->
-                Nothin canBeNothing
+            IsNothing canBeNothing ->
+                IsNothing canBeNothing
 
 
 {-| If all the arguments exist, combine them using a given function.
@@ -241,11 +241,11 @@ map2 combine aMaybe bMaybe =
         ( Jus a, Jus b ) ->
             combine a b |> Jus
 
-        ( Nothin canBeNothing, _ ) ->
-            Nothin canBeNothing
+        ( IsNothing canBeNothing, _ ) ->
+            IsNothing canBeNothing
 
-        ( _, Nothin canBeNothing ) ->
-            Nothin canBeNothing
+        ( _, IsNothing canBeNothing ) ->
+            IsNothing canBeNothing
 
 
 {-| Chain together many computations that may fail.
@@ -268,8 +268,8 @@ andThen tryIfSuccess =
             Jus val ->
                 tryIfSuccess val
 
-            Nothin canBeNothing ->
-                Nothin canBeNothing
+            IsNothing canBeNothing ->
+                IsNothing canBeNothing
 
 
 
