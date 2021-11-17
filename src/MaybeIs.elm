@@ -57,7 +57,10 @@ This is exactly how [`ListIs`](ListIs) is implemented.
 -}
 
 
-{-| Like `Maybe` with type level information whether it exists.
+{-| Like `Maybe` with type level information about whether it exists.
+
+See [`Just`](#Just) and [`Nothingable`](#Nothingable).
+
 -}
 type MaybeIs justOrNothing a
     = IsNothing justOrNothing
