@@ -6,7 +6,8 @@ module ListIs exposing
     , cons
     , append, appendNonEmpty, concat
     , when, whenJust
-    , map, map2, mapHead, mapTail, fold, foldWith, toList, toTuple
+    , map, mapHead, mapTail, fold, foldWith, toList, toTuple
+    , map2, map2HeadsAndTails
     )
 
 {-|
@@ -45,7 +46,8 @@ module ListIs exposing
 
 ## transform
 
-@docs map, map2, mapHead, mapTail, fold, foldWith, toList, toTuple
+@docs map, mapHead, mapTail, fold, foldWith, toList, toTuple
+@docs map2, map2HeadsAndTails
 
 -}
 
@@ -433,6 +435,14 @@ If one list is longer, its extra elements are dropped.
         (ListIs.fromCons 4 [ 5, 6, 7 ])
     --> List.fromCons 5 [ 7, 9 ]
 
+    ListIs.map2 Tuple.pair
+        (ListIs.fromCons 1 [ 2, 3 ])
+        ListIs.empty
+    --> List.empty
+
+For `ListWithHeadType head ... tailElement` where `head` and `tailElement` have a different type,
+there's [`map2HeadsAndTails`](#map2HeadsAndTails).
+
 -}
 map2 :
     (a -> b -> combined)
@@ -440,10 +450,36 @@ map2 :
     -> ListIs emptyOrNot b
     -> ListIs emptyOrNot combined
 map2 combineAB aList bList =
+    map2HeadsAndTails combineAB combineAB aList bList
+
+
+{-| Combine the head and tail elements of 2 `ListIs`s using given functions.
+If one list is longer, its extra elements are dropped.
+
+    ListIs.map2HeadsAndTails Tuple.pair (+)
+        (ListIs.fromCons "hey" [ 0, 1 ])
+        (ListIs.fromCons "there" [ 1, 6, 7 ])
+    --> List.fromCons ( "hey", "there" ) [ 1, 7 ]
+
+    ListIs.map2HeadsAndTails Tuple.pair (+)
+        (ListIs.fromCons 1 [ 2, 3 ])
+        ListIs.empty
+    --> List.empty
+
+For matching `head` and `tailElement` types, there's [`map2`](#map2).
+
+-}
+map2HeadsAndTails :
+    (aHead -> bHead -> combinedHead)
+    -> (aTailElement -> bTailElement -> combinedTailElement)
+    -> ListWithHeadType aHead emptyOrNot aTailElement
+    -> ListWithHeadType bHead emptyOrNot bTailElement
+    -> ListWithHeadType combinedHead emptyOrNot combinedTailElement
+map2HeadsAndTails combineHeads combineTailElements aList bList =
     MaybeIs.map2
         (\( aHead, aTail ) ( bHead, bTail ) ->
-            ( combineAB aHead bHead
-            , List.map2 combineAB aTail bTail
+            ( combineHeads aHead bHead
+            , List.map2 combineTailElements aTail bTail
             )
         )
         aList
