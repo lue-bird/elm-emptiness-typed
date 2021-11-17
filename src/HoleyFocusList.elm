@@ -9,7 +9,7 @@ module HoleyFocusList exposing
     , mapCurrent, plug, remove
     , mapBefore, mapAfter
     , insertAfter, insertBefore
-    , squeezeInAfter
+    , squeezeInBefore, squeezeInAfter
     , map, mapParts, joinParts, toList
     , branchableType
     )
@@ -156,7 +156,7 @@ only current_ =
     --> "hi there"
 
     HoleyFocusList.only 1
-        |> HoleFocusList.append [ 2, 3, 4 ]
+        |> HoleyFocusList.append [ 2, 3, 4 ]
         |> HoleyFocusList.last
         |> HoleyFocusList.current
     --> 4
@@ -679,6 +679,12 @@ pointing at a thing, that thing is also checked.
 
 This start from the current focussed location and searches towards the end.
 
+    HoleyFocusList.only 4
+        |> HoleyFocusList.append [ 2, -1, 0, 3 ]
+        |> HoleyFocusList.findForward (\item -> item < 0)
+        |> Maybe.map HoleyFocusList.current
+    --> Just -1
+
 -}
 findForward : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
 findForward predicate z =
@@ -706,6 +712,13 @@ findForwardHelp predicate ((HoleyFocusList before_ focus after_) as holeyFocusLi
 
 {-| Find the first item in the `HoleyFocusList` matching a predicate, moving backwards
 from the current position.
+
+    HoleyFocusList.only 4
+        |> HoleyFocusList.prepend [ 2, -1, 0, 3 ]
+        |> HoleyFocusList.findBackward (\item -> item < 0)
+        |> Maybe.map HoleyFocusList.current
+    --> Just -1
+
 -}
 findBackward : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
 findBackward shouldStop =
