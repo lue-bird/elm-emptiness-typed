@@ -14,7 +14,7 @@ module MaybeIs exposing
         |> List.map MaybeIs.value
     --> [ 1, 7 ]
 
-I don't think `MaybeIs` will proof any useful just by itself,
+`MaybeIs` alone will probably not proof any useful,
 but we can build cool type-safe data structures with it:
 
     type alias ListIs emptyOrNot a =
