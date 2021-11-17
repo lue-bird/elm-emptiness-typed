@@ -9,7 +9,7 @@ import Test exposing (Test, describe, test)
 tests : Test
 tests =
     describe "HoleyFocusList"
-        [ describe "create" [ emptyTest, onlyTest, currentAndAfterTest ]
+        [ describe "create" [ emptyTest, onlyTest, appendTest ]
         , describe "navigate" [ nextTest, previousTest ]
         ]
 
@@ -38,37 +38,24 @@ onlyTest =
         )
 
 
-currentAndAfterTest : Test
-currentAndAfterTest =
+
+-- modify
+
+
+appendTest : Test
+appendTest =
     let
         holeyFocusList : HoleyFocusList Item Int
         holeyFocusList =
-            HoleyFocusList.currentAndAfter 1 [ 2, 3, 4, 5 ]
+            HoleyFocusList.only 1
+                |> HoleyFocusList.append [ 2, 3, 4, 5 ]
     in
-    describe "currentAndAfter"
-        [ test "currentAndAfter creates a HoleyFocusList."
+    describe "append"
+        [ test "correct order"
             (\_ ->
                 holeyFocusList
                     |> HoleyFocusList.joinParts
                     |> Expect.equal (Lis.fromCons 1 [ 2, 3, 4, 5 ])
-            )
-        , test "nothing before it"
-            (\_ ->
-                holeyFocusList
-                    |> HoleyFocusList.before
-                    |> Expect.equal []
-            )
-        , test "the current thing is the first thing"
-            (\_ ->
-                holeyFocusList
-                    |> HoleyFocusList.current
-                    |> Expect.equal 1
-            )
-        , test "the current thing is followed by the rest of the things"
-            (\_ ->
-                holeyFocusList
-                    |> HoleyFocusList.after
-                    |> Expect.equal [ 2, 3, 4, 5 ]
             )
         ]
 
@@ -82,7 +69,8 @@ nextTest =
     let
         holeyFocusList : HoleyFocusList Item Int
         holeyFocusList =
-            HoleyFocusList.currentAndAfter 1 [ 2, 3 ]
+            HoleyFocusList.only 1
+                |> HoleyFocusList.append [ 2, 3 ]
     in
     describe "next"
         [ test "next gives the next thing"
@@ -119,7 +107,8 @@ previousTest =
     let
         holeyFocusList : HoleyFocusList Item Int
         holeyFocusList =
-            HoleyFocusList.currentAndAfter 1 [ 2, 3 ]
+            HoleyFocusList.only 1
+                |> HoleyFocusList.append [ 2, 3 ]
     in
     describe "previous"
         [ test "previous gives nothing initially"
