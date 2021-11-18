@@ -48,9 +48,13 @@ module HoleyFocusList exposing
 @docs append, prepend
 
 
-## around focus
+### modify the focus
 
 @docs mapCurrent, plug, remove
+
+
+### modify around the focus
+
 @docs mapBefore, mapAfter
 @docs insertAfter, insertBefore
 @docs squeezeInBefore, squeezeInAfter
