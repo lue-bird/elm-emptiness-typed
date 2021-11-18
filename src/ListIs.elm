@@ -441,12 +441,12 @@ If one list is longer, its extra elements are dropped.
     ListIs.map2 (+)
         (ListIs.fromCons 1 [ 2, 3 ])
         (ListIs.fromCons 4 [ 5, 6, 7 ])
-    --> List.fromCons 5 [ 7, 9 ]
+    --> ListIs.fromCons 5 [ 7, 9 ]
 
     ListIs.map2 Tuple.pair
         (ListIs.fromCons 1 [ 2, 3 ])
         ListIs.empty
-    --> List.empty
+    --> ListIs.empty
 
 For `ListWithHeadType head ... tailElement` where `head` and `tailElement` have a different type,
 there's [`map2HeadsAndTails`](#map2HeadsAndTails).
@@ -467,12 +467,12 @@ If one list is longer, its extra elements are dropped.
     ListIs.map2HeadsAndTails Tuple.pair (+)
         (ListIs.fromCons "hey" [ 0, 1 ])
         (ListIs.fromCons "there" [ 1, 6, 7 ])
-    --> List.fromCons ( "hey", "there" ) [ 1, 7 ]
+    --> ListIs.fromCons ( "hey", "there" ) [ 1, 7 ]
 
     ListIs.map2HeadsAndTails Tuple.pair (+)
         (ListIs.fromCons 1 [ 2, 3 ])
         ListIs.empty
-    --> List.empty
+    --> ListIs.empty
 
 For matching `head` and `tailElement` types, there's [`map2`](#map2).
 
