@@ -34,6 +34,8 @@ HoleyFocusList.empty           -- HoleyFocusList HoleOrItem a_
 --> [ 5, 1, 2, 3 ]
 ```
 
+→ [zwilias's holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest) with [a type-safe implementation using `MaybeIs` and other minor tweaks](https://github.com/lue-bird/elm-emptiness-typed/blob/master/changes%20from%20holey-zipper.md).
+
 ## `MaybeIs`
 
 `Maybe` + type information: does it exist?
