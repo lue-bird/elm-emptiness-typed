@@ -4,7 +4,7 @@ module ListIs exposing
     , empty, only, fromCons, fromTuple, fromList
     , head, tail, length
     , cons
-    , append, appendNonEmpty, concat
+    , append, appendNotEmpty, concat
     , when, whenJust
     , map, mapHead, mapTail, fold, foldWith, toList, toTuple
     , map2, map2HeadsAndTails
@@ -36,7 +36,7 @@ module ListIs exposing
 
 ## glue
 
-@docs append, appendNonEmpty, concat
+@docs append, appendNotEmpty, concat
 
 
 ### filter
@@ -62,7 +62,11 @@ We can require a [`NotEmpty`](#NotEmpty) for example:
 
     toNonempty : ListIs NotEmpty a -> Nonempty a
 
-This is equivalent to a [`MaybeIs`](MaybeIs) of a non-empty list tuple:
+`ListIs` is equivalent to a [`MaybeIs`](MaybeIs) of a non-empty list tuple:
+
+    MaybeIs emptyOrNot ( a, List a )
+
+so we can treat it like a normal [`MaybeIs`](MaybeIs):
 
     import MaybeIs exposing (MaybeIs(..))
 
@@ -100,6 +104,7 @@ Use [`ListIs`](#ListIs) if you have matching head and tail element types.
   - [`fromTuple`](#fromTuple)
   - [`cons`](#cons)
   - [`mapHead`](#mapHead)
+  - [`map2HeadsAndTails`](#map2HeadsAndTails)
 
 This is equivalent to a [`MaybeIs`](MaybeIs) of a `( head, tail )` tuple:
 
@@ -276,7 +281,10 @@ length =
     --> ListIs.only 1
 
 -}
-cons : consed -> ListIs emptyOrNot_ a -> ListWithHeadType consed NotEmpty a
+cons :
+    newHead
+    -> ListIs emptyOrNot_ a
+    -> ListWithHeadType newHead NotEmpty a
 cons toPutBeforeAllOtherElements =
     fromCons toPutBeforeAllOtherElements << toList
 
@@ -284,7 +292,7 @@ cons toPutBeforeAllOtherElements =
 {-| Glue the elements of a `ListIs NotEmpty ...` to the end of a `ListIs`.
 
     ListIs.empty
-        |> ListIs.appendNonEmpty
+        |> ListIs.appendNotEmpty
             (ListIs.fromCons 1 [ 2 ])
         |> ListIs.append
             (ListIs.fromCons 3 [ 4, 5 ])
@@ -294,11 +302,11 @@ Prefer [`append`](#append) if the piped `ListIs` is already known as `NotEmpty`
 or if both are `Emptiable`.
 
 -}
-appendNonEmpty :
+appendNotEmpty :
     ListIs NotEmpty a
     -> ListIs emptyOrNot_ a
     -> ListIs NotEmpty a
-appendNonEmpty nonEmptyToAppend =
+appendNotEmpty nonEmptyToAppend =
     \list ->
         case list of
             IsNothing _ ->
@@ -315,12 +323,12 @@ appendNonEmpty nonEmptyToAppend =
             (ListIs.fromCons 3 [ 4 ])
     --> ListIs.fromCons 1 [ 2, 3, 4 ]
 
-Prefer this over [`appendNonEmpty`](#appendNonEmpty) if the piped `ListIs` is already known as `NotEmpty`
+Prefer this over [`appendNotEmpty`](#appendNotEmpty) if the piped `ListIs` is already known as `NotEmpty`
 or if both are `Emptiable`.
 
 -}
 append :
-    ListIs Emptiable a
+    ListIs appendedEmptyOrNot_ a
     -> ListIs emptyOrNot a
     -> ListIs emptyOrNot a
 append toAppend =
