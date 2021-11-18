@@ -1,4 +1,10 @@
-## changes from [holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest)
+# changelog
+
+## 2.0.0
+
+- renamed `CanBeNothing` type and variant to `CanBe`
+
+## 1.0.0: changes from [holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest)
 
 - renamed module `List.Holey.Zipper` to `HoleyFocusList`
 - switched to implementation using `MaybeIs`
