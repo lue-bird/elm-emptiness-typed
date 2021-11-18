@@ -988,6 +988,8 @@ joinParts =
 
 {-| Find out if the current focussed thing is an item.
 
+    import MaybeIs
+
     HoleyFocusList.only 3
         |> HoleyFocusList.append [ 2, 1 ]
         |> HoleyFocusList.nextHole
