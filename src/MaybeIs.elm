@@ -279,7 +279,7 @@ andThen tryIfSuccess =
 --
 
 
-{-| When using `(Just ...)` for an argument:
+{-| When using `Just`/`NotEmpty`/... for an argument:
 
     theShorter :
         ListIs NotEmpty a
