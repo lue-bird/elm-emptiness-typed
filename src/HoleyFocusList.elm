@@ -14,7 +14,7 @@ module HoleyFocusList exposing
     , focussesItem, branchableType
     )
 
-{-| A list zipper which can also focus on a hole _between_ items.
+{-| A list zipper that can also focus on a hole _between_ items.
 
 1.  🔎 focus on a hole between two items
 2.  🔌 plug that hole with a value
@@ -244,6 +244,10 @@ after =
 
 This also works from within holes:
 
+```monospace
+🍊 <> 🍉 🍇  ->  🍊 <🍉> 🍇
+```
+
     HoleyFocusList.empty
         |> HoleyFocusList.insertAfter "foo"
         |> HoleyFocusList.next
@@ -286,7 +290,7 @@ next (HoleyFocusList beforeFocusUntilHead focus after_) =
 {-| Move the focus of the `HoleyFocusList` to the previous item, if there is one.
 
 ```monospace
-🍍 <🍊> 🍉  ->  <🍍> 🍊 🍉
+🍊 <🍉> 🍇  ->  <🍊> 🍉 🍇
 ```
 
     HoleyFocusList.empty |> HoleyFocusList.previous
@@ -298,6 +302,17 @@ next (HoleyFocusList beforeFocusUntilHead focus after_) =
         |> HoleyFocusList.previous
         |> Maybe.map HoleyFocusList.current
     --> Just "holey"
+
+This also works from within holes:
+
+```monospace
+🍊 🍉 <> 🍇  ->  🍊 <🍉> 🍇
+```
+
+    HoleyFocusList.empty
+        |> HoleyFocusList.insertBefore "foo"
+        |> HoleyFocusList.previous
+    --> Just (HoleyFocusList.only "foo")
 
 -}
 previous : HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
@@ -379,14 +394,17 @@ previousHole holeyFocusList =
 {-| Fill in or replace the focussed thing in the `HoleyFocusList`.
 
 ```monospace
-       🍒
-🍍 🍓 <🡇> 🍉 🍇
+🍓 <?> 🍉  ->  🍓 <🍒> 🍉
 ```
 
     import ListIs
 
-    HoleyFocusList.plug "plug" HoleyFocusList.empty
-    --> HoleyFocusList.only "plug"
+    HoleyFocusList.empty
+        |> HoleyFocusList.insertBefore "🍓" -- "🍓" <>
+        |> HoleyFocusList.insertAfter "🍉"  -- "🍓" <> "🍉"
+        |> HoleyFocusList.plug "🍒"         -- "🍓" <"🍒"> "🍉"
+        |> HoleyFocusList.joinParts
+    --> ListIs.fromCons "🍓" [ "🍒", "🍉" ]
 
 -}
 plug : a -> HoleyFocusList HoleOrItem a -> HoleyFocusList item_ a
@@ -418,8 +436,8 @@ remove =
 {-| Insert an item after the focussed location.
 
 ```monospace
-           🍒
-🍍 🍓 <🍊> ↓ 🍉 🍇
+        🍒
+🍓 <🍊> ↓ 🍉 🍇
 ```
 
     import ListIs
@@ -443,7 +461,7 @@ insertAfter toInsertAfterFocus =
 
 ```monospace
       🍒
-🍍 🍓 ↓ <🍊> 🍉 🍇
+🍍 🍓 ↓ <🍊> 🍉
 ```
 
     import ListIs
@@ -479,8 +497,8 @@ focusAndAfter =
 {-| Append items directly after the focussed location in the `HoleyFocusList`.
 
 ```monospace
-           🍒🍋
-🍍 🍓 <🍊> \↓/ 🍉 🍇
+        🍒🍋
+🍓 <🍊> \↓/ 🍉 🍇
 ```
 
     import ListIs
@@ -502,7 +520,7 @@ squeezeInAfter toAppendDirectlyAfterFocus =
 
 ```monospace
       🍒🍋
-🍍 🍓 \↓/ <🍊> 🍉 🍇
+🍍 🍓 \↓/ <🍊> 🍉
 ```
 
     import ListIs
@@ -526,8 +544,8 @@ squeezeInBefore toPrependDirectlyBeforeFocus =
 {-| Put items to the end of the `HoleyFocusList`. After anything else.
 
 ```monospace
-                 🍒🍋
-🍍 🍓 <🍊> 🍉 🍇 ↓/
+              🍒🍋
+🍓 <🍊> 🍉 🍇 ↓/
 ```
 
     import ListIs
@@ -549,7 +567,7 @@ append itemsToAppend =
 
 ```monospace
 🍒🍋
- \↓ 🍍 🍓 <🍊> 🍉 🍇
+ \↓ 🍍 🍓 <🍊> 🍉
 ```
 
     import ListIs
@@ -670,7 +688,7 @@ beforeFirst holeyFocusList =
 {-| Focus the hole after the end of the `HoleyFocusList`. Into the nothingness.
 
 ```monospace
-🍍 🍓 <🍊> 🍉  ->  🍍 🍓 🍊 🍉 <>
+🍓 <🍊> 🍉  ->  🍓 🍊 🍉 <>
 ```
 
     import ListIs
@@ -722,8 +740,8 @@ This start from the current focussed location and searches towards the end.
 
 -}
 findForward : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
-findForward predicate z =
-    findForwardHelp predicate z
+findForward predicate =
+    findForwardHelp predicate
 
 
 findForwardHelp : (a -> Bool) -> HoleyFocusList focus_ a -> Maybe (HoleyFocusList item_ a)
@@ -943,19 +961,21 @@ joinParts =
             (HoleyFocusList _ focus after_) =
                 holeyFocusList
         in
-        case ( before holeyFocusList, focus, after_ ) of
-            ( head_ :: afterFirstUntilFocus, _, _ ) ->
+        case ( before holeyFocusList, focus ) of
+            ( head_ :: afterFirstUntilFocus, _ ) ->
                 ListIs.fromCons head_
                     (afterFirstUntilFocus ++ focusAndAfter holeyFocusList)
 
-            ( [], IsJust cur, _ ) ->
+            ( [], IsJust cur ) ->
                 ListIs.fromCons cur after_
 
-            ( [], IsNothing _, head_ :: tail_ ) ->
-                ListIs.fromCons head_ tail_
+            ( [], IsNothing (CanBeNothing canBeNothing) ) ->
+                case after_ of
+                    head_ :: tail_ ->
+                        ListIs.fromCons head_ tail_
 
-            ( [], IsNothing (CanBeNothing canBeNothing), [] ) ->
-                IsNothing (CanBeNothing canBeNothing)
+                    [] ->
+                        IsNothing (CanBeNothing canBeNothing)
 
 
 
