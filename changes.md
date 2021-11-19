@@ -5,7 +5,7 @@
 - changed `MaybeIs.CanBeNothing yesOrNever tag` type to `CanBe tag yesOrNever`
 - removed `MaybeIs.Just` & `.Nothingable` in favor of `CanBe`
 - removed `ListIs.Emptiable` in favor of `CanBe empty_ ()`
-- removed `ListIs.ItemOrHole` in favor of `CanBe hole_ ()`
+- removed `HoleyFocusList.ItemOrHole` in favor of `CanBe hole_ ()`
 - changed `ListIs.fold dir red init` to `.foldFrom init dir red`
 - renamed variant variant `MaybeIs.CanBeNothing` to `CanBe`
 - renamed `ListIs.foldWith` to `.fold`
