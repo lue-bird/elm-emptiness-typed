@@ -290,7 +290,7 @@ andThen tryIfSuccess =
 
 to make both branches return `emptyOrNot`, we could use
 
-    aList |> ListType.unCons |> ListType.fromTuple
+    aList |> ListType.unCons |> ListType.fromUnConsed
 
 also known as: necessary code that nobody will understand.
 

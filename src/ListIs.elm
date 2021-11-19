@@ -1,7 +1,7 @@
 module ListIs exposing
     ( ListIs, NotEmpty
     , ListWithHeadType
-    , empty, only, fromCons, fromTuple, fromList
+    , empty, only, fromCons, fromUnConsed, fromList
     , head, tail, length
     , cons
     , append, appendNotEmpty, concat
@@ -21,7 +21,7 @@ module ListIs exposing
 
 ## create
 
-@docs empty, only, fromCons, fromTuple, fromList
+@docs empty, only, fromCons, fromUnConsed, fromList
 
 
 ## scan
@@ -101,7 +101,7 @@ Use [`ListIs`](#ListIs) if you have matching head and tail element types.
   - [`empty`](#empty)
   - [`only`](#only)
   - [`fromCons`](#fromCons)
-  - [`fromTuple`](#fromTuple)
+  - [`fromUnConsed`](#fromUnConsed)
   - [`cons`](#cons)
   - [`mapHead`](#mapHead)
   - [`map2HeadsAndTails`](#map2HeadsAndTails)
@@ -166,10 +166,10 @@ only onlyElement =
 Equivalent to `MaybeIs.just`.
 
 -}
-fromTuple :
+fromUnConsed :
     ( head, List tailElement )
     -> ListWithHeadType head notEmpty_ tailElement
-fromTuple headAndTailTuple =
+fromUnConsed headAndTailTuple =
     just headAndTailTuple
 
 
@@ -180,7 +180,7 @@ fromCons :
     -> List tailElement
     -> ListWithHeadType head notEmpty_ tailElement
 fromCons head_ tail_ =
-    fromTuple ( head_, tail_ )
+    fromUnConsed ( head_, tail_ )
 
 
 {-| Convert a `List a` to a `ListIs (CanBe emptyTag_ ()) a`.
@@ -327,7 +327,7 @@ append toAppend =
                 IsNothing is
 
             ( IsNothing _, IsJust nonEmptyToAppend ) ->
-                fromTuple nonEmptyToAppend
+                fromUnConsed nonEmptyToAppend
 
             ( IsJust ( head_, tail_ ), _ ) ->
                 fromCons head_ (tail_ ++ toList toAppend)

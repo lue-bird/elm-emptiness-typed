@@ -10,6 +10,7 @@
 - renamed variant variant `MaybeIs.CanBeNothing` to `CanBe`
 - renamed `ListIs.foldWith` to `.fold`
 - renamed `ListIs.toTuple` to `.unCons`
+- renamed `ListIs.fromTuple` to `.fromUnConsed`
 - added extended summary in readme (`CanBe` explanation etc.)
 
 
