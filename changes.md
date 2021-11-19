@@ -2,7 +2,16 @@
 
 ## 2.0.0
 
-- renamed `CanBeNothing` type and variant to `CanBe`
+- changed `MaybeIs.CanBeNothing yesOrNever tag` type to `CanBe tag yesOrNever`
+- removed `MaybeIs.Just` & `.Nothingable` in favor of `CanBe`
+- removed `ListIs.Emptiable` in favor of `CanBe empty_ ()`
+- removed `ListIs.ItemOrHole` in favor of `CanBe hole_ ()`
+- changed `ListIs.fold dir red init` to `.foldFrom init dir red`
+- renamed variant variant `MaybeIs.CanBeNothing` to `CanBe`
+- renamed `ListIs.foldWith` to `.fold`
+- renamed `ListIs.toTuple` to `.unCons`
+- added extended summary in readme (`CanBe` explanation etc.)
+
 
 ## 1.0.0: changes from [holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest)
 
@@ -11,10 +20,9 @@
         - → type-safety
         - [makes unifying types possible](https://github.com/zwilias/elm-holey-zipper/issues/2)
     - removed type `Hole`
-    - added type `HoleOrItem`
+    - changed type `Full` to `Item` as `CanBe { hole : () } Never`
 - removed `zipper`
 - renamed type `Zipper` and its module to `HoleyFocusList`
-- renamed type `Full` to `Item`
 - renamed `singleton` to `only`
 - added `squeezeInBefore`
 - added `squeezeInAfter`

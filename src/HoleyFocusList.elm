@@ -1,5 +1,5 @@
 module HoleyFocusList exposing
-    ( HoleyFocusList, Item, HoleOrItem
+    ( HoleyFocusList, Item
     , empty, only
     , current, before, after
     , next, previous, nextHole, previousHole
@@ -23,7 +23,7 @@ module HoleyFocusList exposing
 
 ## types
 
-@docs HoleyFocusList, Item, HoleOrItem
+@docs HoleyFocusList, Item
 
 
 ## create
@@ -72,20 +72,20 @@ module HoleyFocusList exposing
 -}
 
 import ListIs exposing (ListIs)
-import MaybeIs exposing (CanBeNothing(..), MaybeIs(..), just, nothing)
+import MaybeIs exposing (CanBe(..), MaybeIs(..), just, nothing)
 
 
 {-| Represents a special kind of list with items of type `a`.
 
 The type `focus` can be
 
-  - [`Item`](#Item): `🍍 🍓 <🍊> 🍉 🍇`
+  - `🍍 🍓 <🍊> 🍉 🍇`: use [`Item`](#Item) to require such an argument
 
-  - [`HoleOrItem`](#HoleOrItem): `🍍 🍓 <?> 🍉 🍇`
+  - `🍍 🍓 <?> 🍉 🍇`: use a type variable to require such an argument
 
     `<?>` means both are possible:
 
-      - `🍍 🍓 <> 🍉 🍇`: a hole between items
+      - `🍍 🍓 <> 🍉 🍇`: a hole between items ... Heh.
       - `🍍 🍓 <🍊> 🍉 🍇`
 
 -}
@@ -101,25 +101,7 @@ type HoleyFocusList focus a
 
 -}
 type alias Item =
-    MaybeIs.Just { item : () }
-
-
-{-| A `HoleyFocusList HoleOrItem a` could be focussed on a hole between `a`s.
-
-... Heh.
-
-```monospace
-🍍 🍓 <?> 🍊 🍉 🍇
-```
-
-`<?>` means both are possible:
-
-    - `🍍 🍓 <> 🍉 🍇`: a hole between items
-    - `🍍 🍓 <🍊> 🍉 🍇`
-
--}
-type alias HoleOrItem =
-    MaybeIs.Nothingable { holeOrItem : () }
+    CanBe { hole : () } Never
 
 
 {-| An empty `HoleyFocusList` focussed on a hole with nothing before
@@ -137,7 +119,7 @@ It's the loneliest of all `HoleyFocusList`s.
     --> ListIs.empty
 
 -}
-empty : HoleyFocusList HoleOrItem a_
+empty : HoleyFocusList (CanBe hole_ ()) a_
 empty =
     HoleyFocusList [] nothing []
 
@@ -354,7 +336,7 @@ lot of nothingness, so it's always there.
     --> ListIs.fromCons "hello" [ "holey", "world" ]
 
 -}
-nextHole : HoleyFocusList Item a -> HoleyFocusList HoleOrItem a
+nextHole : HoleyFocusList Item a -> HoleyFocusList (CanBe hole_ ()) a
 nextHole holeyFocusList =
     let
         (HoleyFocusList beforeFocusUntilHead _ after_) =
@@ -382,7 +364,7 @@ that hole right up!
     --> ListIs.fromCons "hello" [ "world" ]
 
 -}
-previousHole : HoleyFocusList Item a -> HoleyFocusList HoleOrItem a
+previousHole : HoleyFocusList Item a -> HoleyFocusList (CanBe hole_ ()) a
 previousHole holeyFocusList =
     let
         (HoleyFocusList before_ _ after_) =
@@ -411,7 +393,7 @@ previousHole holeyFocusList =
     --> ListIs.fromCons "🍓" [ "🍒", "🍉" ]
 
 -}
-plug : a -> HoleyFocusList HoleOrItem a -> HoleyFocusList item_ a
+plug : a -> HoleyFocusList holeOrItem_ a -> HoleyFocusList item_ a
 plug newCurrent =
     \(HoleyFocusList before_ _ after_) ->
         HoleyFocusList before_ (just newCurrent) after_
@@ -431,7 +413,7 @@ plug newCurrent =
     --> Just [ "hello", "world" ]
 
 -}
-remove : HoleyFocusList focus_ a -> HoleyFocusList HoleOrItem a
+remove : HoleyFocusList focus_ a -> HoleyFocusList (CanBe hole_ ()) a
 remove =
     \(HoleyFocusList before_ _ after_) ->
         HoleyFocusList before_ nothing after_
@@ -684,7 +666,7 @@ Remember that holes surround everything!
     --> ListIs.fromCons 0 [ 1, 2, 3, 4 ]
 
 -}
-beforeFirst : HoleyFocusList focus_ a -> HoleyFocusList HoleOrItem a
+beforeFirst : HoleyFocusList focus_ a -> HoleyFocusList (CanBe hole_ ()) a
 beforeFirst holeyFocusList =
     HoleyFocusList [] nothing (holeyFocusList |> toList)
 
@@ -705,7 +687,7 @@ beforeFirst holeyFocusList =
     --> ListIs.fromCons 1 [ 2, 3, 4 ]
 
 -}
-afterLast : HoleyFocusList focus_ a -> HoleyFocusList HoleOrItem a
+afterLast : HoleyFocusList focus_ a -> HoleyFocusList (CanBe hole_ ()) a
 afterLast holeyFocusList =
     HoleyFocusList (toReverseList holeyFocusList) nothing []
 
@@ -761,7 +743,8 @@ findForwardHelp predicate holeyFocusList =
     case focus of
         IsJust cur ->
             if predicate cur then
-                Just (HoleyFocusList before_ (just cur) after_)
+                HoleyFocusList before_ (just cur) after_
+                    |> Just
 
             else
                 goForward ()
@@ -798,7 +781,8 @@ findBackwardHelp shouldStop holeyFocusList =
     case focus of
         IsJust cur ->
             if shouldStop cur then
-                Just (HoleyFocusList before_ (just cur) after_)
+                HoleyFocusList before_ (just cur) after_
+                    |> Just
 
             else
                 goBack ()
@@ -819,7 +803,10 @@ findBackwardHelp shouldStop holeyFocusList =
     --> ListIs.fromCons "ZEROTH" [ "FIRST", "SECOND", "THIRD" ]
 
 -}
-map : (a -> b) -> HoleyFocusList focus a -> HoleyFocusList focus b
+map :
+    (a -> b)
+    -> HoleyFocusList (CanBe hole_ yesOrNever) a
+    -> HoleyFocusList (CanBe mappedHole_ yesOrNever) b
 map changeItem =
     \(HoleyFocusList before_ focus after_) ->
         HoleyFocusList
@@ -840,10 +827,16 @@ map changeItem =
     --> ListIs.fromCons "zeroth" [ "FIRST", "second", "third" ]
 
 -}
-mapCurrent : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
+mapCurrent :
+    (a -> a)
+    -> HoleyFocusList (CanBe hole_ yesOrNever) a
+    -> HoleyFocusList (CanBe mappedHole_ yesOrNever) a
 mapCurrent updateCurrent =
     \(HoleyFocusList before_ focus after_) ->
-        HoleyFocusList before_ (MaybeIs.map updateCurrent focus) after_
+        HoleyFocusList
+            before_
+            (MaybeIs.map updateCurrent focus)
+            after_
 
 
 {-| Apply a function to all items coming before the current focussed location.
@@ -860,7 +853,10 @@ mapCurrent updateCurrent =
 mapBefore : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
 mapBefore updateItemBefore =
     \(HoleyFocusList before_ focus after_) ->
-        HoleyFocusList (List.map updateItemBefore before_) focus after_
+        HoleyFocusList
+            (List.map updateItemBefore before_)
+            focus
+            after_
 
 
 {-| Apply a function to all items coming after the current focussed location.
@@ -874,10 +870,16 @@ mapBefore updateItemBefore =
     --> ListIs.fromCons "zeroth" [ "FIRST", "SECOND" ]
 
 -}
-mapAfter : (a -> a) -> HoleyFocusList focus a -> HoleyFocusList focus a
+mapAfter :
+    (a -> a)
+    -> HoleyFocusList focus a
+    -> HoleyFocusList focus a
 mapAfter updateItemAfter =
     \(HoleyFocusList before_ focus after_) ->
-        HoleyFocusList before_ focus (List.map updateItemAfter after_)
+        HoleyFocusList
+            before_
+            focus
+            (List.map updateItemAfter after_)
 
 
 {-| Apply multiple different functions on the parts of a `HoleyFocusList` - what
@@ -907,8 +909,8 @@ mapParts :
     , current : a -> b
     , after : a -> b
     }
-    -> HoleyFocusList focus a
-    -> HoleyFocusList focus b
+    -> HoleyFocusList (CanBe hole_ yesOrNever) a
+    -> HoleyFocusList (CanBe mappedHole_ yesOrNever) b
 mapParts changePart =
     \(HoleyFocusList before_ focus after_) ->
         HoleyFocusList
@@ -953,12 +955,12 @@ toList =
 the type information gets carried over, so
 
     Item -> ListIs.NotEmpty
-    HoleOrItem -> ListIs.Emptiable
+    CanBe hole_ () -> CanBe empty_ ()
 
 -}
 joinParts :
-    HoleyFocusList (CanBeNothing valueIfNothing focusTag_) a
-    -> ListIs (CanBeNothing valueIfNothing emptyOrNotTag_) a
+    HoleyFocusList (CanBe holeTag_ yesOrNever) a
+    -> ListIs (CanBe emptyTag_ yesOrNever) a
 joinParts =
     \holeyFocusList ->
         let
@@ -973,13 +975,13 @@ joinParts =
             ( [], IsJust cur ) ->
                 ListIs.fromCons cur after_
 
-            ( [], IsNothing (CanBeNothing canBeNothing) ) ->
+            ( [], IsNothing (CanBe yesOrNever) ) ->
                 case after_ of
                     head_ :: tail_ ->
                         ListIs.fromCons head_ tail_
 
                     [] ->
-                        IsNothing (CanBeNothing canBeNothing)
+                        IsNothing (CanBe yesOrNever)
 
 
 
@@ -998,21 +1000,19 @@ joinParts =
 
 -}
 focussesItem :
-    HoleyFocusList (CanBeNothing valueIfNothing focusTag_) a
-    -> MaybeIs (CanBeNothing valueIfNothing emptyOrNotTag_) (HoleyFocusList item_ a)
+    HoleyFocusList (CanBe holeTag_ yesOrNever) a
+    -> MaybeIs (CanBe emptyTag_ yesOrNever) (HoleyFocusList item_ a)
 focussesItem =
     \holeyFocusList ->
         let
             (HoleyFocusList before_ focus after_) =
                 holeyFocusList
         in
-        case focus of
-            IsNothing (CanBeNothing canBeNothing) ->
-                IsNothing (CanBeNothing canBeNothing)
-
-            IsJust current_ ->
-                HoleyFocusList before_ (just current_) after_
-                    |> just
+        focus
+            |> MaybeIs.map
+                (\current_ ->
+                    HoleyFocusList before_ (just current_) after_
+                )
 
 
 {-| When using a `HoleyFocusList Item ...` argument,

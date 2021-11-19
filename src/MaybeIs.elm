@@ -1,5 +1,5 @@
 module MaybeIs exposing
-    ( MaybeIs(..), Just, Nothingable, CanBeNothing(..)
+    ( CanBe(..), MaybeIs(..)
     , just, nothing, fromMaybe
     , map, map2, toMaybe, value, andThen, withFallback
     , branchableType
@@ -21,10 +21,10 @@ but we can build cool type-safe data structures with it:
         MaybeIs emptyOrNot ( a, List a )
 
     type alias NotEmpty =
-        MaybeIs.Just { notEmpty : () }
+        MaybeIs.CanBe { empty : () } Never
 
     type alias Emptiable =
-        MaybeIs.Nothingable { emptiable : () }
+        MaybeIs.CanBe { empty : () } ()
 
     empty : ListIs Emptiable a_
 
@@ -37,7 +37,7 @@ This is exactly how [`ListIs`](ListIs) is implemented.
 
 ## types
 
-@docs MaybeIs, Just, Nothingable, CanBeNothing
+@docs CanBe, MaybeIs
 
 
 ## create
@@ -57,65 +57,56 @@ This is exactly how [`ListIs`](ListIs) is implemented.
 -}
 
 
-{-| Like `Maybe` with type level information about whether it exists.
-
-See [`Just`](#Just) and [`Nothingable`](#Nothingable).
-
+{-| Like `Maybe` with type level information about whether it exists. See [`CanBe`](#CanBe).
 -}
 type MaybeIs justOrNothing a
     = IsNothing justOrNothing
     | IsJust a
 
 
-{-| The value attached to a `IsNothing`:
-
-  - [`Just`](#Just): that value is `Never`
-  - [`Nothingable`](#Nothingable): that value is `()`
-
-It also has a simple type tag to make `MaybeIs` values distinct:
+{-| `CanBe` is just a cleaner version of this.
+It has a simple type tag to make `Never` values distinct:
 
     type alias NotEmpty =
-        MaybeIs.Just { notEmpty : () }
+        CanBe { empty : () } Never
 
-    type alias ItemFocussed =
-        MaybeIs.Just { itemFocussed : () }
+    type alias Item =
+        CanBe { hole : () } Never
 
-Remember to update the tag after renaming an alias.
+_Remember to update the tag after renaming an alias._
 
--}
-type CanBeNothing valueIfNothing tag
-    = CanBeNothing valueIfNothing
+Now the fun part:
 
+    joinParts :
+        HoleyFocusList (CanBe hole_ yesOrNever) a
+        -> ListIs (CanBe empty_ yesOrNever) a
+    joinParts ... =
+        case ( before, focus, after ) of
+            ( [], StringEmpty (CanBe yesOrNever), [] ) ->
+                IsNothing
+                    --↓ carries over the `yesOrNever` type,
+                    --↓ while allowing a new tag
+                    (CanBe yesOrNever)
 
-{-| `MaybeIs (Nothingable tag)`: The value could exist, could also not exist.
+            ... -> ...
 
-See [`CanBeNothing`](#CanBeNothing).
+> the type information gets carried over, so
+>
+>     HoleyFocusList.Item -> ListIs.NotEmpty
+>     CanBe hole_ () -> CanBe empty_ ()
 
--}
-type alias Nothingable tag =
-    CanBeNothing () tag
-
-
-{-| Only allow `MaybeIs`s that certainly exist as arguments.
-
-    import MaybeIs exposing (Just, MaybeIs)
-
-    head : MaybeIs (Just tag_) ( a, List a ) -> a
-    head =
-        MaybeIs.value >> Tuple.first
-
-See [`CanBeNothing`](#CanBeNothing) and [`ListIs`](ListIs).
+Read more in the readme!
 
 -}
-type alias Just tag =
-    CanBeNothing Never tag
+type CanBe stateTag neverOrValue
+    = CanBe neverOrValue
 
 
 {-| Nothing here.
 -}
-nothing : MaybeIs (Nothingable tag_) a_
+nothing : MaybeIs (CanBe possibleStateTag_ ()) a_
 nothing =
-    IsNothing (CanBeNothing ())
+    IsNothing (CanBe ())
 
 
 {-| A `MaybeIs` that certainly exists.
@@ -131,7 +122,7 @@ just value_ =
 
 {-| Convert a `Maybe` to a `MaybeIs`.
 -}
-fromMaybe : Maybe a -> MaybeIs (Nothingable tag_) a
+fromMaybe : Maybe a -> MaybeIs (CanBe possibleStateTag_ ()) a
 fromMaybe coreMaybe =
     case coreMaybe of
         Just val ->
@@ -158,9 +149,9 @@ toMaybe =
                 Nothing
 
 
-{-| Safely extracts the `value` from a `MaybeIs Just value`.
+{-| Safely extracts the `value` from a `MaybeIs (CanBe nothingTag_ Never) value`.
 
-    import MaybeIs exposing (just)
+    import MaybeIs exposing (just, MaybeIs)
 
     just (just (just "you"))
         |> MaybeIs.value
@@ -168,15 +159,16 @@ toMaybe =
         |> MaybeIs.value
     --> "you"
 
--}
-value : MaybeIs (Just tag_) value -> value
-value definitelyJust =
-    case definitelyJust of
-        IsJust val ->
-            val
+    head : MaybeIs (CanBe empty_ Never) ( a, List a ) -> a
+    head =
+        MaybeIs.value >> Tuple.first
 
-        IsNothing (CanBeNothing canBeNothing) ->
-            never canBeNothing
+See [`CanBe`](#CanBe) and [`ListIs`](ListIs).
+
+-}
+value : MaybeIs (CanBe impossibleStateTag_ Never) value -> value
+value definitelyJust =
+    definitelyJust |> withFallback never
 
 
 {-| Lazily use a fallback value if the `MaybeIs` is [`nothing`](#nothing).
@@ -193,8 +185,8 @@ Hint: `MaybeIs.withFallback never` is equivalent to `MaybeIs.value`.
 
 -}
 withFallback :
-    (canBeNothing -> value)
-    -> MaybeIs (CanBeNothing canBeNothing tag_) value
+    (unitOrNever -> value)
+    -> MaybeIs (CanBe stateTag_ unitOrNever) value
     -> value
 withFallback lazyFallback =
     \maybe ->
@@ -202,8 +194,8 @@ withFallback lazyFallback =
             IsJust val ->
                 val
 
-            IsNothing (CanBeNothing canBeNothing) ->
-                lazyFallback canBeNothing
+            IsNothing (CanBe unitOrNever) ->
+                lazyFallback unitOrNever
 
 
 {-| Transform the value in the `MaybeIs` using a given function:
@@ -214,15 +206,18 @@ withFallback lazyFallback =
     MaybeIs.map abs nothing --> nothing
 
 -}
-map : (a -> b) -> MaybeIs justOrNothing a -> MaybeIs justOrNothing b
+map :
+    (a -> b)
+    -> MaybeIs (CanBe nothingTag_ yesOrNever) a
+    -> MaybeIs (CanBe mappedNothingTag_ yesOrNever) b
 map change =
     \maybe ->
         case maybe of
             IsJust val ->
                 change val |> IsJust
 
-            IsNothing canBeNothing ->
-                IsNothing canBeNothing
+            IsNothing (CanBe yesOrNever) ->
+                IsNothing (CanBe yesOrNever)
 
 
 {-| If all the arguments exist, combine them using a given function.
@@ -236,19 +231,19 @@ map change =
 -}
 map2 :
     (a -> b -> combined)
-    -> MaybeIs justOrNothing a
-    -> MaybeIs justOrNothing b
-    -> MaybeIs justOrNothing combined
+    -> MaybeIs (CanBe aNothingTag_ yesOrNever) a
+    -> MaybeIs (CanBe bNothingTag_ yesOrNever) b
+    -> MaybeIs (CanBe combinedNothingTag_ yesOrNever) combined
 map2 combine aMaybe bMaybe =
     case ( aMaybe, bMaybe ) of
         ( IsJust a, IsJust b ) ->
             combine a b |> IsJust
 
-        ( IsNothing canBeNothing, _ ) ->
-            IsNothing canBeNothing
+        ( IsNothing (CanBe yesOrNever), _ ) ->
+            IsNothing (CanBe yesOrNever)
 
-        ( _, IsNothing canBeNothing ) ->
-            IsNothing canBeNothing
+        ( _, IsNothing (CanBe yesOrNever) ) ->
+            IsNothing (CanBe yesOrNever)
 
 
 {-| Chain together many computations that may fail.
@@ -257,32 +252,32 @@ map2 combine aMaybe bMaybe =
         |> MaybeIs.andThen parse
         |> MaybeIs.andThen extraValidation
 
-    parse : String -> MaybeIs Nothingable Parsed
-    extraValidation : Parsed -> MaybeIs Nothingable Validated
+    parse : String -> MaybeIs CanBe Parsed
+    extraValidation : Parsed -> MaybeIs CanBe Validated
 
 -}
 andThen :
-    (a -> MaybeIs justOrNothing b)
-    -> MaybeIs justOrNothing a
-    -> MaybeIs justOrNothing b
+    (a -> MaybeIs (CanBe thenNothingTag yesOrNever) b)
+    -> MaybeIs (CanBe nothingTag_ yesOrNever) a
+    -> MaybeIs (CanBe thenNothingTag yesOrNever) b
 andThen tryIfSuccess =
     \maybe ->
         case maybe of
             IsJust val ->
                 tryIfSuccess val
 
-            IsNothing canBeNothing ->
-                IsNothing canBeNothing
+            IsNothing (CanBe yesOrNever) ->
+                IsNothing (CanBe yesOrNever)
 
 
 
 --
 
 
-{-| When using `Just`/`NotEmpty`/... for an argument:
+{-| When using `CanBe ... Never` for an argument:
 
     theShorter :
-        ListIs NotEmpty a
+        ListIs (CanBe { empty : () } Never) a
         -> ListIs emptyOrNot a
         -> ListIs emptyOrNot a
     theShorter aList bList =
@@ -295,19 +290,19 @@ andThen tryIfSuccess =
 
 to make both branches return `emptyOrNot`, we could use
 
-    else
-        aList |> ListType.toTuple |> ListType.fromTuple
+    aList |> ListType.unCons |> ListType.fromTuple
 
 also known as: necessary code that nobody will understand.
 
-    else
-        aList |> MaybeIs.branchableType
+    aList |> MaybeIs.branchableType
 
 is a bit better.
 
 💙 Found a better name? → open an issue.
 
 -}
-branchableType : MaybeIs (Just tag_) a -> MaybeIs just_ a
+branchableType :
+    MaybeIs (CanBe impossibleStateTag_ Never) a
+    -> MaybeIs just_ a
 branchableType =
     value >> just
