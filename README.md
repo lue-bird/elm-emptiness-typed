@@ -136,7 +136,7 @@ joinParts ... =
 >     CanBe hole_ () -> CanBe empty_ ()
 
 `MaybeIs` is just a convenience layer for an optional-able value
-where a [`CanBe`](#CanBe) value is attached to its nothing variant.
+where a [`CanBe`](MaybeIs#CanBe) value is attached to its nothing variant.
 
 ```elm
 type alias StringIs emptyOrNot =
