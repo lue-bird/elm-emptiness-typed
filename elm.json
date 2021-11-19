@@ -3,7 +3,7 @@
     "name": "lue-bird/elm-emptiness-typed",
     "summary": "Deal with emptiness in a way that doesn't make life hard",
     "license": "MIT",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "exposed-modules": [
         "HoleyFocusList",
         "MaybeIs",
