@@ -6,15 +6,17 @@ How about this: A string type that allows the **same operations for non-empty an
 
 ```elm
 toUpper : String emptyOrNot -> String emptyOrNot
-```
-or even allow **passing** the **(im)possibility of a state** from one data structure to another?
-```elm
-toCharList : String emptyOrNot -> List emptyOrNot -- crazy!
 length : String emptyOrNot -> Int
 ...
 ```
+or even allows **passing** the **(im)possibility of a state** from one data structure to another?
+```elm
+toCharList : String emptyOrNot -> List emptyOrNot -- crazy!
+```
 
-Turns out this is very much possible!
+All this is very much possible!
+
+Let's try stuff out and see how where we end up:
 
 ```elm
 type String emptyOrNot
@@ -33,11 +35,14 @@ head string =
         
         StringNotEmpty headChar _ ->
             headChar
+
+head (char 'E') --> 'E'
+head (StringEmpty ()) --> error
 ```
 
 the type `StringIs Never` limits arguments to just `StringNotEmpty`.
 
-to make the name more descriptive, we could define
+to make the type argument name more descriptive, we could define
 
 ```elm
 type alias NotEmpty =
@@ -53,7 +58,7 @@ not a good idea:
 Html NotEmpty
 ```
 
-next try:
+Next try:
 
 ```elm
 type alias NotEmpty =
@@ -81,7 +86,7 @@ toCharList :
     -> ListIs { ... : unitOrNever } Char
 ```
 
-`CanBe` is just a cleaner version of this.
+[`CanBe`](#MaybeIs#CanBe) is just a cleaner version of this.
 It has a simple type tag to make `Never` values distinct:
 
 ```elm
@@ -91,8 +96,6 @@ type alias NotEmpty =
 type alias Item =
     CanBe { hole : () } Never
 ```
-
-_Remember to update the tag after renaming an alias._
 
 Also, what needed to be written as
 
@@ -116,24 +119,25 @@ emptyString =
 Now the fun part:
 
 ```elm
-joinParts :
-    HoleyFocusList (CanBe hole_ yesOrNever) a
-    -> ListIs (CanBe empty_ yesOrNever) a
-joinParts ... =
-    case ( before, focus, after ) of
-        ( [], StringEmpty (CanBe yesOrNever), [] ) ->
+toCharList :
+    StringIs (CanBe emptyString_ yesOrNever) a
+    -> ListIs (CanBe emptyList_ yesOrNever) a
+toCharList string =
+    case string of
+        StringEmpty (CanBe yesOrNever) ->
             IsNothing
                 --↓ carries over the `yesOrNever` type,
                 --↓ while allowing a new tag
                 (CanBe yesOrNever)
 
-        ... -> ...
+        StringNotEmpty headChar tailString ->
+            ListIs.fromCons headChar (tailString |> String.toList)
 ```
 
 > the type information gets carried over, so
 >
->     HoleyFocusList.Item -> ListIs.NotEmpty
->     CanBe hole_ () -> CanBe empty_ ()
+>     StringIs.NotEmpty -> ListIs.NotEmpty
+>     CanBe emptyString_ () -> CanBe emptyList_ ()
 
 `MaybeIs` is just a convenience layer for an optional-able value
 where a [`CanBe`](MaybeIs#CanBe) value is attached to its nothing variant.
@@ -151,27 +155,15 @@ A `StringIs` acts like a type-safe `Maybe NonEmptyString`!
 
 Let's create some data structures!
 
-## `ListIs`
+## [`ListIs`](ListIs)
 
 Handle `Emptiable` and `NotEmpty` lists at once.
 
-```elm
-MaybeIs emptyOrNot ( a, List b )
-```
+`MaybeIs emptyOrNot ( a, List b )` is a `ListIs emptyOrNot a`.
 
-is
+More correctly, it's a [`ListWithHeadType a emptyOrNot b`](ListIs#ListWithHeadType).
 
-```elm
-ListIs emptyOrNot a
-```
-
-more correctly, it's a
-
-```elm
-ListWithHeadType a emptyOrNot b
-```
-
-`ListIs NotEmpty` then allow Maybe-free type-safe [`head`](ListIs#head), [`tail`](ListIs#tail) and [`fold`](ListIs#fold) (useful for finding the maximum, some call it "fold1"), etc.
+`NotEmpty` allows safe `Maybe`-free [`head`](ListIs#head), [`tail`](ListIs#tail), [`fold`](ListIs#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
 
 ```elm
 import ListIs
@@ -185,7 +177,7 @@ ListIs.empty         -- ListIs Emptiable a_
 --> ( 5, [ 1, 2, 3 ] )
 ```
 
-## `HoleyFocusList`
+## [`HoleyFocusList`](HoleyFocusList)
 
 A list zipper that can also focus before and after every item.
 
