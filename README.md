@@ -1,4 +1,4 @@
-Deal with emptiness in a way that doesn't make life hard:
+> one type for emptiable and safe non-empty
 
 # [emptiness-typed](https://package.elm-lang.org/packages/lue-bird/elm-emptiness-typed/latest/)
 
