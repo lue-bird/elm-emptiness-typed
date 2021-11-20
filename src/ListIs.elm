@@ -604,7 +604,7 @@ toList =
                 []
 
 
-{-| Convert a `NotEmpty` to a non-empty list tuple `( a, List a )`.
+{-| Convert a `ListWithHeadType a NotEmpty b` to a non-empty list tuple `( a, List b )`.
 
 Equivalent to `MaybeIs.value`.
 
