@@ -1,5 +1,9 @@
 # changelog
 
+#### 2.0.1
+
+- doc correction for `ListIs.unCons`
+
 ## 2.0.0
 
 - changed `MaybeIs.CanBeNothing yesOrNever tag` type to `CanBe tag yesOrNever`
