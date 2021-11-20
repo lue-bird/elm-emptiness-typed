@@ -1,5 +1,9 @@
 # changelog
 
+#### 2.0.2
+
+- changed and corrected readme
+
 #### 2.0.1
 
 - doc correction for `ListIs.unCons`
