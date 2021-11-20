@@ -1,5 +1,9 @@
 # changelog
 
+#### 2.0.3
+
+- add a mini "why you should care about non-empty" section in the readme
+
 #### 2.0.2
 
 - changed and corrected readme
