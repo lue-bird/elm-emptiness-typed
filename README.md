@@ -90,7 +90,7 @@ toCharList :
     -> ListIs { ... : unitOrNever } Char
 ```
 
-[`CanBe`](#MaybeIs#CanBe) is just a cleaner version of this.
+[`CanBe`](MaybeIs#CanBe) is just a cleaner version of this.
 It has a simple type tag to make `Never` values distinct:
 
 ```elm
