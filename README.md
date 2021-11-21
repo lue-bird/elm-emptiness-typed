@@ -4,7 +4,7 @@
 
 There are many types that promise non-emptiness. One example: [MartinSStewart's NonemptyString](https://dark.elm.dmy.fr/packages/MartinSStewart/elm-nonempty-string/latest/).
 
-The cool thing is that `fromInt`, `fromChar`, etc. keep the non-empty compile-time promise, so that `head`, `tail`, etc. are guaranteed to succeed and you don't have to carry `Maybe`s throughout your program.
+The cool thing is that `fromInt`, `fromChar`, etc. keep the compile-time promise of being non-empty, so `head`, `tail`, etc. are guaranteed to succeed and you don't have to carry `Maybe`s throughout your program.
 
 How about this: A string type that allows the **same operations for non-empty and emptiable** values:
 
