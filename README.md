@@ -9,13 +9,13 @@ The cool thing is that `fromInt`, `fromChar`, etc. keep the compile-time promise
 How about this: A string type that allows the **same operations for non-empty and emptiable** values:
 
 ```elm
-toUpper : String emptyOrNot -> String emptyOrNot
-length : String emptyOrNot -> Int
+toUpper : StringIs emptyOrNot -> StringIs emptyOrNot
+length : StringIs emptyOrNot -> Int
 ...
 ```
 or even allows **passing** the **(im)possibility of a state** from one data structure to another?
 ```elm
-toCharList : String emptyOrNot -> List emptyOrNot -- crazy!
+toCharList : StringIs emptyOrNot -> ListIs emptyOrNot -- crazy!
 ```
 
 All this is very much possible!
@@ -23,7 +23,7 @@ All this is very much possible!
 Let's try stuff out and see how where we end up:
 
 ```elm
-type String emptyOrNot
+type StringIs emptyOrNot
     = StringEmpty emptyOrNot
     | StringNotEmpty Char String
 
