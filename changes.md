@@ -1,8 +1,14 @@
 # changelog
 
+## 3.0.0 plans
+
+- rename `MaybeIs.IsJust` variant to `.JustIs`
+- rename `MaybeIs.IsNothing` variant to `.NothingIs`
+- rename `ListIs.fromUnConsed` to `.fromTuple`/`.fromHeadTail`/`-Tuple`
+
 #### 2.0.4
 
-- corrections in the readme
+- corrected readme
 
 #### 2.0.3
 
