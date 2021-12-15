@@ -2,8 +2,8 @@
 
 ## 3.0.0
 
-- rename `MaybeIs.IsJust` variant to `.JustIs`
-- rename `MaybeIs.IsNothing` variant to `.NothingIs`
+- renamed `MaybeIs.IsJust` variant to `.JustIs`
+- renamed `MaybeIs.IsNothing` variant to `.NothingIs`
 
 #### 2.0.4
 
