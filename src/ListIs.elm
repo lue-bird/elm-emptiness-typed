@@ -390,18 +390,19 @@ when isGood =
     fromList << List.filter isGood << toList
 
 
-{-| Keep all `just` values and drop all `Nothing`s.
+{-| Keep all `just` values and drop all [`nothing`](MaybeIs#nothing)s.
 
-    ListIs.fromCons Nothing [ Nothing ]
+    import MaybeIs exposing (just, nothing)
+
+    ListIs.fromCons nothing [ nothing ]
         |> ListIs.whenJust
     --> ListIs.empty
 
-    ListIs.fromCons (just 1) [ Nothing, just 3 ]
+    ListIs.fromCons (just 1) [ nothing, just 3 ]
         |> ListIs.whenJust
     --> ListIs.fromCons 1 [ 3 ]
-    --: ListIs NotEmpty number
 
-As you can see, if the head is `just` a value, the result is [`NotEmpty`](#NotEmpty).
+As you can see, if only the head is `just` a value, the result is [`NotEmpty`](#NotEmpty).
 
 -}
 whenJust :
