@@ -263,10 +263,10 @@ next (HoleyFocusList beforeFocusUntilHead focus after_) =
             let
                 newBeforeReversed =
                     case focus of
-                        IsNothing _ ->
+                        NothingIs _ ->
                             beforeFocusUntilHead
 
-                        IsJust oldCurrent ->
+                        JustIs oldCurrent ->
                             oldCurrent :: beforeFocusUntilHead
             in
             HoleyFocusList newBeforeReversed (just next_) afterNext
@@ -473,10 +473,10 @@ focusAndAfter : HoleyFocusList focus_ a -> List a
 focusAndAfter =
     \(HoleyFocusList _ focus after_) ->
         case focus of
-            IsNothing _ ->
+            NothingIs _ ->
                 after_
 
-            IsJust current_ ->
+            JustIs current_ ->
                 current_ :: after_
 
 
@@ -635,10 +635,10 @@ last =
                 let
                     focusToFirst =
                         case focus of
-                            IsJust current_ ->
+                            JustIs current_ ->
                                 current_ :: before_
 
-                            IsNothing _ ->
+                            NothingIs _ ->
                                 before_
                 in
                 HoleyFocusList
@@ -698,10 +698,10 @@ toReverseList =
         let
             focusToFirst =
                 case focus of
-                    IsNothing _ ->
+                    NothingIs _ ->
                         beforeFocusUntilHead
 
-                    IsJust current_ ->
+                    JustIs current_ ->
                         current_ :: beforeFocusUntilHead
         in
         List.reverse after_ ++ focusToFirst
@@ -741,7 +741,7 @@ findForwardHelp predicate holeyFocusList =
                 |> Maybe.andThen (findForwardHelp predicate)
     in
     case focus of
-        IsJust cur ->
+        JustIs cur ->
             if predicate cur then
                 HoleyFocusList before_ (just cur) after_
                     |> Just
@@ -749,7 +749,7 @@ findForwardHelp predicate holeyFocusList =
             else
                 goForward ()
 
-        IsNothing _ ->
+        NothingIs _ ->
             goForward ()
 
 
@@ -779,7 +779,7 @@ findBackwardHelp shouldStop holeyFocusList =
                 |> Maybe.andThen (findBackwardHelp shouldStop)
     in
     case focus of
-        IsJust cur ->
+        JustIs cur ->
             if shouldStop cur then
                 HoleyFocusList before_ (just cur) after_
                     |> Just
@@ -787,7 +787,7 @@ findBackwardHelp shouldStop holeyFocusList =
             else
                 goBack ()
 
-        IsNothing _ ->
+        NothingIs _ ->
             goBack ()
 
 
@@ -972,16 +972,16 @@ joinParts =
                 ListIs.fromCons head_
                     (afterFirstUntilFocus ++ focusAndAfter holeyFocusList)
 
-            ( [], IsJust cur ) ->
+            ( [], JustIs cur ) ->
                 ListIs.fromCons cur after_
 
-            ( [], IsNothing (CanBe yesOrNever) ) ->
+            ( [], NothingIs (CanBe yesOrNever) ) ->
                 case after_ of
                     head_ :: tail_ ->
                         ListIs.fromCons head_ tail_
 
                     [] ->
-                        IsNothing (CanBe yesOrNever)
+                        NothingIs (CanBe yesOrNever)
 
 
 

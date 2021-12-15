@@ -60,8 +60,8 @@ This is exactly how [`ListIs`](ListIs) is implemented.
 {-| Like `Maybe` with type level information about whether it exists. See [`CanBe`](#CanBe).
 -}
 type MaybeIs justOrNothing a
-    = IsNothing justOrNothing
-    | IsJust a
+    = NothingIs justOrNothing
+    | JustIs a
 
 
 {-| `CanBe` is just a cleaner version of this.
@@ -83,7 +83,7 @@ Now the fun part:
     joinParts ... =
         case ( before, focus, after ) of
             ( [], StringEmpty (CanBe yesOrNever), [] ) ->
-                IsNothing
+                NothingIs
                     --↓ carries over the `yesOrNever` type,
                     --↓ while allowing a new tag
                     (CanBe yesOrNever)
@@ -95,7 +95,7 @@ Now the fun part:
 >     HoleyFocusList.Item -> ListIs.NotEmpty
 >     CanBe hole_ () -> CanBe empty_ ()
 
-Read more in the readme!
+Read more in the [readme](https://dark.elm.dmy.fr/packages/lue-bird/elm-emptiness-typed/latest/)!
 
 -}
 type CanBe stateTag neverOrValue
@@ -106,7 +106,7 @@ type CanBe stateTag neverOrValue
 -}
 nothing : MaybeIs (CanBe possibleStateTag_ ()) a_
 nothing =
-    IsNothing (CanBe ())
+    NothingIs (CanBe ())
 
 
 {-| A `MaybeIs` that certainly exists.
@@ -117,7 +117,7 @@ nothing =
 -}
 just : value -> MaybeIs just_ value
 just value_ =
-    IsJust value_
+    JustIs value_
 
 
 {-| Convert a `Maybe` to a `MaybeIs`.
@@ -142,10 +142,10 @@ toMaybe : MaybeIs justOrNothing_ a -> Maybe a
 toMaybe =
     \maybe ->
         case maybe of
-            IsJust val ->
+            JustIs val ->
                 Just val
 
-            IsNothing _ ->
+            NothingIs _ ->
                 Nothing
 
 
@@ -191,10 +191,10 @@ withFallback :
 withFallback lazyFallback =
     \maybe ->
         case maybe of
-            IsJust val ->
+            JustIs val ->
                 val
 
-            IsNothing (CanBe unitOrNever) ->
+            NothingIs (CanBe unitOrNever) ->
                 lazyFallback unitOrNever
 
 
@@ -213,11 +213,11 @@ map :
 map change =
     \maybe ->
         case maybe of
-            IsJust val ->
-                change val |> IsJust
+            JustIs val ->
+                change val |> JustIs
 
-            IsNothing (CanBe yesOrNever) ->
-                IsNothing (CanBe yesOrNever)
+            NothingIs (CanBe yesOrNever) ->
+                NothingIs (CanBe yesOrNever)
 
 
 {-| If all the arguments exist, combine them using a given function.
@@ -236,14 +236,14 @@ map2 :
     -> MaybeIs (CanBe combinedNothingTag_ yesOrNever) combined
 map2 combine aMaybe bMaybe =
     case ( aMaybe, bMaybe ) of
-        ( IsJust a, IsJust b ) ->
-            combine a b |> IsJust
+        ( JustIs a, JustIs b ) ->
+            combine a b |> JustIs
 
-        ( IsNothing (CanBe yesOrNever), _ ) ->
-            IsNothing (CanBe yesOrNever)
+        ( NothingIs (CanBe yesOrNever), _ ) ->
+            NothingIs (CanBe yesOrNever)
 
-        ( _, IsNothing (CanBe yesOrNever) ) ->
-            IsNothing (CanBe yesOrNever)
+        ( _, NothingIs (CanBe yesOrNever) ) ->
+            NothingIs (CanBe yesOrNever)
 
 
 {-| Chain together many computations that may fail.
@@ -263,11 +263,11 @@ andThen :
 andThen tryIfSuccess =
     \maybe ->
         case maybe of
-            IsJust val ->
+            JustIs val ->
                 tryIfSuccess val
 
-            IsNothing (CanBe yesOrNever) ->
-                IsNothing (CanBe yesOrNever)
+            NothingIs (CanBe yesOrNever) ->
+                NothingIs (CanBe yesOrNever)
 
 
 

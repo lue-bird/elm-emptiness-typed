@@ -129,7 +129,7 @@ toCharList :
 toCharList string =
     case string of
         StringEmpty (CanBe yesOrNever) ->
-            IsNothing
+            NothingIs
                 --↓ carries over the `yesOrNever` type,
                 --↓ while allowing a new tag
                 (CanBe yesOrNever)

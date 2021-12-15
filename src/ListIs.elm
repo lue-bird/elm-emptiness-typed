@@ -81,10 +81,10 @@ so we can treat it like a normal [`MaybeIs`](MaybeIs):
     toList : ListIs emptyOrNot_ a -> List a
     toList list =
         case list of
-            IsJust ( head_, tail_ ) ->
+            JustIs ( head_, tail_ ) ->
                 head_ :: tail_
 
-            IsNothing _ ->
+            NothingIs _ ->
                 []
 
 -}
@@ -120,10 +120,10 @@ This is equivalent to a [`MaybeIs`](MaybeIs) of a `( head, tail )` tuple:
     tail : ListWithHead head_ tailElement -> List tailElement
     tail listNotEmpty =
         case listNotEmpty of
-            IsJust ( _, tailList ) ->
+            JustIs ( _, tailList ) ->
                 tailList
 
-            IsNothing _ ->
+            NothingIs _ ->
                 []
 
 -}
@@ -250,10 +250,10 @@ length : ListWithHeadType head_ emptyOrNot_ tailElement_ -> Int
 length =
     \list ->
         case list of
-            IsJust ( _, tail_ ) ->
+            JustIs ( _, tail_ ) ->
                 1 + List.length tail_
 
-            IsNothing _ ->
+            NothingIs _ ->
                 0
 
 
@@ -298,10 +298,10 @@ appendNotEmpty :
 appendNotEmpty nonEmptyToAppend =
     \list ->
         case list of
-            IsNothing _ ->
+            NothingIs _ ->
                 nonEmptyToAppend
 
-            IsJust ( head_, tail_ ) ->
+            JustIs ( head_, tail_ ) ->
                 fromCons head_ (tail_ ++ toList nonEmptyToAppend)
 
 
@@ -323,13 +323,13 @@ append :
 append toAppend =
     \list ->
         case ( list, toAppend ) of
-            ( IsNothing is, IsNothing _ ) ->
-                IsNothing is
+            ( NothingIs is, NothingIs _ ) ->
+                NothingIs is
 
-            ( IsNothing _, IsJust nonEmptyToAppend ) ->
+            ( NothingIs _, JustIs nonEmptyToAppend ) ->
                 fromUnConsed nonEmptyToAppend
 
-            ( IsJust ( head_, tail_ ), _ ) ->
+            ( JustIs ( head_, tail_ ), _ ) ->
                 fromCons head_ (tail_ ++ toList toAppend)
 
 
@@ -355,19 +355,19 @@ concat :
     -> ListIs emptyOrNot a
 concat listOfLists =
     case listOfLists of
-        IsNothing canBeNothing ->
-            IsNothing canBeNothing
+        NothingIs canBeNothing ->
+            NothingIs canBeNothing
 
-        IsJust ( IsJust ( head_, firstListTail ), afterFirstList ) ->
+        JustIs ( JustIs ( head_, firstListTail ), afterFirstList ) ->
             fromCons head_
                 (firstListTail
                     ++ (afterFirstList |> List.concatMap toList)
                 )
 
-        IsJust ( IsNothing canBeNothing, lists ) ->
+        JustIs ( NothingIs canBeNothing, lists ) ->
             case lists |> List.concatMap toList of
                 [] ->
-                    IsNothing canBeNothing
+                    NothingIs canBeNothing
 
                 head_ :: tail__ ->
                     fromCons head_ tail__
@@ -412,15 +412,15 @@ whenJust :
     -> ListWithHeadType headValue emptyOrNot tailElementValue
 whenJust maybes =
     case maybes of
-        IsNothing isPossible ->
-            IsNothing isPossible
+        NothingIs isPossible ->
+            NothingIs isPossible
 
-        IsJust ( head_, tail_ ) ->
+        JustIs ( head_, tail_ ) ->
             case head_ of
-                IsNothing isPossible ->
-                    IsNothing isPossible
+                NothingIs isPossible ->
+                    NothingIs isPossible
 
-                IsJust headValue ->
+                JustIs headValue ->
                     fromCons headValue
                         (tail_ |> List.filterMap MaybeIs.toMaybe)
 
@@ -597,10 +597,10 @@ toList : ListIs emptyOrNot_ a -> List a
 toList =
     \list ->
         case list of
-            IsJust ( head_, tail_ ) ->
+            JustIs ( head_, tail_ ) ->
                 head_ :: tail_
 
-            IsNothing _ ->
+            NothingIs _ ->
                 []
 
 
