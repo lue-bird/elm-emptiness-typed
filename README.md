@@ -9,13 +9,13 @@ The cool thing is that `fromInt`, `fromChar`, etc. keep the compile-time promise
 How about this: A string type that allows the **same operations for non-empty and emptiable** values:
 
 ```elm
-toUpper : StringIs emptyOrNot -> StringIs emptyOrNot
-length : StringIs emptyOrNot -> Int
+toUpper : StringIs canBeEmpty -> StringIs canBeEmpty
+length : StringIs canBeEmpty -> Int
 ...
 ```
 or even allows **passing** the **(im)possibility of a state** from one data structure to another?
 ```elm
-toCharList : StringIs emptyOrNot -> ListIs emptyOrNot -- crazy!
+toCharList : StringIs canBeEmpty -> ListIs canBeEmpty -- crazy!
 ```
 
 All this is very much possible!
@@ -23,12 +23,12 @@ All this is very much possible!
 Let's try stuff out and see how where we end up:
 
 ```elm
-type StringIs emptyOrNot
-    = StringEmpty emptyOrNot
+type StringIs canBeEmpty
+    = StringEmpty canBeEmpty
     | StringNotEmpty Char String
 
-char : Char -> StringIs notEmpty_
-char onlyChar =
+fromChar : Char -> StringIs notEmpty_
+fromChar onlyChar =
     StringNotEmpty onlyChar ""
 
 head : StringIs Never -> Char
@@ -51,12 +51,9 @@ to make the type argument name more descriptive, we could define
 ```elm
 type alias NotEmpty =
     Never
-
-type alias Emptiable =
-    ()
 ```
 
-not a good idea:
+Not a good idea:
 
 ```elm
 Html NotEmpty
@@ -67,11 +64,12 @@ Next try:
 ```elm
 type alias NotEmpty =
     { canBeEmpty : Never }
+
+StringIs.empty
+--: StringIs ()
 ```
 
-almost there!
-
-`StringIs ()` would then refer to an emptiable. Nice!
+Nice! almost there!
 
 Now let's create `toCharList` that carries the emptiness-information over:
 
@@ -79,15 +77,18 @@ Now let's create `toCharList` that carries the emptiness-information over:
 toCharList : StringIs WAIT -> ListIs HOW_CAN_I_DO_THIS Char
 ```
 
-seems like we need
+It seems like we need
 
 ```elm
-type alias Emptiable = { canBeEmpty : () }
-type alias NotEmpty = { canBeEmpty : Never }
+type alias NotEmpty =
+    { canBeEmpty : Never }
+
+StringIs.empty
+--: StringIs { canBeEmpty : () }
 
 toCharList :
-    StringIs { canBeEmpty : unitOrNever }
-    -> ListIs { ... : unitOrNever } Char
+    StringIs { canBeEmpty : yesOrNever }
+    -> ListIs { ... : yesOrNever } Char
 ```
 
 [`CanBe`](MaybeIs#CanBe) is just a cleaner version of this.
