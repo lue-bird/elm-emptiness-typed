@@ -1,5 +1,43 @@
 # changelog
 
+## 4.0.0
+
+  - changed
+    ```elm
+    type CanBe stateTag yesOrNever
+        = CanBe yesOrNever
+    ```
+    to
+    ```elm
+    type Can possiblyOrNever be state
+        = Can yesOrNever Be
+    ```
+      - added
+        ```elm
+        type Be
+            = Be
+        
+        type alias Isnt state =
+            Can Never Be state
+        type alias CanBe state =
+            Can () Be state
+        ```
+
+  - renamed `MaybeIs` type and module to `MaybeThat`
+      - renamed `MaybeIs.IsJust` variant to `.JustThat`
+      - renamed `MaybeIs.IsNothing` variant to `.NothingThat`
+      - added `type Nothing = Nothing`
+  
+  - renamed `ListIs` type and module to `ListThat`
+        - removed `NotEmpty`
+        - added `type Empty = Empty`
+        
+  - renamed `HoleyFocusList` type and module to `ListWithFocusThat`
+        - removed `type alias Item`
+        - removed `type alias Hole`
+        - added `type Hole = Hole`
+  
+
 ## 3.0.0
 
 - renamed `MaybeIs.IsJust` variant to `.JustIs`
@@ -23,7 +61,7 @@
 
 ## 2.0.0
 
-- changed `MaybeIs.CanBeNothing yesOrNever tag` type to `CanBe tag yesOrNever`
+- changed `MaybeIs.CanBeNothing possiblyOrNever tag` type to `CanBe tag possiblyOrNever`
 - removed `MaybeIs.Just` & `.Nothingable` in favor of `CanBe`
 - removed `ListIs.Emptiable` in favor of `CanBe empty_ ()`
 - removed `HoleyFocusList.ItemOrHole` in favor of `CanBe hole_ ()`
