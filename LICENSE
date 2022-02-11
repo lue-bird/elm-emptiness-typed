@@ -1,6 +1,6 @@
 
 - [main license](#main-license)
-- [`HoleyFocusList` and `HoleyFocusListTest`](#HoleyFocusList-and-HoleyFocusListTest)
+- [`ListWithFocusThat` and `ListWithFocusThatTest`](#ListWithFocusThat-and-ListWithFocusThatTest)
 
 ## main license
 
@@ -25,9 +25,9 @@ BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## `HoleyFocusList` and `HoleyFocusListTest`
+## `ListWithFocusThat` and `ListWithFocusThatTest`
 
-is additionally licensed under:
+is in part licensed additionally under:
 
 for BSD 3-Clause License
 

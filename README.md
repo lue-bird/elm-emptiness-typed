@@ -6,36 +6,35 @@ There are many types that promise non-emptiness. One example: [MartinSStewart's 
 
 The cool thing is that `fromInt`, `fromChar`, etc. keep the compile-time promise of being non-empty, so `head`, `tail`, etc. are guaranteed to succeed and you don't have to carry `Maybe`s throughout your program.
 
-How about this: A string type that allows the **same operations for non-empty and emptiable** values:
-
+How about **operations that work on non-empty and emptiable** strings?
 ```elm
-toUpper : StringIs canBeEmpty -> StringIs canBeEmpty
-length : StringIs canBeEmpty -> Int
+toUpper : StringThat canOrCantBeEmpty -> StringThat canOrCantBeEmpty
+length : StringThat canOrCantBeEmpty_ -> Int
 ...
 ```
-or even allows **passing** the **(im)possibility of a state** from one data structure to another?
+or ones that can **pass** the **(im)possibility of a state** from one data structure to the other?
 ```elm
-toCharList : StringIs canBeEmpty -> ListIs canBeEmpty -- crazy!
+toCharList : StringThat canOrCantBeEmpty -> ListThat canOrCantBeEmpty
 ```
 
-All this is very much possible!
+All this good stuff is very much possible 🔥
 
-Let's try stuff out and see how where we end up:
+Let's experiment and see how where we end up:
 
 ```elm
-type StringIs canBeEmpty
-    = StringEmpty canBeEmpty
+type StringThatCanBeEmpty yesOrNever
+    = StringEmpty yesOrNever
     | StringNotEmpty Char String
 
-fromChar : Char -> StringIs notEmpty_
+fromChar : Char -> StringThatCanBeEmpty Never
 fromChar onlyChar =
     StringNotEmpty onlyChar ""
 
-head : StringIs Never -> Char
+head : StringThatCanBeEmpty Never -> Char
 head string =
     case string of
-        StringEmpty empty ->
-            never empty --! neat
+        StringEmpty canBeEmpty ->
+            canBeEmpty |> never --! neat
         
         StringNotEmpty headChar _ ->
             headChar
@@ -44,163 +43,179 @@ head (char 'E') --> 'E'
 head (StringEmpty ()) --> error
 ```
 
-the type `StringIs Never` limits arguments to just `StringNotEmpty`.
+→ The type `StringThatCanBeEmpty Never` limits arguments to just `StringNotEmpty`.
 
-to make the type argument name more descriptive, we could define
+To avoid the somewhat unintuitive type argument `StringThatCanBeEmpty ()/Never`, let's try
 
 ```elm
-type alias NotEmpty =
+type StringThat canOrCantBeEmpty
+
+type alias IsntEmpty =
     Never
+
+fromChar : Char -> StringThatCanBeEmpty Never
 ```
 
-Not a good idea:
+Not a good idea: `Html NotEmpty`
+
+Next roll:
 
 ```elm
-Html NotEmpty
+type IsntEmpty
+    = NotEmpty Never
+
+type CanBeEmpty
+    = CanBeEmpty
+
+StringThat.empty
+--: StringThat CanBeEmpty
+
+StringThat.head
+--: StringThat IsntEmpty -> Char
 ```
 
-Next try:
-
-```elm
-type alias NotEmpty =
-    { canBeEmpty : Never }
-
-StringIs.empty
---: StringIs ()
-```
-
-Nice! almost there!
+👌 – almost there!
 
 Now let's create `toCharList` that carries the emptiness-information over:
 
 ```elm
-toCharList : StringIs WAIT -> ListIs HOW_CAN_I_DO_THIS Char
+toCharList : StringThat ?? -> ListThat ?? Char
 ```
 
 It seems like we need
 
 ```elm
-type alias NotEmpty =
-    { canBeEmpty : Never }
+type CanBeEmpty possiblyOrNever
+    = CanBeEmpty possiblyOrNever
 
-StringIs.empty
---: StringIs { canBeEmpty : () }
+type alias IsntEmpty =
+    CanBeEmpty Never
+
+StringThat.empty
+--: StringThat (CanBeEmpty ())
 
 toCharList :
-    StringIs { canBeEmpty : yesOrNever }
-    -> ListIs { ... : yesOrNever } Char
+    StringThat (CanBeEmpty possiblyOrNever)
+    -> ListThat (... possiblyOrNever) Char
 ```
 
-[`CanBe`](MaybeIs#CanBe) is just a cleaner version of this.
-It has a simple type tag to make `Never` values distinct:
+[`Can ... Be ...`](MaybeThat#Can) is just a cleaner and more powerful version of this.
+It uses a simple type tag to make values distinct:
 
 ```elm
-type alias NotEmpty =
-    CanBe { empty : () } Never
+type Empty
+    = Empty Never
 
-type alias Item =
-    CanBe { hole : () } Never
+fromCons : a -> List a -> ListThat (Isnt Empty) a
 ```
+or
+```elm
+type Hole
+    = Hole Never
+
+only : a -> ListWithFocusThat (Isnt Hole) a
+```
+(`Never` ensures that _no value can be created_ → phantom-type-only)
 
 Also, what needed to be written as
 
 ```elm
-type alias Emptiable =
-    { canBeEmpty : () }
-
-emptyString : StringIs Emptiable
+emptyString : StringThat (CanBeEmpty ())
 emptyString =
-    StringEmpty { canBeEmpty = () }
+    StringEmpty (CanBeEmpty ())
 ```
 
 becomes simply
 
 ```elm
-emptyString : StringIs (CanBe empty_ ())
+emptyString : StringThat (CanBe empty_)
 emptyString =
-    StringEmpty (CanBe ())
+    StringEmpty (Can () Be)
 ```
 
 Now the fun part:
 
 ```elm
 toCharList :
-    StringIs (CanBe emptyString_ yesOrNever) a
-    -> ListIs (CanBe emptyList_ yesOrNever) a
+    StringThat (Can possiblyOrNever Be emptyString_) a
+    -> ListThat (Can possiblyOrNever Be emptyList_) a
 toCharList string =
     case string of
-        StringEmpty (CanBe yesOrNever) ->
-            NothingIs
-                --↓ carries over the `yesOrNever` type,
+        StringEmpty (CanBe possiblyOrNever) ->
+            NothingThat
+                --↓ carries over the `possiblyOrNever` type,
                 --↓ while allowing a new tag
-                (CanBe yesOrNever)
+                (CanBe possiblyOrNever)
 
         StringNotEmpty headChar tailString ->
-            ListIs.fromCons headChar (tailString |> String.toList)
+            ListThat.fromCons headChar (tailString |> String.toList)
 ```
 
 > the type information gets carried over, so
 >
->     StringIs.NotEmpty -> ListIs.NotEmpty
+>     StringThat.(Isnt Empty) -> ListThat.(Isnt Empty)
 >     CanBe emptyString_ () -> CanBe emptyList_ ()
 
-`MaybeIs` is just a convenience layer for an optional-able value
-where a [`CanBe`](MaybeIs#CanBe) value is attached to its nothing variant.
+`MaybeThat` is just a convenience layer for an optional-able value
+where a [`CanBe`](MaybeThat#CanBe) value is attached to its nothing variant.
 
 ```elm
-type alias StringIs emptyOrNot =
-    MaybeIs emptyOrNot ( Char, String )
+type alias StringThat emptyOrNot =
+    MaybeThat emptyOrNot ( Char, String )
 
-MaybeIs.map StringIs.head
---: StringIs (CanBe empty_ yesOrNever)
---: -> MaybeIs (CanBe nothing_ yesOrNever) Char
+MaybeThat.map StringThat.head
+--: StringThat (CanBe empty_ possiblyOrNever)
+--: -> MaybeThat (CanBe nothing_ possiblyOrNever) Char
 ```
 
-A `StringIs` acts like a type-safe `Maybe NonEmptyString`!
+A `StringThat` acts like a type-safe `Maybe NonEmptyString`!
 
 Let's create some data structures!
 
-## [`ListIs`](ListIs)
+## [`ListThat`](ListThat)
 
-Handle `Emptiable` and `NotEmpty` lists at once.
+Handle cases where a list `Isnt Empty` or `CanBe Empty` in one go.
 
-`MaybeIs emptyOrNot ( a, List b )` is a `ListIs emptyOrNot a`.
-
-More correctly, it's a [`ListWithHeadType a emptyOrNot b`](ListIs#ListWithHeadType).
-
-`NotEmpty` allows safe `Maybe`-free [`head`](ListIs#head), [`tail`](ListIs#tail), [`fold`](ListIs#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
+`Isnt Empty` allows safe `Maybe`-free [`head`](ListThat#head), [`tail`](ListThat#tail), [`fold`](ListThat#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
 
 ```elm
-import ListIs
+import ListThat
 
-ListIs.empty         -- ListIs Emptiable a_
-    |> ListIs.appendNotEmpty
-        (ListIs.fromCons 1 [ 2, 3 ])
-                     -- ListIs notEmpty_ Int
-    |> ListIs.cons 5 -- ListIs notEmpty_ Int
-    |> ListIs.unCons
+ListThat.empty         -- ListThat (CanBe Empty) a_
+    |> ListThat.appendNotEmpty
+        (ListThat.fromCons 1 [ 2, 3 ])
+                       -- ListThat isntEmpty Int
+    |> ListThat.cons 5 -- ListThat isntEmpty Int
+    |> ListThat.unCons
 --> ( 5, [ 1, 2, 3 ] )
 ```
 
-## [`HoleyFocusList`](HoleyFocusList)
+Notice how
+```elm
+type alias ListThat canItBeEmpty a =
+    MaybeThat canItBeEmpty ( a, List a )
+```
 
-A list zipper that can also focus before and after every item.
+## [`ListWithFocusThat`](ListWithFocusThat)
+
+A list zipper that can also focus before and after every element.
 
 ```elm
-import HoleyFocusList
+import ListWithFocusThat
 
-HoleyFocusList.empty           -- HoleyFocusList (CanBe hole_ ()) a_
-    |> HoleyFocusList.plug 5   -- HoleyFocusList item_ Int
-    |> HoleyFocusList.append [ 1, 2, 3 ]
-                               -- HoleyFocusList item_ Int
-    |> HoleyFocusList.nextHole -- HoleyFocusList (CanBe hole_ ()) Int
-    |> HoleyFocusList.toList
+ListWithFocusThat.empty           -- ListWithFocusThat (CanBe hole_) a_
+    |> ListWithFocusThat.plug 5   -- ListWithFocusThat isntHole_ Int
+    |> ListWithFocusThat.append [ 1, 2, 3 ]
+                                  -- ListWithFocusThat isntHole_ Int
+    |> ListWithFocusThat.nextHole -- ListWithFocusThat (CanBe hole_) Int
+    |> ListWithFocusThat.toList
 --> [ 5, 1, 2, 3 ]
 ```
 
-→ [zwilias's holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest) with [a type-safe implementation using `MaybeIs` and other minor tweaks](https://github.com/lue-bird/elm-emptiness-typed/blob/master/changes.md).
+→ [zwilias's holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest) with [a type-safe implementation using `MaybeThat` and other minor tweaks](https://github.com/lue-bird/elm-emptiness-typed/blob/master/changes.md).
 
 ## suggestions?
+
 → See [contributing.md](https://github.com/lue-bird/elm-emptiness-typed/blob/master/contributing.md)
 
 ## you like type-safety?
