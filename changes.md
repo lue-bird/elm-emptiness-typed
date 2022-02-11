@@ -1,3 +1,7 @@
+### non-plans
+
+  - adding `StackThat`. Currently I can't see additional value not provided by `ListThat`
+
 # changelog
 
 ## 4.0.0
@@ -19,6 +23,7 @@
         
         type alias Isnt state =
             Can Never Be state
+        
         type alias CanBe state =
             Can () Be state
         ```
@@ -29,14 +34,18 @@
       - added `type Nothing = Nothing`
   
   - renamed `ListIs` type and module to `ListThat`
-        - removed `NotEmpty`
-        - added `type Empty = Empty`
+      - removed `NotEmpty`
+      - added `type Empty = Empty`
+      - removed `type alias ListWithHeadType head canItBeEmpty tailElement`
+        in favor of the aliased type `MaybeThat canItBeEmpty ( head, List tailElement )`
         
   - renamed `HoleyFocusList` type and module to `ListWithFocusThat`
-        - removed `type alias Item`
-        - removed `type alias Hole`
-        - added `type Hole = Hole`
-  
+      - removed `type alias Item`
+      - removed `type alias Hole`
+      - added `type Hole = Hole`
+      - renamed `mapBefore` to `alterBefore`
+      - renamed `mapCurrent` to `alterCurrent`
+      - renamed `mapAfter` to `alterAfter`
 
 ## 3.0.0
 
