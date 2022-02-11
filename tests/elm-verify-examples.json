@@ -1,8 +1,9 @@
 {
   "root": "../src",
   "tests": [
-    "HoleyFocusList",
-    "MaybeIs",
-    "ListIs"
+    "ListWithFocusThat",
+    "MaybeThat",
+    "ListThat",
+    "StackThat"
   ]
 }
