@@ -2,11 +2,14 @@
 
 # [emptiness-typed](https://package.elm-lang.org/packages/lue-bird/elm-emptiness-typed/latest/)
 
-There are many types that promise non-emptiness. One example: [MartinSStewart's NonemptyString](https://dark.elm.dmy.fr/packages/MartinSStewart/elm-nonempty-string/latest/).
+There are many types that promise non-emptiness. One example: [MartinSStewart's `NonemptyString`](https://dark.elm.dmy.fr/packages/MartinSStewart/elm-nonempty-string/latest/).
 
-The cool thing is that `fromInt`, `fromChar`, etc. keep the compile-time promise of being non-empty, so `head`, `tail`, etc. are guaranteed to succeed and you don't have to carry `Maybe`s throughout your program.
+`fromInt`, `fromChar`, ... promise being non-empty at compile-time
 
-How about **operations that work on non-empty and emptiable** strings?
+→ `head`, `tail`, ... are guaranteed to succeed.
+You don't have to carry `Maybe`s throughout your program. Cool.
+
+How about operations that **work on non-empty and emptiable** strings?
 ```elm
 length : StringThat canBeEmptyOrNot_ -> Int
 
@@ -24,7 +27,7 @@ toCharList :
 
 All this good stuff is very much possible [🔥](https://youtu.be/3b7U8LePPL0)
 
-Let's experiment and see how where we end up:
+Let's experiment and see where we end up.
 
 ```elm
 type StringThatCanBeEmpty possiblyOrNever
@@ -100,8 +103,7 @@ type alias IsntEmpty =
 type alias CanBeEmpty =
     CanBeEmpty ()
 
-StringThat.empty
---: StringThat CanBeEmpty
+empty : StringThat CanBeEmpty
 
 toCharList :
     StringThat (CanBeEmpty possiblyOrNever)
@@ -145,15 +147,15 @@ Now the fun part:
 
 ```elm
 toCharList :
-    StringThat (Can possiblyOrNever Be emptyString_) element
-    -> ListThat (Can possiblyOrNever Be emptyList_) element
+    StringThat (Can possiblyOrNever Be emptyString_)
+    -> ListThat (Can possiblyOrNever Be emptyList_) Char
 toCharList string =
     case string of
-        StringEmpty (CanBe possiblyOrNever) ->
-            NothingThat
-                --↓ carries over the `possiblyOrNever` type,
+        StringEmpty (Can possiblyOrNever Be) ->
+            ListEmpty
+                --↓ carries over `possiblyOrNever`
                 --↓ while allowing a new tag
-                (CanBe possiblyOrNever)
+                (Can possiblyOrNever Be)
 
         StringNotEmpty headChar tailString ->
             ListThat.fromCons headChar (tailString |> String.toList)
@@ -162,10 +164,10 @@ toCharList string =
 > the type information gets carried over, so
 >
 >     StringThat (Isnt emptyString_)
->         -> ListThat (Isnt emptyList_)
+>     -> ListThat (Isnt emptyList_) Char
 >
 >     StringThat (CanBe emptyString_)
->         -> ListThat (CanBe emptyList_)
+>     -> ListThat (CanBe emptyList_) Char
 
 `MaybeThat` is just a convenience layer for an optional-able value
 where a [`Can ... Be ...`](MaybeThat#Can) value is attached to its nothing variant.
