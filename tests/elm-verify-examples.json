@@ -4,6 +4,7 @@
     "ListWithFocusThat",
     "MaybeThat",
     "ListThat",
-    "StackThat"
+    "StackThat",
+    "./README.md"
   ]
 }
