@@ -8,22 +8,27 @@ The cool thing is that `fromInt`, `fromChar`, etc. keep the compile-time promise
 
 How about **operations that work on non-empty and emptiable** strings?
 ```elm
-toUpper : StringThat canOrCantBeEmpty -> StringThat canOrCantBeEmpty
-length : StringThat canOrCantBeEmpty_ -> Int
+length : StringThat canBeEmptyOrNot_ -> Int
+
+toUpper :
+    StringThat canBeEmptyOrNot
+    -> StringThat canBeEmptyOrNot
 ...
 ```
 or ones that can **pass** the **(im)possibility of a state** from one data structure to the other?
 ```elm
-toCharList : StringThat canOrCantBeEmpty -> ListThat canOrCantBeEmpty
+toCharList :
+    StringThat canBeEmptyOrNot
+    -> ListThat canBeEmptyOrNot
 ```
 
-All this good stuff is very much possible 🔥
+All this good stuff is very much possible [🔥](https://youtu.be/3b7U8LePPL0)
 
 Let's experiment and see how where we end up:
 
 ```elm
-type StringThatCanBeEmpty yesOrNever
-    = StringEmpty yesOrNever
+type StringThatCanBeEmpty possiblyOrNever
+    = StringEmpty possiblyOrNever
     | StringNotEmpty Char String
 
 fromChar : Char -> StringThatCanBeEmpty Never
@@ -45,20 +50,24 @@ head (StringEmpty ()) --> error
 
 → The type `StringThatCanBeEmpty Never` limits arguments to just `StringNotEmpty`.
 
-To avoid the somewhat unintuitive type argument `StringThatCanBeEmpty ()/Never`, let's try
+Lets make the type `StringThatCanBeEmpty ()/Never` handier:
 
 ```elm
-type StringThat canOrCantBeEmpty
+type StringThat canBeEmptyOrNot
 
 type alias IsntEmpty =
     Never
 
-fromChar : Char -> StringThatCanBeEmpty Never
+type alias CanBeEmpty =
+    ()
+
+head : StringThat IsntEmpty -> Char
+empty : StringThat CanBeEmpty
 ```
 
-Not a good idea: `Html NotEmpty`
+To avoid misuse like `empty : StringThat ()` or `Parser.spaces : Parser CanBeEmpty`,
 
-Next roll:
+we'll wrap the type tags up 🌯
 
 ```elm
 type IsntEmpty
@@ -67,22 +76,19 @@ type IsntEmpty
 type CanBeEmpty
     = CanBeEmpty
 
-StringThat.empty
---: StringThat CanBeEmpty
-
-StringThat.head
---: StringThat IsntEmpty -> Char
+head : StringThat IsntEmpty -> Char
+empty : StringThat CanBeEmpty
 ```
 
-👌 – almost there!
+👌
 
-Now let's create `toCharList` that carries the emptiness-information over:
+On to implementing ↓ that carries the emptiness-information over:
 
 ```elm
 toCharList : StringThat ?? -> ListThat ?? Char
 ```
 
-It seems like we need
+We need a common wrapper
 
 ```elm
 type CanBeEmpty possiblyOrNever
@@ -91,45 +97,47 @@ type CanBeEmpty possiblyOrNever
 type alias IsntEmpty =
     CanBeEmpty Never
 
+type alias CanBeEmpty =
+    CanBeEmpty ()
+
 StringThat.empty
---: StringThat (CanBeEmpty ())
+--: StringThat CanBeEmpty
 
 toCharList :
     StringThat (CanBeEmpty possiblyOrNever)
     -> ListThat (... possiblyOrNever) Char
 ```
 
-[`Can ... Be ...`](MaybeThat#Can) is just a cleaner and more powerful version of this.
-It uses a simple type tag to make values distinct:
+[`Can ... Be ...`](MaybeThat#Can) is just a clean generic version of this.
+It has a type tag to differentiate between different kinds of emptiness:
 
 ```elm
 type Empty
     = Empty Never
 
-fromCons : a -> List a -> ListThat (Isnt Empty) a
+head : ListThat (Isnt Empty) element -> element
 ```
-or
 ```elm
 type Hole
     = Hole Never
 
-only : a -> ListWithFocusThat (Isnt Hole) a
+current : ListWithFocusThat (Isnt Hole) element -> element
 ```
-(`Never` ensures that _no value can be created_ → phantom-type-only)
+(`Never` ensures that _no value can be created_ → type tag-only)
 
 Also, what needed to be written as
 
 ```elm
-emptyString : StringThat (CanBeEmpty ())
-emptyString =
-    StringEmpty (CanBeEmpty ())
+empty : StringThat CanBeEmpty
+empty =
+    StringEmpty CanBeEmpty
 ```
 
 becomes simply
 
 ```elm
-emptyString : StringThat (CanBe empty_)
-emptyString =
+empty : StringThat (CanBe empty_)
+empty =
     StringEmpty (Can () Be)
 ```
 
@@ -137,8 +145,8 @@ Now the fun part:
 
 ```elm
 toCharList :
-    StringThat (Can possiblyOrNever Be emptyString_) a
-    -> ListThat (Can possiblyOrNever Be emptyList_) a
+    StringThat (Can possiblyOrNever Be emptyString_) element
+    -> ListThat (Can possiblyOrNever Be emptyList_) element
 toCharList string =
     case string of
         StringEmpty (CanBe possiblyOrNever) ->
@@ -153,22 +161,35 @@ toCharList string =
 
 > the type information gets carried over, so
 >
->     StringThat.(Isnt Empty) -> ListThat.(Isnt Empty)
->     CanBe emptyString_ () -> CanBe emptyList_ ()
+>     StringThat (Isnt emptyString_)
+>         -> ListThat (Isnt emptyList_)
+>
+>     StringThat (CanBe emptyString_)
+>         -> ListThat (CanBe emptyList_)
 
 `MaybeThat` is just a convenience layer for an optional-able value
-where a [`CanBe`](MaybeThat#CanBe) value is attached to its nothing variant.
+where a [`Can ... Be ...`](MaybeThat#Can) value is attached to its nothing variant.
 
+Defining
 ```elm
-type alias StringThat emptyOrNot =
-    MaybeThat emptyOrNot ( Char, String )
+type alias StringThat canBeEmptyOrNot =
+    MaybeThat canBeEmptyOrNot ( Char, String )
 
-MaybeThat.map StringThat.head
---: StringThat (CanBe empty_ possiblyOrNever)
---: -> MaybeThat (CanBe nothing_ possiblyOrNever) Char
+head : StringThatCanBeEmpty Never -> Char
+head =
+    \string ->
+        let
+            ( headChar, _ ) =
+                string |> MaybeThat.value
+        in
+        headChar
+
+MaybeThat.map head :
+    StringThat (Can possiblyOrNever Be empty_)
+    -> MaybeThat (Can possiblyOrNever Be nothing_) Char
 ```
 
-A `StringThat` acts like a type-safe `Maybe NonEmptyString`!
+`StringThat` acts like a type-safe `Maybe NonEmptyString` 🪴
 
 Let's create some data structures!
 
