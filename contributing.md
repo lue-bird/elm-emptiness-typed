@@ -1,7 +1,7 @@
 ## contributing 💙
 
 - share your thoughts
-- add useful operations and new data structures, e.g. `StringIs`
+- add useful operations and new data structures, e.g. `StringIs`, `QueueIs`, `DequeIs`
 - suggest smaller changes through a pull request
 - discuss bigger changes in an issue or in a github Discussion 
 

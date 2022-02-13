@@ -1,4 +1,4 @@
-### non-plans
+### rejected
 
   - adding `StackThat`. Currently I can't see additional value not provided by `ListThat`
 
@@ -13,36 +13,46 @@
     ```
     to
     ```elm
-    type Can possiblyOrNever be state
-        = Can yesOrNever Be
+    type PossiblyEmpty unitOrNever
+        = Possibly unitOrNever
+    
+    type alias Filled =
+        PossiblyEmpty Never
+    
+    type alias Emptiable =
+        PossiblyEmpty ()
     ```
-      - added
-        ```elm
-        type Be
-            = Be
-        
-        type alias Isnt state =
-            Can Never Be state
-        
-        type alias CanBe state =
-            Can () Be state
-        ```
+    to improve understandability of types
 
-  - renamed `MaybeIs` type and module to `MaybeThat`
-      - renamed `MaybeIs.IsJust` variant to `.JustThat`
-      - renamed `MaybeIs.IsNothing` variant to `.NothingThat`
-      - added `type Nothing = Nothing`
+  - renamed `MaybeIs` type and module to `Fillable`
+      - renamed `IsJust` variant to `Filled`
+      - renamed `IsNothing` variant to `Empty`
+      - renamed `just` to `filled`
+      - renamed `nothing` to `empty`
+      - renamed `value` to `filling`
+      - renamed `withFallback` to `toFillingWithEmpty`
   
-  - renamed `ListIs` type and module to `ListThat`
+  - `ListIs`
       - removed `NotEmpty`
-      - added `type Empty = Empty`
-      - removed `type alias ListWithHeadType head canItBeEmpty tailElement`
-        in favor of the aliased type `MaybeThat canItBeEmpty ( head, List tailElement )`
+      - changed
+        ```elm
+        type alias ListIs emptiableOrFilled element =
+            ListWithHeadType element emptiableOrFilled element
+        ```
+        to
+        ```elm
+        type alias ListIs emptiableOrFilled element =
+            Fillable.Is emptiableOrFilled ( element, List element )
+        ```
+      - removed `ListWithHeadType`
+        in favor of `Fillable.Is emptiableOrFilled ( head, tail )`
+      - removed `empty`
+      - renamed `whenJust` to `whenFilled`
         
-  - renamed `HoleyFocusList` type and module to `ListWithFocusThat`
+  - renamed `HoleyFocusList` module to `ListWithFocus`
+      - renamed `type alias HoleyFocusList` to `ListWithFocusThat`
       - removed `type alias Item`
       - removed `type alias Hole`
-      - added `type Hole = Hole`
       - renamed `mapBefore` to `alterBefore`
       - renamed `mapCurrent` to `alterCurrent`
       - renamed `mapAfter` to `alterAfter`

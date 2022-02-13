@@ -11,18 +11,18 @@ You don't have to carry `Maybe`s throughout your program. Cool.
 
 How about operations that **work on non-empty and emptiable** strings?
 ```elm
-length : StringThat canBeEmptyOrNot_ -> Int
+length : StringIs emptiableOrFilled_ -> Int
 
 toUpper :
-    StringThat canBeEmptyOrNot
-    -> StringThat canBeEmptyOrNot
+    StringIs emptiableOrFilled
+    -> StringIs emptiableOrFilled
 ...
 ```
 or ones that can **pass** the **(im)possibility of a state** from one data structure to the other?
 ```elm
 toCharList :
-    StringThat canBeEmptyOrNot
-    -> ListThat canBeEmptyOrNot
+    StringIs emptiableOrFilled
+    -> ListIs emptiableOrFilled
 ```
 
 All this good stuff is very much possible [🔥](https://youtu.be/3b7U8LePPL0)
@@ -30,19 +30,19 @@ All this good stuff is very much possible [🔥](https://youtu.be/3b7U8LePPL0)
 Let's experiment and see where we end up.
 
 ```elm
-type StringThatCanBeEmpty possiblyOrNever
+type StringIsCanBeEmpty possiblyOrNever
     = StringEmpty possiblyOrNever
     | StringNotEmpty Char String
 
-fromChar : Char -> StringThatCanBeEmpty Never
+fromChar : Char -> StringIsCanBeEmpty Never
 fromChar onlyChar =
     StringNotEmpty onlyChar ""
 
-head : StringThatCanBeEmpty Never -> Char
+head : StringIsCanBeEmpty Never -> Char
 head string =
     case string of
-        StringEmpty canBeEmpty ->
-            canBeEmpty |> never --! neat
+        StringEmpty empty ->
+            empty |> never --! neat
         
         StringNotEmpty headChar _ ->
             headChar
@@ -51,36 +51,36 @@ head (char 'E') --> 'E'
 head (StringEmpty ()) --> error
 ```
 
-→ The type `StringThatCanBeEmpty Never` limits arguments to just `StringNotEmpty`.
+→ The type `StringIsCanBeEmpty Never` limits arguments to just `StringNotEmpty`.
 
-Lets make the type `StringThatCanBeEmpty ()/Never` handier:
+Lets make the type `StringIsCanBeEmpty ()/Never` handier:
 
 ```elm
-type StringThat canBeEmptyOrNot
+type StringIs emptiableOrFilled
 
-type alias IsntEmpty =
+type alias Filled =
     Never
 
 type alias CanBeEmpty =
     ()
 
-head : StringThat IsntEmpty -> Char
-empty : StringThat CanBeEmpty
+head : StringIs Filled -> Char
+empty : StringIs CanBeEmpty
 ```
 
-To avoid misuse like `empty : StringThat ()` or `Parser.spaces : Parser CanBeEmpty`,
+To avoid misuse like `empty : StringIs ()` or `Parser.spaces : Parser CanBeEmpty`,
 
 we'll wrap the type tags up 🌯
 
 ```elm
-type IsntEmpty
+type Filled
     = NotEmpty Never
 
 type CanBeEmpty
     = CanBeEmpty
 
-head : StringThat IsntEmpty -> Char
-empty : StringThat CanBeEmpty
+head : StringIs Filled -> Char
+empty : StringIs CanBeEmpty
 ```
 
 👌
@@ -88,154 +88,125 @@ empty : StringThat CanBeEmpty
 On to implementing ↓ that carries the emptiness-information over:
 
 ```elm
-toCharList : StringThat ?? -> ListThat ?? Char
+toCharList : StringIs ?? -> ListIs ?? Char
 ```
 
 We need a common wrapper
 
 ```elm
-type CanBeEmpty possiblyOrNever
-    = CanBeEmpty possiblyOrNever
+type PossiblyEmpty possiblyOrNever
+    = Possible possiblyOrNever
 
-type alias IsntEmpty =
-    CanBeEmpty Never
+type alias Filled =
+    PossiblyEmpty Never
 
-type alias CanBeEmpty =
-    CanBeEmpty ()
+type alias Emptiable =
+    PossiblyEmpty ()
 
-empty : StringThat CanBeEmpty
 
-toCharList :
-    StringThat (CanBeEmpty possiblyOrNever)
-    -> ListThat (... possiblyOrNever) Char
-```
-
-[`Can ... Be ...`](MaybeThat#Can) is just a clean generic version of this.
-It has a type tag to differentiate between different kinds of emptiness:
-
-```elm
-type Empty
-    = Empty Never
-
-head : ListThat (Isnt Empty) element -> element
-```
-```elm
-type Hole
-    = Hole Never
-
-current : ListWithFocusThat (Isnt Hole) element -> element
-```
-(`Never` ensures that _no value can be created_ → type tag-only)
-
-Also, what needed to be written as
-
-```elm
-empty : StringThat CanBeEmpty
+empty : StringIs Emptiable
 empty =
-    StringEmpty CanBeEmpty
+    StringEmpty (Possible ())
+
+head : StringIs Filled
+head =
+    \string ->
+        case string of
+            StringEmpty (Possible emptyPossible) ->
+                emptyPossible |> never
+            
+            StringFilled headChar _ ->
+                headChar
 ```
 
-becomes simply
-
-```elm
-empty : StringThat (CanBe empty_)
-empty =
-    StringEmpty (Can () Be)
-```
+This is **exactly** what this library provides: [`PossiblyEmpty`](Fillable#PossiblyEmpty), [`Emptiable`](Fillable#Emptiable), [`Filled`](Fillable#Filled)
 
 Now the fun part:
 
 ```elm
 toCharList :
-    StringThat (Can possiblyOrNever Be emptyString_)
-    -> ListThat (Can possiblyOrNever Be emptyList_) Char
+    StringIs emptiableOrFilled
+    -> ListIs emptiableOrFilled Char
 toCharList string =
     case string of
-        StringEmpty (Can possiblyOrNever Be) ->
-            ListEmpty
-                --↓ carries over `possiblyOrNever`
-                --↓ while allowing a new tag
-                (Can possiblyOrNever Be)
+        StringEmpty emptiableOrFilled ->
+            ListEmpty emptiableOrFilled
 
         StringNotEmpty headChar tailString ->
-            ListThat.fromCons headChar (tailString |> String.toList)
+            ListIs.fromCons headChar (tailString |> String.toList)
 ```
 
-> the type information gets carried over, so
->
->     StringThat (Isnt emptyString_)
->     -> ListThat (Isnt emptyList_) Char
->
->     StringThat (CanBe emptyString_)
->     -> ListThat (CanBe emptyList_) Char
+The type information gets carried over, so
+```elm
+StringIs Filled -> ListIs Filled
+StringIs Emptiable -> ListIs Emptiable
+```
 
-`MaybeThat` is just a convenience layer for an optional-able value
-where a [`Can ... Be ...`](MaybeThat#Can) value is attached to its nothing variant.
+[`Fillable.Is`](Fillable#Is) is just a convenience layer for an optional-able value
+where [`PossiblyEmpty`](Fillable#PossiblyEmpty) is attached to its [`Empty`](Fillable#Is) variant.
 
 Defining
 ```elm
-type alias StringThat canBeEmptyOrNot =
-    MaybeThat canBeEmptyOrNot ( Char, String )
+import Fillable exposing (Is, Filled, filled, filling)
 
-head : StringThatCanBeEmpty Never -> Char
+type alias StringIs emptiableOrFilled =
+    Is emptiableOrFilled ( Char, String )
+
+head : StringIs Filled -> Char
 head =
-    \string ->
-        let
-            ( headChar, _ ) =
-                string |> MaybeThat.value
-        in
-        headChar
+    filling >> \( headChar, _ ) -> headChar
 
-MaybeThat.map head :
-    StringThat (Can possiblyOrNever Be empty_)
-    -> MaybeThat (Can possiblyOrNever Be nothing_) Char
+Fillable.map (filled >> head) :
+--: StringIs emptiableOrFilled
+--.: -> Is emptiableOrFilled Char
 ```
 
-`StringThat` acts like a type-safe `Maybe NonEmptyString` 🪴
+`StringIs` acts like a type-safe `Maybe NonEmptyString` 🪴
+
 
 Let's create some data structures!
 
-## [`ListThat`](ListThat)
+## [`ListIs`](ListIs)
 
-Handle cases where a list `Isnt Empty` or `CanBe Empty` in one go.
+Handle [`Emptiable`](Fillable#Emptiable) & [`Filled`](Fillable#Filled) lists in one go.
 
-`Isnt Empty` allows safe `Maybe`-free [`head`](ListThat#head), [`tail`](ListThat#tail), [`fold`](ListThat#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
+[`Filled`](Fillable#Filled) allows safe `Maybe`-free [`head`](ListIs#head), [`tail`](ListIs#tail), [`fold`](ListIs#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
 
 ```elm
-import ListThat
+import ListIs
 
-ListThat.empty         -- ListThat (CanBe Empty) a_
-    |> ListThat.appendNotEmpty
-        (ListThat.fromCons 1 [ 2, 3 ])
-                       -- ListThat isntEmpty Int
-    |> ListThat.cons 5 -- ListThat isntEmpty Int
-    |> ListThat.unCons
+Fillable.empty         -- ListIs Emptiable a_
+    |> ListIs.appendNotEmpty
+        (ListIs.fromCons 1 [ 2, 3 ])
+                       -- ListIs Filled Int
+    |> ListIs.cons 5 -- ListIs Filled Int
+    |> ListIs.unCons
 --> ( 5, [ 1, 2, 3 ] )
 ```
 
 Notice how
 ```elm
-type alias ListThat canItBeEmpty a =
-    MaybeThat canItBeEmpty ( a, List a )
+type alias ListIs emptiableOrFilled element =
+    Fillable.Is emptiableOrFilled ( element, List element )
 ```
 
-## [`ListWithFocusThat`](ListWithFocusThat)
+## [`ListWithFocus`](ListWithFocus)
 
 A list zipper that can also focus before and after every element.
 
 ```elm
 import ListWithFocusThat
 
-ListWithFocusThat.empty           -- ListWithFocusThat (CanBe hole_) a_
-    |> ListWithFocusThat.plug 5   -- ListWithFocusThat isntHole_ Int
-    |> ListWithFocusThat.append [ 1, 2, 3 ]
-                                  -- ListWithFocusThat isntHole_ Int
-    |> ListWithFocusThat.nextHole -- ListWithFocusThat (CanBe hole_) Int
-    |> ListWithFocusThat.toList
+ListWithFocus.empty           -- ListWhereFocusIs Emptiable item_
+    |> ListWithFocus.plug 5   -- ListWhereFocusIs filled_ number_
+    |> ListWithFocus.append [ 1, 2, 3 ]
+                              -- ListWereFocusIs filled_ number_
+    |> ListWithFocus.nextHole -- ListWereFocusIs Emptiable number_
+    |> ListWithFocus.toList
 --> [ 5, 1, 2, 3 ]
 ```
 
-→ [zwilias's holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest) with [a type-safe implementation using `MaybeThat` and other minor tweaks](https://github.com/lue-bird/elm-emptiness-typed/blob/master/changes.md).
+→ [zwilias's holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest) with [a type-safe implementation using [`Fillable.Is`](Fillable#Is) and other minor tweaks](https://github.com/lue-bird/elm-emptiness-typed/blob/master/changes.md).
 
 ## suggestions?
 

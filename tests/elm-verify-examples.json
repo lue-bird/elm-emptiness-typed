@@ -1,10 +1,10 @@
 {
   "root": "../src",
   "tests": [
-    "ListWithFocusThat",
-    "MaybeThat",
-    "ListThat",
-    "StackThat",
+    "ListWithFocus",
+    "Fillable",
+    "ListIs",
+    "StackIs",
     "./README.md"
   ]
 }
