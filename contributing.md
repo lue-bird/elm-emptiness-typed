@@ -1,9 +1,9 @@
 ## contributing 💙
 
-- share your thoughts
+- share your thoughts (in a github Discussion)
 - add useful operations and new data structures, e.g. `StringIs`, `QueueIs`, `DequeIs`
 - suggest smaller changes through a pull request
-- discuss bigger changes in an issue or in a github Discussion 
+- discuss bigger changes in an issue 
 
 ## commits
 look like this:
