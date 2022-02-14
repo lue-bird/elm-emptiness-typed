@@ -89,14 +89,14 @@ nextTest =
                     |> Fillable.map ListWithFocus.current
                     |> Expect.equal (filled 2)
             )
-        , test "next on last gives nothing"
+        , test "next on last gives empty"
             (\_ ->
                 listWithFocusThat
                     |> ListWithFocus.last
                     |> ListWithFocus.next
                     |> Expect.equal Fillable.empty
             )
-        , test "repeating `next` eventually results in `Nothing`"
+        , test "repeating `next` eventually results in empty"
             (\_ ->
                 List.foldl Fillable.andThen
                     (filled listWithFocusThat)
@@ -115,7 +115,7 @@ previousTest =
                 |> ListWithFocus.append [ 2, 3 ]
     in
     describe "previous"
-        [ test "previous gives nothing initially"
+        [ test "previous gives empty initially"
             (\_ ->
                 listWithFocusThat
                     |> ListWithFocus.previous

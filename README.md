@@ -4,7 +4,7 @@
 
 There are many types that promise non-emptiness. One example: [MartinSStewart's `NonemptyString`](https://dark.elm.dmy.fr/packages/MartinSStewart/elm-nonempty-string/latest/).
 
-`fromInt`, `fromChar`, ... promise being non-empty at compile-time
+`fromInt`, `char`, ... promise being non-empty at compile-time
 
 → `head`, `tail`, ... are guaranteed to succeed.
 You don't have to carry `Maybe`s throughout your program. Cool.
@@ -25,7 +25,7 @@ toCharList :
     -> ListIs emptiableOrFilled
 ```
 
-All this good stuff is very much possible [🔥](https://youtu.be/3b7U8LePPL0)
+All this good stuff is very much possible 🔥
 
 Let's experiment and see where we end up.
 
@@ -34,21 +34,22 @@ type StringIsCanBeEmpty possiblyOrNever
     = StringEmpty possiblyOrNever
     | StringNotEmpty Char String
 
-fromChar : Char -> StringIsCanBeEmpty Never
-fromChar onlyChar =
+char : Char -> StringIsCanBeEmpty Never
+char onlyChar =
     StringNotEmpty onlyChar ""
 
 head : StringIsCanBeEmpty Never -> Char
-head string =
-    case string of
-        StringEmpty empty ->
-            empty |> never --! neat
-        
-        StringNotEmpty headChar _ ->
-            headChar
+head =
+    \string ->
+        case string of
+            StringNotEmpty headChar _ ->
+                headChar
+            
+            StringEmpty empty ->
+                empty |> never --! neat
 
-head (char 'E') --> 'E'
-head (StringEmpty ()) --> error
+head (char 'E') -- 'E'
+head (StringEmpty ()) -- error
 ```
 
 → The type `StringIsCanBeEmpty Never` limits arguments to just `StringNotEmpty`.
@@ -156,9 +157,9 @@ head : StringIs Filled -> Char
 head =
     filling >> \( headChar, _ ) -> headChar
 
-Fillable.map (filled >> head) :
+Fillable.map (filled >> head)
 --: StringIs emptiableOrFilled
---.: -> Is emptiableOrFilled Char
+--: -> Is emptiableOrFilled Char
 ```
 
 `StringIs` acts like a type-safe `Maybe NonEmptyString` 🪴
@@ -173,12 +174,13 @@ Handle [`Emptiable`](Fillable#Emptiable) & [`Filled`](Fillable#Filled) lists in 
 [`Filled`](Fillable#Filled) allows safe `Maybe`-free [`head`](ListIs#head), [`tail`](ListIs#tail), [`fold`](ListIs#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
 
 ```elm
+import Fillable exposing (Emptiable, Filled)
 import ListIs
 
-Fillable.empty         -- ListIs Emptiable a_
+Fillable.empty
     |> ListIs.appendNotEmpty
         (ListIs.fromCons 1 [ 2, 3 ])
-                       -- ListIs Filled Int
+                     -- ListIs Filled Int
     |> ListIs.cons 5 -- ListIs Filled Int
     |> ListIs.unCons
 --> ( 5, [ 1, 2, 3 ] )
@@ -195,7 +197,7 @@ type alias ListIs emptiableOrFilled element =
 A list zipper that can also focus before and after every element.
 
 ```elm
-import ListWithFocusThat
+import ListWithFocus
 
 ListWithFocus.empty           -- ListWhereFocusIs Emptiable item_
     |> ListWithFocus.plug 5   -- ListWhereFocusIs filled_ number_

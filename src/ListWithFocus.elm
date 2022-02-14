@@ -126,6 +126,7 @@ It's the loneliest of all `ListWereFocusIs`s.
 <>
 ```
 
+    import Fillable
     import ListIs
 
     ListWithFocus.empty
@@ -194,12 +195,14 @@ current =
 🍍 🍓) <🍊> 🍉 🍇
 ```
 
+    import Fillable exposing (filled)
+
     ListWithFocus.only 0
         |> ListWithFocus.append [ 1, 2, 3 ]
         |> ListWithFocus.next
-        |> Maybe.andThen ListWithFocus.next
-        |> Maybe.map ListWithFocus.before
-    --> Just [ 0, 1 ]
+        |> Fillable.andThen ListWithFocus.next
+        |> Fillable.map ListWithFocus.before
+    --> filled [ 0, 1 ]
 
 -}
 before : ListWhereFocusIs emptiableOrFilled_ item -> List item
@@ -214,11 +217,13 @@ before =
 🍍 🍓 <🍊> (🍉 🍇
 ```
 
+    import Fillable exposing (filled)
+
     ListWithFocus.only 0
         |> ListWithFocus.append [ 1, 2, 3 ]
         |> ListWithFocus.next
-        |> Maybe.map ListWithFocus.after
-    --> Just [ 2, 3 ]
+        |> Fillable.map ListWithFocus.after
+    --> filled [ 2, 3 ]
 
 -}
 after : ListWhereFocusIs emptiableOrFilled_ item -> List item
@@ -237,11 +242,13 @@ after =
 <🍊> 🍉 🍇  ->  🍊 <🍉> 🍇
 ```
 
+    import Fillable exposing (filled)
+
     ListWithFocus.only 0
         |> ListWithFocus.append [ 1, 2, 3 ]
         |> ListWithFocus.next
-        |> Maybe.map ListWithFocus.current
-    --> Just 1
+        |> Fillable.map ListWithFocus.current
+    --> filled 1
 
 This also works from within holes:
 
@@ -249,23 +256,26 @@ This also works from within holes:
 🍊 <> 🍉 🍇  ->  🍊 <🍉> 🍇
 ```
 
+    import Fillable exposing (filled)
+
     ListWithFocus.empty
         |> ListWithFocus.insertAfter "foo"
         |> ListWithFocus.next
-    --> Just (ListWithFocus.only "foo")
+    --> filled (ListWithFocus.only "foo")
 
-If there is no `next` item, the result is `Nothing`.
+If there is no `next` item, the result is [`empty`](Fillable#empty).
+
+    import Fillable
 
     ListWithFocus.empty
         |> ListWithFocus.next
-    --> Nothing
-
+    --> Fillable.empty
 
     ListWithFocus.only 0
         |> ListWithFocus.append [ 1, 2, 3 ]
         |> ListWithFocus.last
         |> ListWithFocus.next
-    --> Nothing
+    --> Fillable.empty
 
 -}
 next :
@@ -296,15 +306,17 @@ next (ListWithFocus beforeFocusUntilHead focus after_) =
 🍊 <🍉> 🍇  ->  <🍊> 🍉 🍇
 ```
 
+    import Fillable exposing (filled)
+
     ListWithFocus.empty |> ListWithFocus.previous
-    --> Nothing
+    --> Fillable.empty
 
     ListWithFocus.only "hello"
         |> ListWithFocus.append [ "holey", "world" ]
         |> ListWithFocus.last
         |> ListWithFocus.previous
-        |> Maybe.map ListWithFocus.current
-    --> Just "holey"
+        |> Fillable.map ListWithFocus.current
+    --> filled "holey"
 
 This also works from within holes:
 
@@ -312,10 +324,12 @@ This also works from within holes:
 🍊 🍉 <> 🍇  ->  🍊 <🍉> 🍇
 ```
 
+    import Fillable exposing (filled)
+
     ListWithFocus.empty
         |> ListWithFocus.insertBefore "foo"
         |> ListWithFocus.previous
-    --> Just (ListWithFocus.only "foo")
+    --> filled (ListWithFocus.only "foo")
 
 -}
 previous :
@@ -434,12 +448,14 @@ plug newCurrent =
 🍓 <?> 🍉  ->  🍓 <> 🍉
 ```
 
+    import Fillable exposing (filled)
+
     ListWithFocus.only "hello"
         |> ListWithFocus.append [ "holey", "world" ]
         |> ListWithFocus.next
-        |> Maybe.map ListWithFocus.remove
-        |> Maybe.map ListWithFocus.toListIs
-    --> Just [ "hello", "world" ]
+        |> Fillable.map ListWithFocus.remove
+        |> Fillable.map ListWithFocus.toList
+    --> filled [ "hello", "world" ]
 
 -}
 remove :
@@ -773,17 +789,19 @@ returning a `ListWereFocusIs` focussed on that item if it was found.
 
 This start from the current focussed location and searches towards the end.
 
+    import Fillable exposing (filled)
+
     ListWithFocus.only 4
         |> ListWithFocus.append [ 2, -1, 0, 3 ]
         |> ListWithFocus.findForward (\item -> item < 0)
-        |> Maybe.map ListWithFocus.current
-    --> Just -1
+        |> Fillable.map ListWithFocus.current
+    --> filled -1
 
     ListWithFocus.only -4
         |> ListWithFocus.append [ 2, -1, 0, 3 ]
         |> ListWithFocus.findForward (\item -> item < 0)
-        |> Maybe.map ListWithFocus.current
-    --> Just -4
+        |> Fillable.map ListWithFocus.current
+    --> filled -4
 
 -}
 findForward :
@@ -825,11 +843,13 @@ findForwardHelp predicate =
 {-| Find the first item in the `ListWereFocusIs`matching a predicate, moving backwards
 from the current position.
 
+    import Fillable exposing (filled)
+
     ListWithFocus.only 4
         |> ListWithFocus.prepend [ 2, -1, 0, 3 ]
         |> ListWithFocus.findBackward (\item -> item < 0)
-        |> Maybe.map ListWithFocus.current
-    --> Just -1
+        |> Fillable.map ListWithFocus.current
+    --> filled -1
 
 -}
 findBackward :
@@ -1020,6 +1040,7 @@ toList =
 
 {-| Flattens the `ListWereFocusIs` into a [`ListIs`](ListIs#ListIs):
 
+    import Fillable
     import ListIs
 
     ListWithFocus.empty
@@ -1071,7 +1092,8 @@ toListIs =
 --
 
 
-{-| Find out if the current focussed thing is an item.
+{-| [`Fillable.empty`](Fillable#empty) if the current focussed thing is a hole,
+[`Fillable.filled`](Fillable#filled) if it is an item.
 
     import Fillable
 
@@ -1079,7 +1101,7 @@ toListIs =
         |> ListWithFocus.append [ 2, 1 ]
         |> ListWithFocus.nextHole
         |> ListWithFocus.focussesItem
-    --> Fillable.is Hole
+    --> Fillable.empty
 
 -}
 focussesItem :

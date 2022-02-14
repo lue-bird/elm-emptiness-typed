@@ -114,10 +114,16 @@ it's also the result of:
 
 -}
 type alias ListIs emptiableOrFilled element =
-    Is emptiableOrFilled ( element, List element )
+    Is emptiableOrFilled (ListFilled element)
+
+
+type alias ListFilled element =
+    ( element, List element )
 
 
 {-| A [`ListIs`](#ListIs) with just 1 element.
+
+    import Fillable
 
     ListIs.only ":)"
     --> Fillable.empty |> ListIs.cons ":)"
@@ -130,7 +136,7 @@ only onlyElement =
 
 {-| Convert from a non-empty structure tuple `( head, tail )`.
 
-Equivalent to `Fillable.just`.
+Equivalent to [`filled`](Fillable#filled).
 
 -}
 fromUnConsed :
@@ -151,6 +157,8 @@ fromCons head_ tail_ =
 
 
 {-| Convert a `List a` to a \`ListIs Emptiable
+
+    import Fillable exposing (Emptiable)
 
     [] |> ListIs.fromList
     --> Fillable.empty
@@ -213,7 +221,7 @@ tail notEmpty =
     --> 2
 
 -}
-length : Is emptyOrNot_ ( head_, List tailElement_ ) -> Int
+length : Is emptiableOrFilled_ ( head_, List tailElement_ ) -> Int
 length =
     \list ->
         case list of
@@ -230,16 +238,18 @@ length =
 
 {-| Add an element to the front.
 
+    import Fillable
+
     ListIs.fromCons 2 [ 3 ] |> ListIs.cons 1
     --> ListIs.fromCons 1 [ 2, 3 ]
 
-Fillable.empty |> ListIs.cons 1
---> ListIs.only 1
+    Fillable.empty |> ListIs.cons 1
+    --> ListIs.only 1
 
 -}
 cons :
     newHead
-    -> ListIs emptyOrNot_ tailElement
+    -> ListIs emptiableOrFilled_ tailElement
     -> Is filled_ ( newHead, List tailElement )
 cons toPutBeforeAllOtherElements =
     fromCons toPutBeforeAllOtherElements << toList
@@ -247,12 +257,14 @@ cons toPutBeforeAllOtherElements =
 
 {-| Glue the elements of a non-empty [`ListIs`](#ListIs) to the end of a [`ListIs`](#ListIs).
 
-Fillable.empty
-|> ListIs.appendNotEmpty
-(ListIs.fromCons 1 [ 2 ])
-|> ListIs.append
-(ListIs.fromCons 3 [ 4, 5 ])
---> ListIs.fromCons 1 [ 2, 3, 4, 5 ]
+    import Fillable
+
+    Fillable.empty
+        |> ListIs.appendNotEmpty
+            (ListIs.fromCons 1 [ 2 ])
+        |> ListIs.append
+            (ListIs.fromCons 3 [ 4, 5 ])
+    --> ListIs.fromCons 1 [ 2, 3, 4, 5 ]
 
 Prefer [`append`](#append) if the piped [`ListIs`](#ListIs) is already known as non-empty
 or if both can be empty.
@@ -302,6 +314,8 @@ append toAppend =
 
 {-| Glue together a bunch of [`ListIs`](#ListIs).
 
+    import Fillable
+
     ListIs.fromCons
         (ListIs.fromCons 0 [ 1 ])
         [ ListIs.fromCons 10 [ 11 ]
@@ -323,8 +337,8 @@ concat :
     -> ListIs emptiableOrFilled element
 concat listOfLists =
     case listOfLists of
-        Empty canBeNothing ->
-            Empty canBeNothing
+        Empty emptiableOrFilled ->
+            Empty emptiableOrFilled
 
         Filled ( Filled ( head_, firstListTail ), afterFirstList ) ->
             fromCons head_
@@ -332,10 +346,10 @@ concat listOfLists =
                     ++ (afterFirstList |> List.concatMap toList)
                 )
 
-        Filled ( Empty canBeNothing, lists ) ->
+        Filled ( Empty emptiableOrFilled, lists ) ->
             case lists |> List.concatMap toList of
                 [] ->
-                    Empty canBeNothing
+                    Empty emptiableOrFilled
 
                 head_ :: tail__ ->
                     fromCons head_ tail__
@@ -363,13 +377,13 @@ when isGood =
 
 {-| Keep all [`filled`](Fillable#filled) values and drop all [`empty`](Fillable#empty) elements.
 
-    import Fillable exposing (just, nothing)
+    import Fillable exposing (filled)
 
-    ListIs.fromCons nothing [ nothing ]
+    ListIs.fromCons Fillable.empty [ Fillable.empty ]
         |> ListIs.whenFilled
     --> Fillable.empty
 
-    ListIs.fromCons (just 1) [ nothing, just 3 ]
+    ListIs.fromCons (filled 1) [ Fillable.empty, filled 3 ]
         |> ListIs.whenFilled
     --> ListIs.fromCons 1 [ 3 ]
 
@@ -381,7 +395,7 @@ whenFilled :
         emptiableOrFilled
         ( Is emptiableOrFilled headValue
         , List
-            (Is canBeNothingOrNotTailElement_ tailElementValue)
+            (Is emptiableOrFilledOrNotTailElement_ tailElementValue)
         )
     ->
         Is
@@ -425,6 +439,8 @@ map changeElement =
 {-| Combine 2 [`ListIs`](#ListIs)s with a given function.
 If one list is longer, its extra elements are dropped.
 
+    import Fillable
+
     ListIs.map2 (+)
         (ListIs.fromCons 1 [ 2, 3 ])
         (ListIs.fromCons 4 [ 5, 6, 7 ])
@@ -450,6 +466,8 @@ map2 combineAB aList bList =
 
 {-| Combine the head and tail elements of 2 [`ListIs`](#ListIs)s using given functions.
 If one list is longer, its extra elements are dropped.
+
+    import Fillable
 
     ListIs.map2HeadsAndTails Tuple.pair (+)
         (ListIs.fromCons "hey" [ 0, 1 ])
@@ -535,7 +553,7 @@ foldFrom :
     acc
     -> LinearDirection
     -> (element -> acc -> acc)
-    -> ListIs emptyOrNot_ element
+    -> ListIs emptiableOrFilled_ element
     -> acc
 foldFrom initial direction reduce =
     toList

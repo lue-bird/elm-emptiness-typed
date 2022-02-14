@@ -320,11 +320,11 @@ map change =
 
 {-| If all the arguments exist, combine them using a given function.
 
-    import Fillable exposing (filled, nothing)
+    import Fillable exposing (filled, empty)
 
     Fillable.map2 (+) (filled 3) (filled 4) --> filled 7
-    Fillable.map2 (+) (filled 3) nothing --> nothing
-    Fillable.map2 (+) nothing (filled 4) --> nothing
+    Fillable.map2 (+) (filled 3) empty --> empty
+    Fillable.map2 (+) empty (filled 4) --> empty
 
 -}
 map2 :

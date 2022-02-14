@@ -4,7 +4,7 @@ module StackIs exposing
     , top, downBelowTop, length
     , layOnTop
     , shoveDownBelow, shoveDownBelowNotEmpty, concat
-    , when, whenJust
+    , when, whenFilled
     , map, alterTop, alterBelowTop, foldFrom, fold, toTopDown, toTopAndDown
     , map2
     )
@@ -36,7 +36,7 @@ module StackIs exposing
 
 ### filter
 
-@docs when, whenJust
+@docs when, whenFilled
 
 
 ## transform
@@ -69,11 +69,16 @@ import List.LinearDirection as List
 
 #### in types
 
+    import Fillable exposing (Emptiable, Filled)
+
     type alias Model =
         WithoutConstructorFunction
             { clipboard : StackIs Filled String
-            , history : StackIs Emptiable Msg
+            , history : StackIs Emptiable SomeEvent
             }
+
+    type SomeEvent
+        = SomethingHappened
 
 where
 
@@ -94,6 +99,7 @@ Because
 we can treat it like a normal [`Fillable.Is`](Fillable#Is):
 
     import Fillable exposing (Is(..), filled)
+    import ListIs
 
     Fillable.empty
         |> ListIs.toList
@@ -115,15 +121,19 @@ we can treat it like a normal [`Fillable.Is`](Fillable#Is):
 
 -}
 type alias StackIs emptiableOrFilled element =
-    Is
-        emptiableOrFilled
-        { top : element, downBelowTop : List element }
+    Is emptiableOrFilled (FilledStack element)
+
+
+type alias FilledStack element =
+    { top : element, downBelowTop : List element }
 
 
 {-| A [`StackIs`](#StackIs) with just 1 element.
 
+    import Fillable
+
     StackIs.only ":)"
-    --> StackIs.empty |> StackIs.layOnTop ":)"
+    --> Fillable.empty |> StackIs.layOnTop ":)"
 
 -}
 only : element -> StackIs filled_ element
@@ -150,8 +160,10 @@ topAndDown head_ tail_ =
 
 {-| Convert a `List` to a \`StackIs Emptiable
 
+    import Fillable
+
     [] |> StackIs.topDown
-    --> StackIs.empty
+    --> Fillable.empty
 
     [ "hello", "emptiness" ] |> StackIs.topDown
     --> StackIs.topAndDown "hello" [ "emptiness" ]
@@ -211,12 +223,12 @@ downBelowTop notEmptyList =
     --> 2
 
 -}
-length : Is emptyOrNot_ ( head_, List tailElement_ ) -> Int
+length : StackIs emptiableOrFilled_ element_ -> Int
 length =
     \stack ->
         case stack of
-            Filled ( _, tail_ ) ->
-                1 + List.length tail_
+            Filled filledStack ->
+                1 + List.length filledStack.downBelowTop
 
             Empty _ ->
                 0
@@ -228,16 +240,18 @@ length =
 
 {-| Add an element above the current [`top`](#top).
 
+    import Fillable
+
     StackIs.topAndDown 2 [ 3 ] |> StackIs.layOnTop 1
     --> StackIs.topAndDown 1 [ 2, 3 ]
 
-    StackIs.empty |> StackIs.layOnTop 1
+    Fillable.empty |> StackIs.layOnTop 1
     --> StackIs.only 1
 
 -}
 layOnTop :
     element
-    -> StackIs emptyOrNot_ element
+    -> StackIs emptiableOrFilled_ element
     -> StackIs filled_ element
 layOnTop toPutBeforeAllOtherElements =
     topAndDown toPutBeforeAllOtherElements << toTopDown
@@ -245,7 +259,9 @@ layOnTop toPutBeforeAllOtherElements =
 
 {-| Glue the elements of a non-empty [`StackIs`](#StackIs) below a [`StackIs`](#StackIs).
 
-    StackIs.empty
+    import Fillable
+
+    Fillable.empty
         |> StackIs.shoveDownBelowNotEmpty
             (StackIs.topAndDown 1 [ 2 ])
         |> StackIs.shoveDownBelow
@@ -306,10 +322,12 @@ shoveDownBelow toAppend =
 
 {-| Glue together a bunch of [`StackIs`](#StackIs)s.
 
+    import Fillable
+
     StackIs.topAndDown
         (StackIs.topAndDown 0 [ 1 ])
         [ StackIs.topAndDown 10 [ 11 ]
-        , StackIs.empty
+        , Fillable.empty
         , StackIs.topAndDown 20 [ 21, 22 ]
         ]
         |> StackIs.concat
@@ -324,25 +342,22 @@ concat :
         (StackIs emptiableOrFilled element)
     -> StackIs emptiableOrFilled element
 concat stackOfStacks =
-    case stackOfStacks of
-        Empty canBeNothing ->
-            Empty canBeNothing
-
-        Filled stacks ->
-            case stacks.top of
-                Empty canBeNothing ->
-                    Empty canBeNothing
-
-                Filled topStack ->
-                    topAndDown
-                        topStack.top
-                        (topStack.downBelowTop
-                            ++ (topStack.downBelowTop
-                                    ++ (stacks.downBelowTop
-                                            |> List.concatMap toTopDown
-                                       )
-                               )
+    stackOfStacks
+        |> Fillable.andThen
+            (\stacks ->
+                stacks.top
+                    |> Fillable.andThen
+                        (\topStack ->
+                            topAndDown
+                                topStack.top
+                                ([ topStack.downBelowTop
+                                 , stacks.downBelowTop
+                                    |> List.concatMap toTopDown
+                                 ]
+                                    |> List.concat
+                                )
                         )
+            )
 
 
 
@@ -367,40 +382,38 @@ when isGood =
 
 {-| Keep all [`filled`](Fillable#filled) and drop all [`empty`](Fillable#empty) elements.
 
-    import Fillable exposing (just, nothing)
+    import Fillable exposing (filled)
 
-    StackIs.topAndDown nothing [ nothing ]
-        |> StackIs.whenJust
-    --> StackIs.empty
+    StackIs.topAndDown Fillable.empty [ Fillable.empty ]
+        |> StackIs.whenFilled
+    --> Fillable.empty
 
-    StackIs.topAndDown (just 1) [ nothing, just 3 ]
-        |> StackIs.whenJust
+    StackIs.topAndDown (filled 1) [ Fillable.empty, filled 3 ]
+        |> StackIs.whenFilled
     --> StackIs.topAndDown 1 [ 3 ]
 
 As you can see, if only the top is [`filling`](Fillable#filling) a value, the result is non-empty.
 
 -}
-whenJust :
+whenFilled :
     StackIs
         emptiableOrFilled
         (Is emptiableOrFilled element)
     -> StackIs emptiableOrFilled element
-whenJust maybes =
-    case maybes of
-        Empty emptiableOrFilled ->
-            Empty emptiableOrFilled
-
-        Filled parts ->
-            case parts.top of
-                Empty emptiableOrFilled ->
-                    Empty emptiableOrFilled
-
-                Filled top_ ->
-                    topAndDown
-                        top_
-                        (parts.downBelowTop
-                            |> List.filterMap Fillable.toMaybe
+whenFilled maybes =
+    maybes
+        |> Fillable.andThen
+            (\parts ->
+                parts.top
+                    |> Fillable.andThen
+                        (\top_ ->
+                            topAndDown
+                                top_
+                                (parts.downBelowTop
+                                    |> List.filterMap Fillable.toMaybe
+                                )
                         )
+            )
 
 
 
@@ -430,6 +443,8 @@ map changeElement =
 {-| Combine 2 [`StackIs`](#StackIs)s with a given function.
 If one stack is longer, its extra elements are dropped.
 
+    import Fillable
+
     StackIs.map2 (+)
         (StackIs.topAndDown 1 [ 2, 3 ])
         (StackIs.topAndDown 4 [ 5, 6, 7 ])
@@ -437,8 +452,8 @@ If one stack is longer, its extra elements are dropped.
 
     StackIs.map2 Tuple.pair
         (StackIs.topAndDown 1 [ 2, 3 ])
-        StackIs.empty
-    --> StackIs.empty
+        Fillable.empty
+    --> Fillable.empty
 
 -}
 map2 :
@@ -458,7 +473,8 @@ map2 combineAB aStack bStack =
         bStack
 
 
-{-| Apply a function to every element of its downBelowTop.
+{-| Alter every element of its [`downBelowTop`](#downBelowTop)
+based on its current value.
 
     StackIs.topAndDown 1 [ 4, 9 ]
         |> StackIs.alterBelowTop negate
@@ -466,12 +482,17 @@ map2 combineAB aStack bStack =
 
 -}
 alterBelowTop :
-    (tailElement -> mappedTailElement)
-    -> Is emptiableOrFilled ( top, List tailElement )
-    -> Is emptiableOrFilled ( top, List mappedTailElement )
+    (element -> element)
+    -> StackIs emptiableOrFilled element
+    -> StackIs emptiableOrFilled element
 alterBelowTop changeTailElement =
     Fillable.map
-        (Tuple.mapSecond (List.map changeTailElement))
+        (\r ->
+            { top = r.top
+            , downBelowTop =
+                r.downBelowTop |> List.map changeTailElement
+            }
+        )
 
 
 {-| Apply a function to the top only.
@@ -507,7 +528,7 @@ foldFrom :
     acc
     -> LinearDirection
     -> (element -> acc -> acc)
-    -> StackIs emptyOrNot_ element
+    -> StackIs emptiableOrFilled_ element
     -> acc
 foldFrom initial direction reduce =
     toTopDown
