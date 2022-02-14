@@ -114,11 +114,7 @@ it's also the result of:
 
 -}
 type alias ListIs emptiableOrFilled element =
-    Is emptiableOrFilled (ListFilled element)
-
-
-type alias ListFilled element =
-    ( element, List element )
+    Is emptiableOrFilled ( element, List element )
 
 
 {-| A [`ListIs`](#ListIs) with just 1 element.
