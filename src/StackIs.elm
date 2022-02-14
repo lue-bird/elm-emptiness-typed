@@ -495,11 +495,11 @@ alterTop changeHead =
     import LinearDirection exposing (LinearDirection(..))
 
     StackIs.topAndDown 'l' [ 'i', 'v', 'e' ]
-        |> StackIs.foldFrom "" LastToFirst String.append
+        |> StackIs.foldFrom "" LastToFirst String.cons
     --> "live"
 
     StackIs.topAndDown 'l' [ 'i', 'v', 'e' ]
-        |> StackIs.foldFrom "" FirstToLast String.append
+        |> StackIs.foldFrom "" FirstToLast String.cons
     --> "evil"
 
 -}
