@@ -31,6 +31,8 @@
       - renamed `nothing` to `empty`
       - renamed `value` to `filling`
       - renamed `withFallback` to `toFillingWithEmpty`
+    
+  - replaced `Maybe` results with `Fillable.Is Emptiable` (except for `Fillable.toMaybe`)
   
   - `ListIs`
       - removed `NotEmpty`
