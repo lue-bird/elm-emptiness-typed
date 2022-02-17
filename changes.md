@@ -1,63 +1,43 @@
-### rejected
-
-  - adding `StackThat`. Currently I can't see additional value not provided by `ListThat`
-
 # changelog
 
 ## 4.0.0
 
-  - changed
-    ```elm
-    type CanBe stateTag yesOrNever
-        = CanBe yesOrNever
-    ```
-    to
-    ```elm
-    type PossiblyEmpty unitOrNever
-        = Possibly unitOrNever
-    
-    type alias Filled =
-        PossiblyEmpty Never
-    
-    type alias Emptiable =
-        PossiblyEmpty ()
-    ```
+  - add [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) dependency
     to improve understandability of types
 
-  - renamed `MaybeIs` type and module to `Fillable`
-      - renamed `IsJust` variant to `Filled`
-      - renamed `IsNothing` variant to `Empty`
+  - replaced `MaybeIs` module with `Fillable`
+      - with
+        ```elm
+        type Empty possiblyOrNever filling
+            = Empty possiblyOrNever
+            | Filled filling
+        ```
       - renamed `just` to `filled`
       - renamed `nothing` to `empty`
       - renamed `value` to `filling`
-      - renamed `withFallback` to `toFillingWithEmpty`
-    
-  - replaced `Maybe` results with `Fillable.Is Emptiable` (except for `Fillable.toMaybe`)
+      - renamed `withFallback` to `toFillingOrIfEmpty`
+      - replaced `branchableType` with `adaptType`
   
-  - `ListIs`
-      - removed `NotEmpty`
-      - changed
+  - replaced `ListIs` with `Stack`
+      - `Empty Possibly`/`Never ...` with
         ```elm
-        type alias ListIs emptiableOrFilled element =
-            ListWithHeadType element emptiableOrFilled element
-        ```
-        to
-        ```elm
-        type alias ListIs emptiableOrFilled element =
-            Fillable.Is emptiableOrFilled ( element, List element )
-        ```
-      - removed `ListWithHeadType`
-        in favor of `Fillable.Is emptiableOrFilled ( head, tail )`
-      - removed `empty`
-      - renamed `whenJust` to `whenFilled`
+        type alias StackFilled element =
+            StackWithTop element element
         
-  - renamed `HoleyFocusList` module to `ListWithFocus`
-      - renamed `type alias HoleyFocusList` to `ListWithFocusThat`
-      - removed `type alias Item`
-      - removed `type alias Hole`
+        type alias StackWithTop top belowElement =
+            ( top, List belowElement )
+        ```
+        
+  - renamed `HoleyFocusList` module to `FocusList`
+      - renamed `HoleyFocusList` to `ListFocusingHole`
+      - removed `Item`, `Hole`
       - renamed `mapBefore` to `alterBefore`
       - renamed `mapCurrent` to `alterCurrent`
       - renamed `mapAfter` to `alterAfter`
+    
+  - in general
+      - replaced `Maybe` results & arguments with `Empty Possibly`
+      - in replacement/addition to `List` results & arguments: `Possibly Empty (StackFilled ...)`
 
 ## 3.0.0
 
@@ -78,20 +58,20 @@
 
 #### 2.0.1
 
-- doc correction for `ListIs.unCons`
+- doc correction for `Stack.splitTop`
 
 ## 2.0.0
 
-- changed `MaybeIs.CanBeNothing possiblyOrNever tag` type to `CanBe tag possiblyOrNever`
-- removed `MaybeIs.Just` & `.Nothingable` in favor of `CanBe`
-- removed `ListIs.Emptiable` in favor of `CanBe empty_ ()`
-- removed `HoleyFocusList.ItemOrHole` in favor of `CanBe hole_ ()`
-- changed `ListIs.fold dir red init` to `.foldFrom init dir red`
-- renamed variant variant `MaybeIs.CanBeNothing` to `CanBe`
-- renamed `ListIs.foldWith` to `.fold`
-- renamed `ListIs.toTuple` to `.unCons`
-- renamed `ListIs.fromTuple` to `.fromUnConsed`
-- added extended summary in readme (`CanBe` explanation etc.)
+- changed `MaybeIs.PossiblyNothing possiblyOrNever tag` type to `Possibly tag possiblyOrNever`
+- removed `MaybeIs.Just` & `.Nothingable` in favor of `Possibly`
+- removed `Stack.Possibly` in favor of `Possibly empty_ ()`
+- removed `HoleyFocusList.ItemOrHole` in favor of `Possibly hole_ ()`
+- changed `Stack.fold dir red init` to `.foldFrom init dir red`
+- renamed variant variant `MaybeIs.PossiblyNothing` to `Possibly`
+- renamed `Stack.foldWith` to `.fold`
+- renamed `Stack.toTuple` to `.splitTop`
+- renamed `Stack.fromTuple` to `.fromTopAndBelow`
+- added extended summary in readme (`Possibly` explanation etc.)
 
 
 ## 1.0.0: changes from [holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest)
@@ -101,7 +81,7 @@
         - → type-safety
         - [makes unifying types possible](https://github.com/zwilias/elm-holey-zipper/issues/2)
     - removed type `Hole`
-    - changed type `Full` to `Item` as `CanBe { hole : () } Never`
+    - changed type `Full` to `Item` as `Possibly { hole : () } Never`
 - removed `zipper`
 - renamed type `Zipper` and its module to `HoleyFocusList`
 - renamed `singleton` to `only`

@@ -1,10 +1,9 @@
 {
   "root": "../src",
   "tests": [
-    "ListWithFocus",
+    "FocusList",
     "Fillable",
-    "ListIs",
-    "StackIs",
+    "Stack",
     "./README.md"
   ]
 }

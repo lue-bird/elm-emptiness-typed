@@ -1,214 +1,67 @@
 > one type for emptiable and safe non-empty
 
-# [emptiness-typed](https://package.elm-lang.org/packages/lue-bird/elm-emptiness-typed/latest/)
+# [emptiness typed](https://package.elm-lang.org/packages/lue-bird/elm-emptiness-typed/latest/)
 
-There are many types that promise non-emptiness. One example: [MartinSStewart's `NonemptyString`](https://dark.elm.dmy.fr/packages/MartinSStewart/elm-nonempty-string/latest/).
+**_🗨️ Read about [allowable state](https://package.elm-lang.org/packages/lue-bird/elm-allowable-state/latest/) first _**
 
-`fromInt`, `char`, ... promise being non-empty at compile-time
-
-→ `head`, `tail`, ... are guaranteed to succeed.
-You don't have to carry `Maybe`s throughout your program. Cool.
-
-How about operations that **work on non-empty and emptiable** strings?
-```elm
-length : StringIs emptiableOrFilled_ -> Int
-
-toUpper :
-    StringIs emptiableOrFilled
-    -> StringIs emptiableOrFilled
-...
-```
-or ones that can **pass** the **(im)possibility of a state** from one data structure to the other?
-```elm
-toCharList :
-    StringIs emptiableOrFilled
-    -> ListIs emptiableOrFilled
-```
-
-All this good stuff is very much possible 🔥
-
-Let's experiment and see where we end up.
-
-```elm
-type StringIsCanBeEmpty possiblyOrNever
-    = StringEmpty possiblyOrNever
-    | StringNotEmpty Char String
-
-char : Char -> StringIsCanBeEmpty Never
-char onlyChar =
-    StringNotEmpty onlyChar ""
-
-head : StringIsCanBeEmpty Never -> Char
-head =
-    \string ->
-        case string of
-            StringNotEmpty headChar _ ->
-                headChar
-            
-            StringEmpty empty ->
-                empty |> never --! neat
-
-head (char 'E') -- 'E'
-head (StringEmpty ()) -- error
-```
-
-→ The type `StringIsCanBeEmpty Never` limits arguments to just `StringNotEmpty`.
-
-Lets make the type `StringIsCanBeEmpty ()/Never` handier:
-
-```elm
-type StringIs emptiableOrFilled
-
-type alias Filled =
-    Never
-
-type alias CanBeEmpty =
-    ()
-
-head : StringIs Filled -> Char
-empty : StringIs CanBeEmpty
-```
-
-To avoid misuse like `empty : StringIs ()` or `Parser.spaces : Parser CanBeEmpty`,
-
-we'll wrap the type tags up 🌯
-
-```elm
-type Filled
-    = NotEmpty Never
-
-type CanBeEmpty
-    = CanBeEmpty
-
-head : StringIs Filled -> Char
-empty : StringIs CanBeEmpty
-```
-
-👌
-
-On to implementing ↓ that carries the emptiness-information over:
-
-```elm
-toCharList : StringIs ?? -> ListIs ?? Char
-```
-
-We need a common wrapper
-
-```elm
-type PossiblyEmpty possiblyOrNever
-    = Possible possiblyOrNever
-
-type alias Filled =
-    PossiblyEmpty Never
-
-type alias Emptiable =
-    PossiblyEmpty ()
-
-
-empty : StringIs Emptiable
-empty =
-    StringEmpty (Possible ())
-
-head : StringIs Filled
-head =
-    \string ->
-        case string of
-            StringEmpty (Possible emptyPossible) ->
-                emptyPossible |> never
-            
-            StringFilled headChar _ ->
-                headChar
-```
-
-This is **exactly** what this library provides: [`PossiblyEmpty`](Fillable#PossiblyEmpty), [`Emptiable`](Fillable#Emptiable), [`Filled`](Fillable#Filled)
-
-Now the fun part:
-
-```elm
-toCharList :
-    StringIs emptiableOrFilled
-    -> ListIs emptiableOrFilled Char
-toCharList string =
-    case string of
-        StringEmpty emptiableOrFilled ->
-            ListEmpty emptiableOrFilled
-
-        StringNotEmpty headChar tailString ->
-            ListIs.fromCons headChar (tailString |> String.toList)
-```
-
-The type information gets carried over, so
-```elm
-StringIs Filled -> ListIs Filled
-StringIs Emptiable -> ListIs Emptiable
-```
-
-[`Fillable.Is`](Fillable#Is) is just a convenience layer for an optional-able value
-where [`PossiblyEmpty`](Fillable#PossiblyEmpty) is attached to its [`Empty`](Fillable#Is) variant.
+[`Fillable.Empty`](Fillable#Empty) is a convenience layer for an optional-able value
+where a type argument that's either `Never` or [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
+is attached to its [`Empty`](Fillable#Empty) variant.
 
 Defining
 ```elm
-import Fillable exposing (Is, Filled, filled, filling)
+import Fillable exposing (Empty, filled, filling)
 
-type alias StringIs emptiableOrFilled =
-    Is emptiableOrFilled ( Char, String )
+type alias TextFilled =
+    ( Char, String )
 
-head : StringIs Filled -> Char
-head =
+first : Empty Never TextFilled -> Char
+first =
     filling >> \( headChar, _ ) -> headChar
 
-Fillable.map (filled >> head)
---: StringIs emptiableOrFilled
---: -> Is emptiableOrFilled Char
+Fillable.map (filled >> first)
+--: Text possiblyOrNever 
+--: -> Empty possiblyOrNever Char
 ```
 
-`StringIs` acts like a type-safe `Maybe NonEmptyString` 🪴
+`Empty ... TextFilled` acts like a type-safe `Maybe NonEmptyString` 🌿
 
+## [`Stack`](Stack)
 
-Let's create some data structures!
+Handle lists that are [`Empty`](Fillable#Empty) [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) or `Never` in one go.
 
-## [`ListIs`](ListIs)
-
-Handle [`Emptiable`](Fillable#Emptiable) & [`Filled`](Fillable#Filled) lists in one go.
-
-[`Filled`](Fillable#Filled) allows safe `Maybe`-free [`head`](ListIs#head), [`tail`](ListIs#tail), [`fold`](ListIs#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
+[`Empty`](Fillable#Empty) `Never` <some stack type> allows safe `Maybe`-free [`top`](Stack#top), [`removeTop`](Stack#removeTop), [`fold`](Stack#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
 
 ```elm
-import Fillable exposing (Emptiable, Filled)
-import ListIs
+import Fillable exposing (Empty)
+import Stack exposing (StackFilled, topAndBelow, stackMoreTypedOnTop, addOnTop, toTopAndBelow)
 
 Fillable.empty
-    |> ListIs.appendNotEmpty
-        (ListIs.fromCons 1 [ 2, 3 ])
-                     -- ListIs Filled Int
-    |> ListIs.cons 5 -- ListIs Filled Int
-    |> ListIs.unCons
+    |> stackMoreTypedOnTop
+        (topAndBelow 1 [ 2, 3 ])
+                  -- Empty never_ (StackFilled number_)
+    |> addOnTop 5 -- Empty never_ (StackFilled number_)
+    |> toTopAndBelow
 --> ( 5, [ 1, 2, 3 ] )
 ```
 
-Notice how
-```elm
-type alias ListIs emptiableOrFilled element =
-    Fillable.Is emptiableOrFilled ( element, List element )
-```
-
-## [`ListWithFocus`](ListWithFocus)
+## [`FocusList`](FocusList)
 
 A list zipper that can also focus before and after every element.
 
 ```elm
-import ListWithFocus
+import FocusList exposing (ListFocusingHole)
 
-ListWithFocus.empty           -- ListWhereFocusIs Emptiable item_
-    |> ListWithFocus.plug 5   -- ListWhereFocusIs filled_ number_
-    |> ListWithFocus.append [ 1, 2, 3 ]
-                              -- ListWereFocusIs filled_ number_
-    |> ListWithFocus.nextHole -- ListWereFocusIs Emptiable number_
-    |> ListWithFocus.toList
+FocusList.empty           -- ListFocusingHole Possibly item_
+    |> FocusList.plug 5   -- ListFocusingHole never_ number_
+    |> FocusList.append [ 1, 2, 3 ]
+                          -- ListFocusingHole never_ number_
+    |> FocusList.nextHole -- ListFocusingHole Possibly number_
+    |> FocusList.toList
 --> [ 5, 1, 2, 3 ]
 ```
 
-→ [zwilias's holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest) with [a type-safe implementation using [`Fillable.Is`](Fillable#Is) and other minor tweaks](https://github.com/lue-bird/elm-emptiness-typed/blob/master/changes.md).
+= [zwilias/elm-holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest) with [a type-safe implementation using [`Fillable.Empty`](Fillable#Empty) and other tweaks](https://github.com/lue-bird/elm-emptiness-typed/blob/master/changes.md).
 
 ## suggestions?
 

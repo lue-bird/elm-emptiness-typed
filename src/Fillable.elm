@@ -1,46 +1,40 @@
 module Fillable exposing
-    ( Emptiable, Filled, PossiblyEmpty(..)
-    , Is(..)
+    ( Empty(..)
     , empty, filled, fromMaybe
     , map, map2, andThen
-    , filling, toFillingWithEmpty, toMaybe
-    , branchableType
+    , filling, toFillingOrIfEmpty, toMaybe
+    , adaptType
     )
 
-{-| `Maybe` with the ability to know at the type level whether `Empty` is possible.
-
-    import Fillable exposing (Is, filled)
-
-    [ filled 1, filled 7 ]
-        --: List (Is filled_ number_)
-        |> List.map filling
-    --> [ 1, 7 ]
-
-[`Is`](#Is) alone probably won't be that useful,
-but we can build type-safe data structures with it:
-
-    type alias ListIs emptiableOrFilled element =
-        Is emptiableOrFilled ( element, List element )
-
-is exactly how [`ListIs`](ListIs) is implemented, allowing you to treat [`ListIs`](ListIs) just like any [`Fillable.Is`](#Is).
-
-    import Fillable exposing (filling)
-
-    head : Is Filled ( head, tail_ ) -> head
-    head =
-        filling >> Tuple.first
+{-| An option-able value.
 
 
+#### in arguments
 
-    Fillable.map (filled >> head)
-    --: Is emptiableOrFilled ( head, tail_ )
-    --: -> Is emptiableOrFilled head
+    import Fillable exposing (Empty)
+    import Stack exposing (StackFilled)
+
+    filling : Empty Never filling -> filling
+
+    top : Empty Never (StackFilled element) -> element
 
 
-## types
+#### in type declarations
 
-@docs Emptiable, Filled, PossiblyEmpty
-@docs Is
+    import Fillable exposing (Empty)
+    import Stack exposing (StackFilled)
+
+    type alias Model =
+        WithoutConstructorFunction
+            { searchKeyWords : Empty Never (StackFilled String)
+            }
+
+    type alias WithoutConstructorFunction record =
+        record
+
+where `WithoutConstructorFunction` stops the compiler from creating a positional constructor function for `Model`.
+
+@docs Empty
 
 
 ## create
@@ -51,137 +45,44 @@ is exactly how [`ListIs`](ListIs) is implemented, allowing you to treat [`ListIs
 ## transform
 
 @docs map, map2, andThen
-@docs filling, toFillingWithEmpty, toMaybe
+@docs filling, toFillingOrIfEmpty, toMaybe
 
 
 ## type-level
 
-@docs branchableType
+@docs adaptType
 
 -}
 
+import Possibly exposing (Possibly(..))
 
-{-| Like `Maybe` with type level information about whether `Empty` is possible.
-See [`PossiblyEmpty`](Fillable#PossiblyEmpty), [`Emptiable`](Fillable#Emptiable), [`Filled`](Fillable#Filled).
 
-[`Is`](#Is) alone probably won't be that useful,
-but we can build type-safe data structures with it.
+{-| Like `Maybe`, but able to know at type-level whether `Empty` is possible.
+
+    import Fillable exposing (Empty, filled)
+
+    [ filled 1, filled 7 ]
+        --: List (Empty never_ number_)
+        |> List.map filling
+    --> [ 1, 7 ]
+
+[`Fillable.Empty`](#Empty) alone probably won't be that useful,
+but it can make data structures type-safely non-emptiable:
+
+    import Fillable exposing (filling)
+
+    top : Empty Never (StackFilled element) -> element
+
+    Fillable.map Dict.NonEmpty.head
+    --: Empty possiblyOrNever (NonEmptyDict comparable v)
+    --: -> Empty possiblyOrNever ( comparable, v ) possiblyOrNever
+
 Go take a look at all the data structures in this package.
 
 -}
-type Is emptiableOrFilled filling
-    = Empty emptiableOrFilled
+type Empty possiblyOrNever filling
+    = Empty possiblyOrNever
     | Filled filling
-
-
-{-| In short:
-
-  - [`Emptiable`](#Emptiable), [`Filled`](#Filled) are defined in terms of `PossiblyEmpty ()/Never`
-
-        empty : Is Emptiable filling_
-
-        head : ListIs Filled element -> element
-
-  - `...Is emptiableOrFilled -> ...Is emptiableOrFilled` can carry over non-emptiness-information
-
-        toCharList :
-            StringIs emptiableOrFilled
-            -> ListIs emptiableOrFilled Char
-        toCharList string =
-            case string of
-                StringEmpty emptiableOrFilled ->
-                    ListEmpty emptiableOrFilled
-
-                StringNotEmpty headChar tailString ->
-                    ListIs.fromCons headChar (tailString |> String.toList)
-
-
-#### [`Filled`](#Filled) in arguments
-
-    head : ListIs Filled element -> element
-
-
-#### [`Emptiable`](#Emptiable) in results
-
-    fromList : List element -> ListIs Emptiable element
-
-
-#### in type declarations
-
-    type alias Model =
-        WithoutConstructorFunction
-            { selected : Is Emptiable
-            , searchKeyWords : ListIs Filled String
-            , planets : ListIs Emptiable Planet
-            }
-
-    type alias WithoutConstructorFunction record =
-        record
-
-where `WithoutConstructorFunction` stops the compiler from creating a positional constructor function for `Model`.
-
-If you still have questions, check out the [readme](https://dark.elm.dmy.fr/packages/lue-bird/elm-emptiness-typed/latest/).
-
--}
-type PossiblyEmpty unitOrNever
-    = Possible unitOrNever
-
-
-{-| The empty state is possible.
-
-
-#### in results
-
-    fromMaybe : Maybe value -> Is Emptiable value
-
-    fromList : List element -> ListIs Emptiable element
-
-
-#### `Emptiable` in type declarations
-
-    type alias Model =
-        WithoutConstructorFunction
-            { selected : Is Emptiable
-            , planets : ListIs Emptiable Planet
-            }
-
-    type alias WithoutConstructorFunction record =
-        record
-
-where `WithoutConstructorFunction` stops the compiler from creating a positional constructor function for `Model`.
-
--}
-type alias Emptiable =
-    PossiblyEmpty ()
-
-
-{-| The empty state isn't possible.
-
-
-#### in arguments
-
-    filling : Is Filled filling -> filling
-
-    unCons : ListIs Filled element -> ( element, List element )
-
-    head : ListIs Filled element -> element
-
-
-#### `Filled` in type declarations
-
-    type alias Model =
-        WithoutConstructorFunction
-            { searchKeyWords : ListIs Filled String
-            }
-
-    type alias WithoutConstructorFunction record =
-        record
-
-where `WithoutConstructorFunction` stops the compiler from creating a positional constructor function for `Model`.
-
--}
-type alias Filled =
-    PossiblyEmpty Never
 
 
 {-| Insert joke about life here.
@@ -191,12 +92,12 @@ type alias Filled =
     --> empty
 
 -}
-empty : Is Emptiable filled_
+empty : Empty Possibly filling_
 empty =
-    Empty (Possible ())
+    Empty Possible
 
 
-{-| A [`Fillable.Is`](#Is) that certainly exists, allowing type-safe extraction.
+{-| A [`Fillable.Empty`](#Empty) that certainly exists, allowing type-safe extraction.
 
     import Fillable exposing (filled, filling)
 
@@ -204,14 +105,14 @@ empty =
     --> "Bami"
 
 -}
-filled : filling -> Is filled_ filling
+filled : filling -> Empty never_ filling
 filled fillingValue =
     Filled fillingValue
 
 
-{-| Convert a `Maybe` to a [`Fillable.Is`](#Is).
+{-| Convert a `Maybe` to a [`Fillable.Empty`](#Empty).
 -}
-fromMaybe : Maybe value -> Is Emptiable value
+fromMaybe : Maybe value -> Empty Possibly value
 fromMaybe coreMaybe =
     case coreMaybe of
         Maybe.Just val ->
@@ -231,20 +132,20 @@ Don't try to use this prematurely.
 Keeping type information as long as possible is always a win.
 
 -}
-toMaybe : Is canBeFilledOrNot_ filling -> Maybe filling
+toMaybe : Empty possiblyOrNever_ filling -> Maybe filling
 toMaybe =
-    \maybe ->
-        case maybe of
-            Filled val ->
-                Maybe.Just val
+    \fillable ->
+        case fillable of
+            Filled fillingValue ->
+                Maybe.Just fillingValue
 
             Empty _ ->
                 Maybe.Nothing
 
 
-{-| Safely extracts the `filling` from an `Is Filled filling`.
+{-| Safely extracts the value from an `Empty Never`.
 
-    import Fillable exposing (filled, filling, Is)
+    import Fillable exposing (Empty, filled, filling)
 
     filled (filled (filled "Bami"))
         |> filling
@@ -252,67 +153,66 @@ toMaybe =
         |> filling
     --> "Bami"
 
-    head : Is Filled ( head, tail ) -> head
-    head =
+    first : Empty Never ( first, others_ ) -> first
+    first =
         filling >> Tuple.first
 
-See [`Filled`](#Filled) and [`ListIs`](ListIs).
-
 -}
-filling : Is Filled value -> value
-filling definitelyFilled =
-    definitelyFilled |> toFillingWithEmpty never
+filling : Empty Never filling -> filling
+filling filledFillable =
+    filledFillable |> toFillingOrIfEmpty never
 
 
-{-| Lazily use a fallback value if the [`Fillable.Is`](#Is) [`empty`](#empty).
+{-| Lazily use a fallback value if the [`Fillable.Empty`](#Empty) [`empty`](#empty).
 
+    import Possibly exposing (Possibly(..))
+    import Fillable exposing (toFillingOrIfEmpty)
     import Dict
 
     Dict.empty
         |> Dict.get "Hannah"
         |> Fillable.fromMaybe
-        |> Fillable.toFillingWithEmpty (\() -> "unknown")
+        |> toFillingOrIfEmpty (\_ -> "unknown")
     --> "unknown"
 
-    value =
-        toFillingWithEmpty never
+    filling =
+        toFillingOrIfEmpty never
 
 -}
-toFillingWithEmpty :
-    (unitOrNever -> value)
-    -> Is (PossiblyEmpty unitOrNever) value
-    -> value
-toFillingWithEmpty lazyFallback =
-    \maybe ->
-        case maybe of
-            Filled val ->
-                val
+toFillingOrIfEmpty :
+    (possiblyOrNever -> filling)
+    -> Empty possiblyOrNever filling
+    -> filling
+toFillingOrIfEmpty lazyFallback =
+    \fillable ->
+        case fillable of
+            Filled fillingValue ->
+                fillingValue
 
-            Empty (Possible possibleOrNever) ->
-                lazyFallback possibleOrNever
+            Empty possiblyOrNever ->
+                lazyFallback possiblyOrNever
 
 
-{-| Transform the value in the \`Fillable. using a given function:
+{-| Change the possibly `Filled` value based on its current value:
 
     import Fillable exposing (filled)
 
     filled -3 |> Fillable.map abs
     --> filled 3
 
-    Fillable.empty
-        |> Fillable.map abs
+    Fillable.empty |> Fillable.map abs
     --> Fillable.empty
 
 -}
 map :
-    (filling -> mappedFilling)
-    -> Is emptiableOrFilled filling
-    -> Is emptiableOrFilled mappedFilling
+    (filling -> fillingMapped)
+    -> Empty possiblyOrNever filling
+    -> Empty possiblyOrNever fillingMapped
 map change =
-    \maybe ->
-        case maybe of
-            Filled val ->
-                val |> change |> Filled
+    \fillable ->
+        case fillable of
+            Filled fillingValue ->
+                fillingValue |> change |> Filled
 
             Empty emptiableOrFilled ->
                 Empty emptiableOrFilled
@@ -328,84 +228,109 @@ map change =
 
 -}
 map2 :
-    (aValue -> bValue -> combinedValue)
-    -> Is emptiableOrFilled aValue
-    -> Is emptiableOrFilled bValue
-    -> Is emptiableOrFilled combinedValue
-map2 combine aMaybe bMaybe =
-    case ( aMaybe, bMaybe ) of
+    (aFilling -> bFilling -> fillingCombined)
+    -> Empty possiblyOrNever aFilling
+    -> Empty possiblyOrNever bFilling
+    -> Empty possiblyOrNever fillingCombined
+map2 combine aFillable bFillable =
+    case ( aFillable, bFillable ) of
         ( Filled a, Filled b ) ->
             combine a b |> Filled
 
-        ( Empty emptiableOrFilled, _ ) ->
-            Empty emptiableOrFilled
+        ( Empty possiblyOrNever, _ ) ->
+            Empty possiblyOrNever
 
-        ( _, Empty emptiableOrFilled ) ->
-            Empty emptiableOrFilled
+        ( _, Empty possiblyOrNever ) ->
+            Empty possiblyOrNever
 
 
 {-| Chain together operations that may return [`empty`](#empty).
 
-If the argument [`Is`](#Is) [`Filled`](#Filled),
+If the argument [`Fillable.Empty`](#Empty) `Never` [`Empty`](Fillable#Empty),
 a given function takes its [`filling`](#filling)
 and returns a new possibly [`empty`](#empty) value.
+
+Some call it `flatMap`.
 
     emptiableString
         |> Fillable.andThen parse
         |> Fillable.andThen extraValidation
 
-    parse : ( Char, String ) -> Is Emptiable Parsed
-    extraValidation : Parsed -> Is Emptiable Parsed
+    parse : ( Char, String ) -> Empty Possibly Parsed
+    extraValidation : Parsed -> Empty Possibly Parsed
 
 -}
 andThen :
-    (value -> Is emptiableOrFilled thenValue)
-    -> Is emptiableOrFilled value
-    -> Is emptiableOrFilled thenValue
+    (filling -> Empty possiblyOrNever fillingThen)
+    -> Empty possiblyOrNever filling
+    -> Empty possiblyOrNever fillingThen
 andThen tryIfFilled =
-    \maybe ->
-        case maybe of
+    \fillable ->
+        case fillable of
             Filled val ->
                 tryIfFilled val
 
-            Empty emptiableOrFilled ->
-                Empty emptiableOrFilled
+            Empty possiblyOrNever ->
+                Empty possiblyOrNever
 
 
 
 --
 
 
-{-| When using `Is Filled ...`
+{-| Change the `possiblyOrNever` type.
+
+
+#### Returning a type declaration value or argument that is `Empty Possibly`
+
+An `Empty possiblyOrNever` can't be used as `Empty Possibly`
+
+    import Fillable exposing (Empty)
+    import Possibly exposing (Possibly)
+    import Stack exposing (StackFilled)
+
+    type alias Log =
+        Empty Possibly (StackFilled String)
+
+    fromStack : Empty possiblyOrNever_ (StackFilled String) -> Log
+    fromStack stackFilled =
+        stackFilled
+            --: `possiblyOrNever_` but we need `Possibly`
+            |> Fillable.adaptType (always Possible)
+
+
+#### An argument or a type declaration value is `Empty Never`
+
+The `Empty Never` can't be unified with `Possibly` or a type variable
+
+    import Fillable exposing (Empty)
+    import Stack exposing (StackFilled)
 
     theShorter :
-        ListIs Filled a
-        -> ListIs isEmptyOrNot a
-        -> ListIs isEmptyOrNot a
-    theShorter aList bList =
-        if ListIs.length bList > ListIs.length aList then
-            bList
+        Empty Never (StackFilled element)
+        -> Empty possiblyOrNever (StackFilled element)
+        -> Empty possiblyOrNever (StackFilled element)
+    theShorter aStack bStack =
+        if Stack.length bStack > Stack.length aStack then
+            bStack
 
         else
-            --↓ `Filled` but we need `emptiableOrFilled`
-            aList
+            --: `Never` but we need `possiblyOrNever`
+            aStack
 
-to make both branches return `emptiableOrFilled`, we could use
+to make both branches return `possiblyOrNever`, use
 
-    aList |> filling |> filled
-
-also known as: necessary code that nobody will understand.
-
-    aList |> Fillable.branchableType
-
-is a bit better.
-
-💙 Found a better name? → open an issue.
+    aStack |> Fillable.adaptType never
 
 -}
-branchableType :
-    Is Filled filled
-    -> Is filled_ filled
-branchableType =
-    \filledFillable ->
-        filledFillable |> filling |> filled
+adaptType :
+    (possiblyOrNever -> possiblyOrNeverAdapted)
+    -> Empty possiblyOrNever filling
+    -> Empty possiblyOrNeverAdapted filling
+adaptType neverOrAlwaysPossible fillableFilled =
+    case fillableFilled of
+        Empty possiblyOrNever ->
+            Empty (possiblyOrNever |> neverOrAlwaysPossible)
+
+        Filled filling_ ->
+            filling_ |> Filled
