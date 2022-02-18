@@ -345,7 +345,7 @@ stackTypedOnTop stackFilledToPutOnTop =
         |> stackOnTop (topAndBelow -1 [ 0 ])
     --> topAndBelow -1 [ 0, 1, 2 ]
 
-Prefer this over [`stackOnTopFilled`](#stackOnTopFilled) if the piped stack is already known as non-empty
+Prefer this over [`stackTypedOnTop`](#stackTypedOnTop) if the piped stack is already known as non-empty
 or if both can be empty.
 
 -}
