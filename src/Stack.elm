@@ -2,10 +2,14 @@ module Stack exposing
     ( StackFilled, StackWithTop
     , only, topAndBelow, fromTopAndBelow, fromList
     , top, length
-    , addOnTop, removeTop, reverse
+    , addOnTop, removeTop
+    , splitTop
+    , reverse
     , when, whenFilled
     , stackOnTop, stackTypedOnTop, concat
-    , map, mapTop, mapBelowTop, foldFrom, fold, toList, splitTop, toTopAndBelow
+    , map, mapTop, mapBelowTop
+    , foldFrom, fold
+    , toList, toTopAndBelow
     , map2, map2TopAndDown
     )
 
@@ -26,9 +30,11 @@ module Stack exposing
 @docs top, length
 
 
-## modify
+## alter
 
-@docs addOnTop, removeTop, reverse
+@docs addOnTop, removeTop
+@docs splitTop
+@docs reverse
 
 
 ### filter
@@ -36,14 +42,16 @@ module Stack exposing
 @docs when, whenFilled
 
 
-## glue
+### glue
 
 @docs stackOnTop, stackTypedOnTop, concat
 
 
 ## transform
 
-@docs map, mapTop, mapBelowTop, foldFrom, fold, toList, splitTop, toTopAndBelow
+@docs map, mapTop, mapBelowTop
+@docs foldFrom, fold
+@docs toList, toTopAndBelow
 @docs map2, map2TopAndDown
 
 -}
