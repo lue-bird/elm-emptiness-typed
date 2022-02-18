@@ -3,7 +3,7 @@ module FocusListTest exposing (tests)
 import Expect
 import Fillable exposing (filled)
 import FocusList exposing (ListFocusingHole)
-import Stack
+import Stack exposing (topAndBelow)
 import Test exposing (Test, describe, test)
 
 
@@ -56,7 +56,8 @@ appendTest =
             (\_ ->
                 listWithFocusThat
                     |> FocusList.toStack
-                    |> Expect.equal (Stack.topAndBelow 1 [ 2, 3, 4, 5 ])
+                    |> Expect.equal
+                        (topAndBelow 1 [ 2, 3, 4, 5 ])
             )
         ]
 

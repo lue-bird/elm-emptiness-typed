@@ -79,7 +79,7 @@ module FocusList exposing
 
 import Fillable exposing (Empty(..), filled, filling)
 import Possibly exposing (Possibly(..))
-import Stack exposing (StackFilled)
+import Stack exposing (StackFilled, topAndBelow)
 
 
 {-| A special kind of list with elements of type `item`.
@@ -222,7 +222,7 @@ before =
         beforeFocusToFirst |> Stack.reverse
 
 
-{-| The items after the current focussed location.
+{-| The items after the location of the focus.
 
 ```monospace
 🍍 🍓 <🍊> (🍉 🍇
@@ -373,8 +373,8 @@ previous listWithFocus =
             )
 
 
-{-| Move the focus to the hole right after the current item. A hole is a whole
-lot of nothingness, so it's always there.
+{-| Move the focus to the hole right after the currently focussed location.
+A hole is a whole lot of nothingness, so it's always there.
 
 ```monospace
 🍍 <🍊> 🍉  ->  🍍 🍊 <> 🍉
@@ -404,20 +404,20 @@ nextHole listWithFocus =
         after_
 
 
-{-| Move the focus to the hole right before the current item. Feel free to plug
-that hole right up!
+{-| Move the focus to the hole right before the currently focussed location.
+Feel free to [`plug`](#plug) that hole right up!
 
 ```monospace
 🍍 <🍊> 🍉  ->  🍍 <> 🍊 🍉
 ```
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.only "world"
         |> FocusList.previousHole
         |> FocusList.plug "hello"
         |> FocusList.toStack
-    --> Stack.topAndBelow "hello" [ "world" ]
+    --> topAndBelow "hello" [ "world" ]
 
 -}
 previousHole :
@@ -444,14 +444,14 @@ previousHole listWithFocus =
 🍓 <?> 🍉  ->  🍓 <🍒> 🍉
 ```
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.empty
         |> FocusList.insertBefore "🍓" -- "🍓" <>
         |> FocusList.insertAfter "🍉"  -- "🍓" <> "🍉"
         |> FocusList.plug "🍒"         -- "🍓" <"🍒"> "🍉"
         |> FocusList.toStack
-    --> Stack.topAndBelow "🍓" [ "🍒", "🍉" ]
+    --> topAndBelow "🍓" [ "🍒", "🍉" ]
 
 -}
 plug :
@@ -494,13 +494,13 @@ remove =
 🍓 <🍊> ↓ 🍉 🍇
 ```
 
-    import Stack
+    import Stack  exposing (topAndBelow)
 
     FocusList.only 123
         |> FocusList.append [ 789 ]
         |> FocusList.insertAfter 456
         |> FocusList.toStack
-    --> Stack.topAndBelow 123 [ 456, 789 ]
+    --> topAndBelow 123 [ 456, 789 ]
 
 Insert multiple items using [`squeezeInAfter`](#squeezeInAfter).
 
@@ -524,12 +524,12 @@ insertAfter toInsertAfterFocus =
 🍍 🍓 ↓ <🍊> 🍉
 ```
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.only 123
         |> FocusList.insertBefore 456
         |> FocusList.toStack
-    --> Stack.topAndBelow 456 [ 123 ]
+    --> topAndBelow 456 [ 123 ]
 
 Insert multiple items using [`squeezeInBefore`](#squeezeInBefore).
 
@@ -558,7 +558,7 @@ focusAndAfter =
             Empty possiblyOrNever ->
                 case after_ of
                     Filled ( head_, tail_ ) ->
-                        Stack.topAndBelow head_ tail_
+                        topAndBelow head_ tail_
 
                     Empty _ ->
                         Empty possiblyOrNever
@@ -897,7 +897,7 @@ Remember that holes surround everything!
 🍍 🍓 <🍊> 🍉  ->  <> 🍍 🍓 🍊 🍉
 ```
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.only 1                 -- <1>
         |> FocusList.append [ 3, 4 ] -- <1> 3 4
@@ -906,7 +906,7 @@ Remember that holes surround everything!
         |> FocusList.beforeFirst     -- <> 1 2 3 4
         |> FocusList.plug 0          -- <0> 1 2 3 4
         |> FocusList.toStack
-    --> Stack.topAndBelow 0 [ 1, 2, 3, 4 ]
+    --> topAndBelow 0 [ 1, 2, 3, 4 ]
 
 -}
 beforeFirst :
@@ -926,14 +926,14 @@ beforeFirst =
 🍓 <🍊> 🍉  ->  🍓 🍊 🍉 <>
 ```
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.only 1                 -- <1>
         |> FocusList.append [ 2, 3 ] -- <1> 2 3
         |> FocusList.afterLast       -- 1 2 3 <>
         |> FocusList.plug 4          -- 1 2 3 <4>
         |> FocusList.toStack
-    --> Stack.topAndBelow 1 [ 2, 3, 4 ]
+    --> topAndBelow 1 [ 2, 3, 4 ]
 
 -}
 afterLast :
@@ -1070,14 +1070,14 @@ findBackwardHelp shouldStop =
 
 {-| Change every item based on its current value.
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.only "first"
         |> FocusList.prepend [ "zeroth" ]
         |> FocusList.append [ "second", "third" ]
         |> FocusList.map String.toUpper
         |> FocusList.toStack
-    --> Stack.topAndBelow "ZEROTH" [ "FIRST", "SECOND", "THIRD" ]
+    --> topAndBelow "ZEROTH" [ "FIRST", "SECOND", "THIRD" ]
 
 -}
 map :
@@ -1092,16 +1092,16 @@ map changeItem =
             (after_ |> Stack.map changeItem)
 
 
-{-| If an item is focussed, alter it based on its current value.
+{-| If an _item_ is focussed, alter it based on its current value.
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.only "first"
         |> FocusList.prepend [ "zeroth" ]
         |> FocusList.append [ "second", "third" ]
         |> FocusList.alterCurrent String.toUpper
         |> FocusList.toStack
-    --> Stack.topAndBelow "zeroth" [ "FIRST", "second", "third" ]
+    --> topAndBelow "zeroth" [ "FIRST", "second", "third" ]
 
 -}
 alterCurrent :
@@ -1118,13 +1118,13 @@ alterCurrent updateCurrent =
 
 {-| Apply a function to all items coming before the current focussed location.
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.only "second"
         |> FocusList.prepend [ "zeroth", "first" ]
         |> FocusList.alterBefore String.toUpper
         |> FocusList.toStack
-    --> Stack.topAndBelow "ZEROTH" [ "FIRST", "second" ]
+    --> topAndBelow "ZEROTH" [ "FIRST", "second" ]
 
 -}
 alterBefore :
@@ -1141,13 +1141,13 @@ alterBefore updateItemBefore =
 
 {-| Apply a function to all items coming after the current focussed location.
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.only "zeroth"
         |> FocusList.append [ "first", "second" ]
         |> FocusList.alterAfter String.toUpper
         |> FocusList.toStack
-    --> Stack.topAndBelow "zeroth" [ "FIRST", "SECOND" ]
+    --> topAndBelow "zeroth" [ "FIRST", "SECOND" ]
 
 -}
 alterAfter :
@@ -1165,19 +1165,19 @@ alterAfter updateItemAfter =
 {-| Apply multiple different functions on the parts of a `FocusList`- what
 comes before, what comes after, and the current item if there is one.
 
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.only "first"
         |> FocusList.append [ "second" ]
         |> FocusList.nextHole
         |> FocusList.plug "one-and-a-halfth"
         |> FocusList.mapParts
-            { before = (++) "before: "
-            , current = (++) "current: "
-            , after = (++) "after: "
+            { before = \item -> "before: " ++ item
+            , current = \item -> "current: " ++ item
+            , after = \item -> "after: " ++ item
             }
         |> FocusList.toStack
-    --> Stack.topAndBelow
+    --> topAndBelow
     -->     "before: first"
     -->     [ "current: one-and-a-halfth"
     -->     , "after: second"
@@ -1222,7 +1222,7 @@ toList =
 {-| Flattens the `FocusList` into a [`Stack`](Stack#StackFilled):
 
     import Fillable
-    import Stack
+    import Stack exposing (topAndBelow)
 
     FocusList.empty
         |> FocusList.toStack
@@ -1233,7 +1233,7 @@ toList =
         |> FocusList.nextHole
         |> FocusList.plug 456
         |> FocusList.toStack
-    --> Stack.topAndBelow 123 [ 456, 789 ]
+    --> topAndBelow 123 [ 456, 789 ]
 
 the type information gets carried over, so
 
@@ -1252,7 +1252,7 @@ toStack =
         in
         case before listWithFocus of
             Filled ( first_, afterFirstUntilFocus ) ->
-                Stack.topAndBelow first_
+                topAndBelow first_
                     (afterFirstUntilFocus
                         ++ (listWithFocus
                                 |> focusAndAfter
@@ -1268,7 +1268,7 @@ toStack =
                     Empty possiblyOrNever ->
                         case after_ of
                             Filled ( head_, tail_ ) ->
-                                Stack.topAndBelow head_ tail_
+                                topAndBelow head_ tail_
 
                             Empty _ ->
                                 Empty possiblyOrNever
