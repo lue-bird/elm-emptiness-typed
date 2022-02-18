@@ -61,7 +61,7 @@ FocusList.empty           -- ListFocusingHole Possibly item_
 --> [ 5, 1, 2, 3 ]
 ```
 
-= [zwilias/elm-holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest) with [a type-safe implementation using [`Fillable.Empty`](Fillable#Empty) and other tweaks](https://github.com/lue-bird/elm-emptiness-typed/blob/master/changes.md).
+= [zwilias/elm-holey-zipper](https://package.elm-lang.org/packages/zwilias/elm-holey-zipper/latest) with [a type-safe implementation using `Fillable.Empty` and other tweaks](https://github.com/lue-bird/elm-emptiness-typed/blob/master/changes.md).
 
 ## suggestions?
 
