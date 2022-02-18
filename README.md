@@ -34,10 +34,10 @@ Handle lists that are [`Empty`](Fillable#Empty) [`Possibly`](https://dark.elm.dm
 
 ```elm
 import Fillable exposing (Empty)
-import Stack exposing (StackFilled, topAndBelow, stackMoreTypedOnTop, addOnTop, toTopAndBelow)
+import Stack exposing (StackFilled, topAndBelow, stackTypedOnTop, addOnTop, toTopAndBelow)
 
 Fillable.empty
-    |> stackMoreTypedOnTop
+    |> stackTypedOnTop
         (topAndBelow 1 [ 2, 3 ])
                   -- Empty never_ (StackFilled number_)
     |> addOnTop 5 -- Empty never_ (StackFilled number_)

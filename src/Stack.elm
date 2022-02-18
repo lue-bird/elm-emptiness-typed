@@ -4,7 +4,7 @@ module Stack exposing
     , top, length
     , addOnTop, removeTop, reverse
     , when, whenFilled
-    , stackOnTop, stackMoreTypedOnTop, concat
+    , stackOnTop, stackTypedOnTop, concat
     , map, mapTop, mapBelowTop, foldFrom, fold, toList, splitTop, toTopAndBelow
     , map2, map2TopAndDown
     )
@@ -38,7 +38,7 @@ module Stack exposing
 
 ## glue
 
-@docs stackOnTop, stackMoreTypedOnTop, concat
+@docs stackOnTop, stackTypedOnTop, concat
 
 
 ## transform
@@ -303,10 +303,10 @@ reverse =
 {-| Glue the elements of an `Empty possiblyOrNever`/`Never` [`Stack`](#StackFilled) to the end of a [`Stack`](#StackFilled).
 
     import Fillable
-    import Stack exposing (topAndBelow, stackOnTop, stackMoreTypedOnTop)
+    import Stack exposing (topAndBelow, stackOnTop, stackTypedOnTop)
 
     Fillable.empty
-        |> stackMoreTypedOnTop
+        |> stackTypedOnTop
             (topAndBelow 1 [ 2 ])
         |> stackOnTop
             (topAndBelow -2 [ -1, 0 ])
@@ -316,11 +316,11 @@ Prefer [`stackOnTop`](#stackOnTop) if the piped stack is already known as non-em
 or if both are `Possibly`.
 
 -}
-stackMoreTypedOnTop :
+stackTypedOnTop :
     Empty possiblyOrNever (StackWithTop newTop element)
     -> Empty inPossiblyOrNever_ (StackFilled element)
     -> Empty possiblyOrNever (StackWithTop newTop element)
-stackMoreTypedOnTop stackFilledToPutOnTop =
+stackTypedOnTop stackFilledToPutOnTop =
     \stack ->
         stackFilledToPutOnTop
             |> Fillable.map
@@ -392,7 +392,7 @@ concat stackOfStacks =
                 belowTopLists
                     |> List.concatMap toList
                     |> fromList
-                    |> stackMoreTypedOnTop topList
+                    |> stackTypedOnTop topList
             )
 
 
