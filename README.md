@@ -6,9 +6,8 @@
 
 [`Fillable.Empty`](Fillable#Empty) is a convenience layer for an optional-able value
 where a type argument that's either `Never` or [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
-is attached to its [`Empty`](Fillable#Empty) variant.
+is attached to its [`Empty`](Fillable#Empty) variant:
 
-Defining
 ```elm
 import Fillable exposing (Empty, filled, filling)
 
@@ -20,7 +19,7 @@ first =
     filling >> \( headChar, _ ) -> headChar
 
 Fillable.map (filled >> first)
---: Text possiblyOrNever 
+--: Empty possiblyOrNever TextFilled
 --: -> Empty possiblyOrNever Char
 ```
 
