@@ -2,6 +2,20 @@
 
 - rename `toFillingOrIfEmpty` to `fillingOrIfEmpty`
 
+### to decide
+
+  - change type of `next`-/`previousHole`
+    from
+    ```elm
+    ListFocusingHole Never item
+    -> ListFocusingHole Possibly item
+    ```
+    to
+    ```elm
+    ListFocusingHole possiblyOrNever_ item
+    -> ListFocusingHole Possibly item
+    ```
+
 # changelog
 
 ## 4.0.0
