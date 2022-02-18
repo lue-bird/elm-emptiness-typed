@@ -50,7 +50,7 @@ module Stack exposing
 
 import Fillable exposing (Empty(..), empty, filled, filling)
 import LinearDirection exposing (LinearDirection)
-import List.LinearDirection as List
+import List.Linear
 import Possibly exposing (Possibly)
 
 
@@ -602,14 +602,14 @@ mapTop changeTop =
 
 -}
 foldFrom :
-    acc
+    accumulationValue
     -> LinearDirection
-    -> (element -> acc -> acc)
+    -> (element -> accumulationValue -> accumulationValue)
     -> Empty possiblyOrNever_ (StackFilled element)
-    -> acc
-foldFrom initial direction reduce =
+    -> accumulationValue
+foldFrom initialAccumulationValue direction reduce =
     toList
-        >> List.fold direction reduce initial
+        >> List.Linear.foldFrom initialAccumulationValue direction reduce
 
 
 {-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
@@ -633,7 +633,7 @@ fold direction reduce filledStack =
         ( top_, belowTop_ ) =
             filledStack |> toTopAndBelow
     in
-    List.fold direction reduce top_ belowTop_
+    List.Linear.foldFrom top_ direction reduce belowTop_
 
 
 {-| Convert it to a `List`.
