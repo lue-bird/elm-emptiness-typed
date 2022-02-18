@@ -3,6 +3,7 @@ module Fillable exposing
     , empty, filled, fromMaybe
     , map, map2, andThen
     , filling, toFillingOrIfEmpty, toMaybe
+    , ifFilled
     , adaptType
     )
 
@@ -46,6 +47,7 @@ where `WithoutConstructorFunction` stops the compiler from creating a positional
 
 @docs map, map2, andThen
 @docs filling, toFillingOrIfEmpty, toMaybe
+@docs ifFilled
 
 
 ## type-level
@@ -272,6 +274,43 @@ andThen tryIfFilled =
 
             Empty possiblyOrNever ->
                 Empty possiblyOrNever
+
+
+{-| If we have a `Filled`, alter the value using the [`filling`](#filling).
+
+    import Fillable exposing (filled, ifFilled)
+    import Stack exposing (addOnTop)
+
+    Fillable.empty
+        |> ifFilled addOnTop (filled 3)
+        |> ifFilled addOnTop Fillable.empty
+    --> Stack.only 3
+    --: Empty Possibly (StackFilled number_)
+
+If you dislike the argument positions, this might be for you:
+
+    import Fillable exposing (filled, ifFilled)
+    import Stack exposing (addOnTop)
+
+    Fillable.empty
+        |> (filled 3 |> ifFilled addOnTop)
+        |> (Fillable.empty |> ifFilled addOnTop)
+    --> Stack.only 3
+    --: Empty Possibly (StackFilled number_)
+
+-}
+ifFilled :
+    (filling -> value -> value)
+    -> Empty possiblyOrNever_ filling
+    -> value
+    -> value
+ifFilled alterValueUsingFilling fillable =
+    case fillable of
+        Filled fillingValue ->
+            alterValueUsingFilling fillingValue
+
+        Empty _ ->
+            identity
 
 
 

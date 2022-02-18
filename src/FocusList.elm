@@ -77,7 +77,7 @@ module FocusList exposing
 
 -}
 
-import Fillable exposing (Empty(..), filled, filling)
+import Fillable exposing (Empty(..), filled, filling, ifFilled)
 import Possibly exposing (Possibly(..))
 import Stack exposing (StackFilled, topAndBelow)
 
@@ -867,22 +867,14 @@ last =
             (FocusList before_ focus after_) =
                 focusList
         in
-        case Stack.reverse after_ of
+        case after_ |> Stack.reverse of
             Empty _ ->
                 focusList
 
             Filled ( last_, beforeLastUntilFocus ) ->
-                let
-                    focusToFirst =
-                        case focus of
-                            Filled currentItem ->
-                                Stack.addOnTop currentItem before_
-
-                            Empty _ ->
-                                before_
-                in
                 FocusList
-                    (focusToFirst
+                    (before_
+                        |> Fillable.ifFilled Stack.addOnTop focus
                         |> Stack.stackOnTop
                             (beforeLastUntilFocus |> Stack.fromList)
                     )
@@ -951,16 +943,8 @@ toReverseStack :
     -> Empty Possibly (StackFilled item)
 toReverseStack =
     \(FocusList beforeFocusToFirst focus after_) ->
-        let
-            focusToFirst =
-                case focus of
-                    Empty _ ->
-                        beforeFocusToFirst
-
-                    Filled currentItem ->
-                        Stack.addOnTop currentItem beforeFocusToFirst
-        in
-        focusToFirst
+        beforeFocusToFirst
+            |> ifFilled Stack.addOnTop focus
             |> Stack.stackOnTop (after_ |> Stack.reverse)
 
 
@@ -1250,10 +1234,10 @@ toStack =
             (FocusList _ focus after_) =
                 listWithFocus
         in
-        case before listWithFocus of
-            Filled ( first_, afterFirstUntilFocus ) ->
+        case listWithFocus |> before of
+            Filled ( first_, afterFirstToBeforeFocus ) ->
                 topAndBelow first_
-                    (afterFirstUntilFocus
+                    (afterFirstToBeforeFocus
                         ++ (listWithFocus
                                 |> focusAndAfter
                                 |> Stack.toList
@@ -1295,13 +1279,11 @@ focusingItem :
     -> Empty possiblyOrNever (ListFocusingHole never_ item)
 focusingItem =
     \(FocusList before_ focus after_) ->
-        case focus of
-            Filled currentItem ->
-                FocusList before_ (filled currentItem) after_
-                    |> filled
-
-            Empty possiblyOrNever ->
-                Empty possiblyOrNever
+        focus
+            |> Fillable.map
+                (\currentItem ->
+                    FocusList before_ (filled currentItem) after_
+                )
 
 
 
