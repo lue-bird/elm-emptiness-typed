@@ -20,7 +20,7 @@
 
 #### 4.1.0
 
-  - added `Fillable.applyIfFilled`
+  - added `Fillable.ifFilled`
 
 ## 4.0.0
 
