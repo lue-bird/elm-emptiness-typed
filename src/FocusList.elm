@@ -77,7 +77,7 @@ module FocusList exposing
 
 -}
 
-import Fillable exposing (Empty(..), filled)
+import Fillable exposing (Empty(..), filled, filling)
 import Possibly exposing (Possibly(..))
 import Stack exposing (StackFilled)
 
@@ -135,7 +135,6 @@ It's the loneliest of all `FocusList`s.
 ```
 
     import Fillable
-    import Stack
 
     FocusList.empty
         |> FocusList.toStack
@@ -194,12 +193,7 @@ only currentItem =
 current : ListFocusingHole Never item -> item
 current =
     \(FocusList _ focus _) ->
-        case focus of
-            Filled item ->
-                item
-
-            Empty possiblyOrNever ->
-                possiblyOrNever |> never
+        focus |> filling
 
 
 {-| The items before the location of the focus.
