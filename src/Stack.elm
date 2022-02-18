@@ -54,19 +54,19 @@ import List.Linear
 import Possibly exposing (Possibly)
 
 
-{-| An **emptiable or non-empty** data structure where [`top`](#top), [`removeTop`](#removeTop), [`addOnTop`](#addOnTop) [`mapTop`](#mapTop) are `O(n)`
+{-| A non-empty representation of a stack. [`top`](#top), [`removeTop`](#removeTop), [`addOnTop`](#addOnTop) [`mapTop`](#mapTop) are `O(n)`
 
 
 #### in arguments
 
-[`Empty`](Fillable#Empty) `Never` → non-empty stack:
+[`Empty`](Fillable#Empty) `Never (StackFilled ...)` → stack is non-empty:
 
     top : Empty Never (StackFilled element) -> element
 
 
 #### in results
 
-[`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) [`Empty`](Fillable#Empty) → stack could be empty
+[`Empty`](Fillable#Empty) [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `(StackFilled ...)` → stack could be empty
 
     fromList : List element -> Empty Possibly (StackFilled element)
 
@@ -78,11 +78,6 @@ We can treat it like any [`Fillable.Empty`](Fillable#Empty):
 
     Fillable.empty : Stack Possibly element_ -- fine
 
-    [ "hi", "there" ] -- comes in as an argument
-        |> Stack.fromList
-        |> Fillable.map (filled >> top)
-    --: Empty String Possibly
-
     toList : Empty possiblyOrNever_ (StackFilled element) -> List element
     toList =
         \stack ->
@@ -92,6 +87,11 @@ We can treat it like any [`Fillable.Empty`](Fillable#Empty):
 
                 Empty _ ->
                     []
+
+    [ "hi", "there" ] -- comes in as an argument
+        |> Stack.fromList
+        |> Fillable.map (filled >> top)
+    --: Empty String Possibly
 
 Most operations also allow a different type for the top element → see [`StackWithTop`](#StackWithTop)
 
@@ -439,12 +439,12 @@ whenFilled :
         possiblyOrNever
         (StackWithTop
             (Empty possiblyOrNever topValue)
-            (Empty possiblyOrNever belowTopElementValue)
+            (Empty belowPossiblyOrNever_ belowElementValue)
         )
     ->
         Empty
             possiblyOrNever
-            (StackWithTop topValue belowTopElementValue)
+            (StackWithTop topValue belowElementValue)
 whenFilled maybes =
     maybes
         |> Fillable.andThen
