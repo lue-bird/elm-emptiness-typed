@@ -119,42 +119,11 @@ stops the compiler from creating a positional constructor function for `Model`.
 type ListFocusingHole possiblyOrNever item
     = FocusList
         (Empty Possibly (StackFilled item))
-        (FocusHole possiblyOrNever item)
+        (Empty possiblyOrNever item)
         (Empty
             Possibly
             (StackFilled item)
         )
-
-
-
---
-
-
-type FocusHole possiblyOrNever item
-    = Item item
-    | Hole possiblyOrNever
-
-
-hole : FocusHole Possibly item_
-hole =
-    Hole Possible
-
-
-focusMap :
-    (item -> itemMapped)
-    -> FocusHole possiblyOrNever item
-    -> FocusHole possiblyOrNever itemMapped
-focusMap changeItem focus =
-    case focus of
-        Item item ->
-            item |> changeItem |> Item
-
-        Hole possiblyOrNever ->
-            Hole possiblyOrNever
-
-
-
---
 
 
 {-| An empty `FocusList` on a hole
@@ -175,7 +144,7 @@ It's the loneliest of all `FocusList`s.
 -}
 empty : ListFocusingHole Possibly item_
 empty =
-    FocusList Fillable.empty hole Fillable.empty
+    FocusList Fillable.empty Fillable.empty Fillable.empty
 
 
 {-| A `FocusList` with a single focussed item in it,
@@ -197,8 +166,8 @@ nothing before and after it.
 
 -}
 only : element -> ListFocusingHole never_ element
-only current_ =
-    FocusList Fillable.empty (Item current_) Fillable.empty
+only currentItem =
+    FocusList Fillable.empty (filled currentItem) Fillable.empty
 
 
 
@@ -226,10 +195,10 @@ current : ListFocusingHole Never item -> item
 current =
     \(FocusList _ focus _) ->
         case focus of
-            Item item ->
+            Filled item ->
                 item
 
-            Hole possiblyOrNever ->
+            Empty possiblyOrNever ->
                 possiblyOrNever |> never
 
 
@@ -343,15 +312,15 @@ next (FocusList beforeFocusUntilHead focus after_) =
             let
                 newBeforeReversed =
                     case focus of
-                        Hole _ ->
+                        Empty _ ->
                             beforeFocusUntilHead
 
-                        Item oldCurrent ->
+                        Filled oldCurrent ->
                             Stack.addOnTop oldCurrent beforeFocusUntilHead
             in
             FocusList
                 newBeforeReversed
-                (Item next_)
+                (filled next_)
                 (afterNext |> Stack.fromList)
                 |> filled
 
@@ -403,7 +372,7 @@ previous listWithFocus =
             (\( previous_, beforePreviousToHead ) ->
                 FocusList
                     (beforePreviousToHead |> Stack.fromList)
-                    (Item previous_)
+                    (filled previous_)
                     ((listWithFocus |> focusAndAfter)
                         |> Fillable.adaptType (\_ -> Possible)
                     )
@@ -437,7 +406,7 @@ nextHole listWithFocus =
     in
     FocusList
         (Stack.addOnTop (current listWithFocus) beforeFocusUntilHead)
-        hole
+        Fillable.empty
         after_
 
 
@@ -467,7 +436,7 @@ previousHole listWithFocus =
     in
     FocusList
         before_
-        hole
+        Fillable.empty
         (Stack.addOnTop (listWithFocus |> current) after_)
 
 
@@ -497,7 +466,7 @@ plug :
     -> ListFocusingHole never_ item
 plug newCurrent =
     \(FocusList before_ _ after_) ->
-        FocusList before_ (Item newCurrent) after_
+        FocusList before_ (filled newCurrent) after_
 
 
 {-| Punch a hole by removing the focussed thing.
@@ -521,7 +490,7 @@ remove :
     -> ListFocusingHole Possibly item
 remove =
     \(FocusList before_ _ after_) ->
-        FocusList before_ hole after_
+        FocusList before_ Fillable.empty after_
 
 
 {-| Insert an item after the focussed location.
@@ -589,10 +558,10 @@ focusAndAfter :
 focusAndAfter =
     \(FocusList _ focus after_) ->
         case focus of
-            Item cur ->
-                Stack.addOnTop cur after_
+            Filled currentItem ->
+                Stack.addOnTop currentItem after_
 
-            Hole possiblyOrNever ->
+            Empty possiblyOrNever ->
                 case after_ of
                     Filled ( head_, tail_ ) ->
                         Stack.topAndBelow head_ tail_
@@ -865,7 +834,7 @@ first =
             Filled ( top, afterHeadBeforeCurrent ) ->
                 FocusList
                     Fillable.empty
-                    (Item top)
+                    (filled top)
                     ((listWithFocus |> focusAndAfter)
                         |> Stack.stackOnTop
                             (afterHeadBeforeCurrent |> Stack.fromList)
@@ -912,10 +881,10 @@ last =
                 let
                     focusToFirst =
                         case focus of
-                            Item current_ ->
-                                Stack.addOnTop current_ before_
+                            Filled currentItem ->
+                                Stack.addOnTop currentItem before_
 
-                            _ ->
+                            Empty _ ->
                                 before_
                 in
                 FocusList
@@ -923,7 +892,7 @@ last =
                         |> Stack.stackOnTop
                             (beforeLastUntilFocus |> Stack.fromList)
                     )
-                    (Item last_)
+                    (filled last_)
                     Fillable.empty
 
 
@@ -953,7 +922,7 @@ beforeFirst =
     \listWithFocus ->
         FocusList
             Fillable.empty
-            hole
+            Fillable.empty
             (listWithFocus |> toList |> Stack.fromList)
 
 
@@ -977,7 +946,10 @@ afterLast :
     ListFocusingHole possiblyOrNever_ item
     -> ListFocusingHole Possibly item
 afterLast listWithFocus =
-    FocusList (listWithFocus |> toReverseStack) hole Fillable.empty
+    FocusList
+        (listWithFocus |> toReverseStack)
+        Fillable.empty
+        Fillable.empty
 
 
 toReverseStack :
@@ -988,11 +960,11 @@ toReverseStack =
         let
             focusToFirst =
                 case focus of
-                    Hole _ ->
+                    Empty _ ->
                         beforeFocusToFirst
 
-                    Item current_ ->
-                        Stack.addOnTop current_ beforeFocusToFirst
+                    Filled currentItem ->
+                        Stack.addOnTop currentItem beforeFocusToFirst
         in
         focusToFirst
             |> Stack.stackOnTop (after_ |> Stack.reverse)
@@ -1022,15 +994,15 @@ findForward :
     (item -> Bool)
     -> ListFocusingHole possiblyOrNever_ item
     -> Empty Possibly (ListFocusingHole never_ item)
-findForward predicate =
-    findForwardHelp predicate
+findForward isFound =
+    findForwardHelp isFound
 
 
 findForwardHelp :
     (item -> Bool)
     -> ListFocusingHole possiblyOrNever_ item
     -> Empty Possibly (ListFocusingHole never_ item)
-findForwardHelp predicate =
+findForwardHelp isFound =
     \listWithFocus ->
         let
             (FocusList before_ focus after_) =
@@ -1039,18 +1011,18 @@ findForwardHelp predicate =
             goForward () =
                 listWithFocus
                     |> next
-                    |> Fillable.andThen (findForwardHelp predicate)
+                    |> Fillable.andThen (findForwardHelp isFound)
         in
         case focus of
-            Item cur ->
-                if predicate cur then
-                    FocusList before_ (Item cur) after_
+            Filled currentItem ->
+                if currentItem |> isFound then
+                    FocusList before_ (filled currentItem) after_
                         |> filled
 
                 else
                     goForward ()
 
-            _ ->
+            Empty _ ->
                 goForward ()
 
 
@@ -1090,15 +1062,15 @@ findBackwardHelp shouldStop =
                     |> Fillable.andThen (findBackwardHelp shouldStop)
         in
         case focus of
-            Item cur ->
-                if shouldStop cur then
-                    FocusList before_ (Item cur) after_
+            Filled currentItem ->
+                if shouldStop currentItem then
+                    FocusList before_ (filled currentItem) after_
                         |> filled
 
                 else
                     goBack ()
 
-            _ ->
+            Empty _ ->
                 goBack ()
 
 
@@ -1122,7 +1094,7 @@ map changeItem =
     \(FocusList before_ focus after_) ->
         FocusList
             (before_ |> Stack.map changeItem)
-            (focus |> focusMap changeItem)
+            (focus |> Fillable.map changeItem)
             (after_ |> Stack.map changeItem)
 
 
@@ -1146,7 +1118,7 @@ alterCurrent updateCurrent =
     \(FocusList before_ focus after_) ->
         FocusList
             before_
-            (focus |> focusMap updateCurrent)
+            (focus |> Fillable.map updateCurrent)
             after_
 
 
@@ -1229,7 +1201,7 @@ mapParts changePart =
     \(FocusList before_ focus after_) ->
         FocusList
             (before_ |> Stack.map changePart.before)
-            (focus |> focusMap changePart.current)
+            (focus |> Fillable.map changePart.current)
             (after_ |> Stack.map changePart.after)
 
 
@@ -1296,10 +1268,10 @@ toStack =
 
             Empty _ ->
                 case focus of
-                    Item cur ->
-                        Stack.addOnTop cur after_
+                    Filled currentItem ->
+                        Stack.addOnTop currentItem after_
 
-                    Hole possiblyOrNever ->
+                    Empty possiblyOrNever ->
                         case after_ of
                             Filled ( head_, tail_ ) ->
                                 Stack.topAndBelow head_ tail_
@@ -1330,11 +1302,11 @@ focusingItem :
 focusingItem =
     \(FocusList before_ focus after_) ->
         case focus of
-            Item current_ ->
-                FocusList before_ (Item current_) after_
+            Filled currentItem ->
+                FocusList before_ (filled currentItem) after_
                     |> filled
 
-            Hole possiblyOrNever ->
+            Empty possiblyOrNever ->
                 Empty possiblyOrNever
 
 
@@ -1352,7 +1324,7 @@ focusingItem =
         FocusList.adaptType (always Possible)
 
   - A `ListFocusingHole Never`
-    can't be unified with `Possibly` or `ListFocusingHole possiblyOrNever`?
+    can't be unified with `ListFocusingHole Possibly` or `possiblyOrNever`?
 
         FocusList.adaptType never
 
@@ -1367,11 +1339,5 @@ adaptHoleType neverOrAlwaysPossible =
     \(FocusList before_ focus after_) ->
         FocusList
             before_
-            (case focus of
-                Item item ->
-                    item |> Item
-
-                Hole hole_ ->
-                    Hole (hole_ |> neverOrAlwaysPossible)
-            )
+            (focus |> Fillable.adaptType neverOrAlwaysPossible)
             after_
