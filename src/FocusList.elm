@@ -5,12 +5,13 @@ module FocusList exposing
     , next, previous, nextHole, previousHole
     , first, last, beforeFirst, afterLast
     , findForward, findBackward
+    , appendStack, append
+    , prependStack, prepend
     , alterCurrent, plug, remove
     , alterBefore, alterAfter
     , insertAfter, insertBefore
-    , squeezeInBefore, squeezeInAfter
-    , appendStack, append
-    , prependStack, prepend
+    , squeezeStackInBefore, squeezeInBefore
+    , squeezeStackInAfter, squeezeInAfter
     , map, mapParts, toStack, toList
     , focusingItem
     , adaptHoleType
@@ -45,25 +46,23 @@ module FocusList exposing
 @docs findForward, findBackward
 
 
-## modify
+## alter
+
+@docs appendStack, append
+@docs prependStack, prepend
 
 
-### modify the focus
+### at the focus
 
 @docs alterCurrent, plug, remove
 
 
-### modify around the focus
+### around the focus
 
 @docs alterBefore, alterAfter
 @docs insertAfter, insertBefore
-@docs squeezeInBefore, squeezeInAfter
-
-
-## glue
-
-@docs appendStack, append
-@docs prependStack, prepend
+@docs squeezeStackInBefore, squeezeInBefore
+@docs squeezeStackInAfter, squeezeInAfter
 
 
 ## transform
@@ -623,13 +622,40 @@ squeezeInAfter :
     -> ListFocusingHole possiblyOrNever item
     -> ListFocusingHole possiblyOrNever item
 squeezeInAfter toAppendDirectlyAfterFocus =
+    squeezeStackInAfter
+        (toAppendDirectlyAfterFocus |> Stack.fromList)
+
+
+{-| Append a [`Stack`](Stack) of items directly after the focussed location.
+
+```monospace
+        🍒🍋
+🍓 <🍊> \↓/ 🍉 🍇
+```
+
+    import Stack exposing (topAndBelow)
+
+    FocusList.only 0
+        |> FocusList.squeezeStackInAfter
+            (topAndBelow 4 [ 5 ])
+        |> FocusList.squeezeStackInAfter
+            (topAndBelow 1 [ 2, 3 ])
+        |> FocusList.toStack
+    --> topAndBelow 0 [ 1, 2, 3, 4, 5 ]
+
+-}
+squeezeStackInAfter :
+    Empty Possibly (StackFilled item)
+    -> ListFocusingHole possiblyOrNever item
+    -> ListFocusingHole possiblyOrNever item
+squeezeStackInAfter stackToAppendDirectlyAfterFocus =
     \(FocusList before_ focus after_) ->
         FocusList
             before_
             focus
             (after_
                 |> Stack.stackOnTop
-                    (toAppendDirectlyAfterFocus |> Stack.fromList)
+                    stackToAppendDirectlyAfterFocus
             )
 
 
@@ -653,14 +679,42 @@ squeezeInBefore :
     List item
     -> ListFocusingHole possiblyOrNever item
     -> ListFocusingHole possiblyOrNever item
-squeezeInBefore toPrependDirectlyBeforeFocus =
+squeezeInBefore listToPrependDirectlyBeforeFocus =
+    squeezeStackInBefore
+        (listToPrependDirectlyBeforeFocus
+            |> Stack.fromList
+        )
+
+
+{-| Prepend a [`Stack`](Stack) of items directly before the focussed location.
+
+```monospace
+      🍒🍋
+🍍 🍓 \↓/ <🍊> 🍉
+```
+
+    import Stack exposing (topAndBelow)
+
+    FocusList.only 0
+        |> FocusList.squeezeStackInBefore
+            (topAndBelow -5 [ -4 ])
+        |> FocusList.squeezeStackInBefore
+            (topAndBelow -3 [ -2, -1 ])
+        |> FocusList.toStack
+    --> topAndBelow -5 [ -4, -3, -2, -1, 0 ]
+
+-}
+squeezeStackInBefore :
+    Empty Possibly (StackFilled item)
+    -> ListFocusingHole possiblyOrNever item
+    -> ListFocusingHole possiblyOrNever item
+squeezeStackInBefore stackToPrependDirectlyBeforeFocus =
     \(FocusList beforeFocusToFirst focus after_) ->
         FocusList
             (beforeFocusToFirst
                 |> Stack.stackOnTop
-                    (toPrependDirectlyBeforeFocus
-                        |> List.reverse
-                        |> Stack.fromList
+                    (stackToPrependDirectlyBeforeFocus
+                        |> Stack.reverse
                     )
             )
             focus
