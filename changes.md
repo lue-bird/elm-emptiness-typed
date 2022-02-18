@@ -1,6 +1,6 @@
 ## 5.0.0 plans
 
-- rename `toFillingOrIfEmpty` to `fillingOrIfEmpty`
+  - rename `toFillingOrIfEmpty` to `fillingOrIfEmpty`
 
 ### to decide
 
@@ -17,6 +17,10 @@
     ```
 
 # changelog
+
+#### 4.1.0
+
+  - added `Fillable.applyIfFilled`
 
 ## 4.0.0
 
