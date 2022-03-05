@@ -1,6 +1,69 @@
 ## 5.0.0 plans
 
-  - rename `toFillingOrIfEmpty` to `fillingOrIfEmpty`
+  - rename `Fillable` to `Hold`
+      - rename `Empty possiblyOrNever filling` to `Hold filling possiblyOrNever Empty`
+      - rename `toFillingOrIfEmpty` to `fillingOrIfEmpty`
+  - rename `FocusList` module to `PivotStack`
+      - replace `ListFocusingHole possibleOrNever item` with
+        ```elm
+        type alias PivotStack item possibleOrNever holePivotTag =
+            = PivotStack
+                { before : Hold (StackFilled item) Possibly Empty
+                , pivot : item possibleOrNever holePivotTag
+                , after : Hold (StackFilled item) Possibly Empty
+                , holePivotPhantom : holePivotTag -> Never
+                }
+        ```
+      - add
+        ```elm
+        type ArmDirection
+            = BeforePivot
+            | AfterPivot
+        ```
+      - rename `previous`/`next` to `pivotToItem ArmDirection`
+      - rename `previousHole`/`nextHole` to `pivotToHole ArmDirection`
+      - rename `findForward`/`findBackward` to `pivotToWhere ArmDirection`
+      - rename `alterCurrent` to `alterPivotItem`
+      - replace `remove`, `plug` with
+        ```elm
+        replacePivot :
+            Hold item possiblyOrNeverAltered
+            -> PivotStack item possiblyOrNever HolePivot
+            -> PivotStack item possiblyOrNeverAltered HolePivot
+        ```
+      - rename `current` to `pivotItem`
+      - rename `focusingItem` to `withItemPivot`
+      - replace `before`/`after` with `arm ArmDirection`
+      - replace `alterBefore`/`alterAfter` with
+        ```elm
+        alterArm :
+            ArmDirection
+            -> (Hold (StackFilled item) Possibly Empty
+                -> Hold (StackFilled item) possiblyOrNeverArm_ Empty
+                )
+            -> PivotStack item possiblyOrNever HolePivot
+            -> PivotStack item possiblyOrNeverAltered HolePivot
+        ```
+      - replace `insertAfter`/`insertBefore` with `insert ArmDirection`
+      - replace `squeezeInBefore`/`squeezeInAfter` with `squeezeIn ArmDirection`
+      - replace `squeezeStackInBefore`/`squeezeStackInAfter` with `squeezeInStack ArmDirection`
+      - rename `mapParts` to `mapBeforePivotAfter`
+      - add
+        ```elm
+        alterPivot :
+            (Hold item possiblyOrNever -> Hold item possiblyOrNeverAltered)
+            -> PivotStack item possiblyOrNever HolePivot
+            -> PivotStack item possiblyOrNeverAltered HolePivot
+        ```
+      - add
+        ```elm
+        replaceArm :
+            ArmDirection
+            -> Hold (StackFilled item) possiblyOrNeverStack_ Empty
+            -> PivotStack item possiblyOrNever HolePivot
+            -> PivotStack item possiblyOrNever HolePivot
+        ```
+      - add `reverse`
 
 ### to decide
 
