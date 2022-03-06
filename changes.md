@@ -1,19 +1,25 @@
 ## 5.0.0 plans
 
-  - rename `Fillable` to `Hand`
+  - rename `Fillable` module to `Hand`
       - rename `Empty possiblyOrNever content` to `Hand content possiblyOrNever Empty`
       - rename `filling` to `content`
       - rename `toFillingOrIfEmpty` to `contentOrIfEmpty`
+  - replace `StackWithTop`/`StackFilled` type with
+    ```elm
+    type alias Stacked element =
+        StackWithTop element element
+
+    type StackWithTop top belowElement
+        = TopBelow top (List belowElement)
+    ```
   - rename `FocusList` module to `Slider`
       - replace `ListFocusingHole possibleOrNever item` with
         ```elm
         type alias Slider item possiblyOrNever focusedOnHoleTag =
-            = Slider
-                { before : Hand (StackFilled item) Possibly Empty
-                , focus : Hand item possiblyOrNever focusedOnHoleTag
-                , after : Hand (StackFilled item) Possibly Empty
-                -- , focusedOnHolePhantom : focusedOnHoleTag -> Never
-                }
+            = BeforeFocusAfter
+                (Hand (StackFilled item) Possibly Empty)
+                (Hand item possiblyOrNever focusedOnHoleTag)
+                (Hand (StackFilled item) Possibly Empty)
         
         type FocusedOnHole
             = FocusedOnHoleTag Never
