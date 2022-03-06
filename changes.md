@@ -7,10 +7,10 @@
   - replace `StackWithTop`/`StackFilled` type with
     ```elm
     type alias Stacked element =
-        StackWithTop element element
+        StackTopBelow element element
 
-    type StackWithTop top belowElement
-        = TopBelow top (List belowElement)
+    type StackTopBelow top belowElement
+        = TopDown top (List belowElement)
     ```
   - rename `FocusList` module to `Slider`
       - replace `ListFocusingHole possibleOrNever item` with
@@ -88,15 +88,17 @@
             -> Slider item possiblyOrNever FocusedOnHole
             -> Slider item possiblyOrNeverAltered FocusedOnHole
         ```
-      - replace `insertAfter`/`insertBefore` with `insert Arm`
-      - replace `squeezeInBefore`/`squeezeInAfter` with `squeezeIn Arm`
-      - replace `squeezeStackInBefore`/`squeezeStackInAfter` with `squeezeInStack Arm`
+      - replace `insertAfter item`/`insertBefore item` with `insert arm item`
+      - replace `squeezeInBefore list`/`squeezeInAfter List` with `squeezeIn arm list`
+      - replace `squeezeStackInBefore stack`/`squeezeStackInAfter stack` with `squeezeInStack arm`
       - rename `mapParts` to `mapBeforeFocusAfter`
       - rename `adaptHoleType` to `adaptFocusedOnHoleType`
       - add
         ```elm
         alterFocus :
-            (Hand item possiblyOrNever -> Hand item possiblyOrNeverAltered)
+            (Hand item possiblyOrNever Empty
+             -> Hand item possiblyOrNeverAltered Empty
+            )
             -> Slider item possiblyOrNever FocusedOnHole
             -> Slider item possiblyOrNeverAltered FocusedOnHole
         ```
