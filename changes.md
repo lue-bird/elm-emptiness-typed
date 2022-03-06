@@ -75,8 +75,9 @@
         ```elm
         alterArm :
             Arm
-            -> (Hand (StackFilled item) Possibly Empty
-                -> Hand (StackFilled item) possiblyOrNeverArm_ Empty
+            ->
+                (Hand (StackFilled item) Possibly Empty
+                 -> Hand (StackFilled item) possiblyOrNeverArm_ Empty
                 )
             -> Slider item possiblyOrNever FocusedOnHole
             -> Slider item possiblyOrNeverAltered FocusedOnHole
@@ -85,6 +86,7 @@
       - replace `squeezeInBefore`/`squeezeInAfter` with `squeezeIn Arm`
       - replace `squeezeStackInBefore`/`squeezeStackInAfter` with `squeezeInStack Arm`
       - rename `mapParts` to `mapBeforeFocusAfter`
+      - rename `adaptHoleType` to `adaptFocusedOnHoleType`
       - add
         ```elm
         alterFocus :
