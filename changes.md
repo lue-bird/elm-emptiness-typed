@@ -1,18 +1,22 @@
 ## 5.0.0 plans
 
-  - rename `Fillable` to `Hold`
-      - rename `Empty possiblyOrNever filling` to `Hold filling possiblyOrNever Empty`
-      - rename `toFillingOrIfEmpty` to `fillingOrIfEmpty`
-  - rename `FocusList` module to `PivotStack`
+  - rename `Fillable` to `Hand`
+      - rename `Empty possiblyOrNever content` to `Hand content possiblyOrNever Empty`
+      - rename `filling` to `content`
+      - rename `toFillingOrIfEmpty` to `contentOrIfEmpty`
+  - rename `FocusList` module to `Slider`
       - replace `ListFocusingHole possibleOrNever item` with
         ```elm
-        type alias PivotStack item possibleOrNever holePivotTag =
-            = PivotStack
-                { before : Hold (StackFilled item) Possibly Empty
-                , pivot : item possibleOrNever holePivotTag
-                , after : Hold (StackFilled item) Possibly Empty
-                , holePivotPhantom : holePivotTag -> Never
+        type alias Slider item possiblyOrNever focusedOnHoleTag =
+            = Slider
+                { before : Hand (StackFilled item) Possibly Empty
+                , focus : Hand item possiblyOrNever focusedOnHoleTag
+                , after : Hand (StackFilled item) Possibly Empty
+                -- , focusedOnHolePhantom : focusedOnHoleTag -> Never
                 }
+        
+        type FocusedOnHole
+            = FocusedOnHoleTag Never
         ```
       - add
         ```elm
@@ -20,54 +24,81 @@
             = Before
             | After
         ```
-      - replace `previous`/`next` with `pivotToItem`
+      - replace `previous`/`next` with
+        ```elm
+        focusItem :
+            Arm
+            -> Slider item possiblyOrNever_ FocusedOnHole
+            -> Hand (Slider item Never FocusedOnHole) Possibly Empty
+        ```
       - replace `previousHole`/`nextHole` with
         ```elm
-        pivotToHole :
+        focusHole :
             Arm
-            -> PivotStack item possiblyOrNever_ HolePivot
-            -> PivotStack item Possibly HolePivot
+            -> Slider item Never FocusedOnHole
+            -> Slider item Possibly FocusedOnHole
         ```
-      - replace `findForward isFound`/`findBackward isFound` with `pivotToWhere Arm isFound`
-      - replace `alterCurrent` with `alterPivotItem`
+      - replace `findForward isFound`/`findBackward isFound` with
+        ```elm
+        focusWhere :
+            Arm
+            -> (item -> Bool)
+            -> Slider item possiblyOrNever_ FocusedOnHole
+            -> Hand (Slider item Never FocusedOnHole) Possibly Empty
+        ```
+      - replace `alterCurrent` with `alterFocusItem`
       - replace `remove`, `plug` with
         ```elm
-        replacePivot :
-            Hold item possiblyOrNeverAltered
-            -> PivotStack item possiblyOrNever HolePivot
-            -> PivotStack item possiblyOrNeverAltered HolePivot
+        replaceFocus :
+            Hand item possiblyOrNeverAltered
+            -> Slider item possiblyOrNever FocusedOnHole
+            -> Slider item possiblyOrNeverAltered FocusedOnHole
         ```
-      - rename `current` to `pivotItem`
-      - rename `focusingItem` to `withItemPivot`
+      - rename `current` to `itemFocus`
+      - replace `first`/`last` with
+        ```elm
+        focusEnd :
+            Arm
+            -> Slider item possiblyOrNever FocusedOnHole
+            -> Slider item possiblyOrNever FocusedOnHole
+        ```
+      - replace `beforeFirst`/`afterLast` with
+        ```elm
+        focusBeyondEnd :
+            Arm
+            -> Slider item possiblyOrNever FocusedOnHole
+            -> Slider item Possibly FocusedOnHole
+        ```
+      - rename `focusingItem` to `withItemFocus`
       - replace `before`/`after` with `arm Arm`
       - replace `alterBefore`/`alterAfter` with
         ```elm
         alterArm :
             Arm
-            -> (Hold (StackFilled item) Possibly Empty
-                -> Hold (StackFilled item) possiblyOrNeverArm_ Empty
+            -> (Hand (StackFilled item) Possibly Empty
+                -> Hand (StackFilled item) possiblyOrNeverArm_ Empty
                 )
-            -> PivotStack item possiblyOrNever HolePivot
-            -> PivotStack item possiblyOrNeverAltered HolePivot
+            -> Slider item possiblyOrNever FocusedOnHole
+            -> Slider item possiblyOrNeverAltered FocusedOnHole
         ```
       - replace `insertAfter`/`insertBefore` with `insert Arm`
       - replace `squeezeInBefore`/`squeezeInAfter` with `squeezeIn Arm`
       - replace `squeezeStackInBefore`/`squeezeStackInAfter` with `squeezeInStack Arm`
-      - rename `mapParts` to `mapBeforePivotAfter`
+      - rename `mapParts` to `mapBeforeFocusAfter`
       - add
         ```elm
-        alterPivot :
-            (Hold item possiblyOrNever -> Hold item possiblyOrNeverAltered)
-            -> PivotStack item possiblyOrNever HolePivot
-            -> PivotStack item possiblyOrNeverAltered HolePivot
+        alterFocus :
+            (Hand item possiblyOrNever -> Hand item possiblyOrNeverAltered)
+            -> Slider item possiblyOrNever FocusedOnHole
+            -> Slider item possiblyOrNeverAltered FocusedOnHole
         ```
       - add
         ```elm
         replaceArm :
             Arm
-            -> Hold (StackFilled item) possiblyOrNeverStack_ Empty
-            -> PivotStack item possiblyOrNever HolePivot
-            -> PivotStack item possiblyOrNever HolePivot
+            -> Hand (StackFilled item) possiblyOrNeverStack_ Empty
+            -> Slider item possiblyOrNever FocusedOnHole
+            -> Slider item possiblyOrNever FocusedOnHole
         ```
       - add `reverse`
 
@@ -85,13 +116,13 @@
   - replaced `MaybeIs` module with `Fillable`
       - with
         ```elm
-        type Empty possiblyOrNever filling
+        type Empty possiblyOrNever content
             = Empty possiblyOrNever
-            | Filled filling
+            | Filled content
         ```
       - renamed `just` to `filled`
       - renamed `nothing` to `empty`
-      - renamed `value` to `filling`
+      - renamed `value` to `content`
       - renamed `withFallback` to `toFillingOrIfEmpty`
       - replaced `branchableType` with `adaptType`
   
