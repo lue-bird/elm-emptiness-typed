@@ -4,14 +4,23 @@
       - rename `Empty possiblyOrNever content` to `Hand content possiblyOrNever Empty`
       - rename `filling` to `content`
       - rename `toFillingOrIfEmpty` to `contentOrIfEmpty`
-  - replace `StackWithTop`/`StackFilled` type with
-    ```elm
-    type alias Stacked element =
-        StackTopBelow element element
+      - rename `andThen` to `mapFlat`
+      - rename `adaptType` to `adaptTypeEmpty`
+      - add `flatten`
+      - add `supply`
+      - add `supplyFlat`
+  - in `Stack`
+      - replace `StackWithTop`/`StackFilled` type with
+        ```elm
+        type alias Stacked element =
+            StackTopBelow element element
 
-    type StackTopBelow top belowElement
-        = TopDown top (List belowElement)
-    ```
+        type StackTopBelow top belowElement
+            = TopDown top (List belowElement)
+        ```
+      - rename `topAndBelow` to `topDown`
+      - rename `fromTopAndBelow` to `fromTopDown`
+      - rename `toTopAndBelow` to `toTopDown`
   - rename `FocusList` module to `Slider`
       - replace `ListFocusingHole possibleOrNever item` with
         ```elm
