@@ -1,8 +1,8 @@
 {
   "root": "../src",
   "tests": [
-    "FocusList",
-    "Fillable",
+    "Scroll",
+    "Hand",
     "Stack",
     "./README.md"
   ]

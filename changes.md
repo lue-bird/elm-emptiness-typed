@@ -1,16 +1,27 @@
-## 5.0.0 plans
+# changelog
 
-  - rename `Fillable` module to `Hand`
-      - rename `Empty possiblyOrNever content` to `Hand content possiblyOrNever Empty`
-      - rename `filling` to `content`
-      - rename `toFillingOrIfEmpty` to `contentOrIfEmpty`
-      - rename `andThen` to `mapFlat`
-      - rename `adaptType` to `adaptTypeEmpty`
-      - add `flatten`
-      - add `supply`
-      - add `supplyFlat`
+## 5.0.0
+
+  - renamed `Fillable` module to `Hand`
+      - replaced `Empty possiblyOrNever fill` with
+        ```elm
+        type Hand fill possiblyOrNever emptyTag = ..as before..
+
+        type Empty
+            = EmptyTag Never
+        ```
+      - renamed `filling` to `fill`
+      - renamed `toFillingOrIfEmpty` to `fillOrWhereEmpty`
+      - renamed `map` to `fillMap`
+      - removed `map2` in favor of `feedFill` pipeline style
+      - removed `ifFilled` in favor of `alterFill`
+      - renamed `andThen` to `fillMapFlat`
+      - renamed `adaptType` to `adaptTypeEmpty`
+      - added `flatten`
+      - added `feedFill`
+      - added `alterFill`
   - in `Stack`
-      - replace `StackWithTop`/`StackFilled` type with
+      - replaced `StackWithTop`/`StackFilled` type with
         ```elm
         type alias Stacked element =
             StackTopBelow element element
@@ -18,110 +29,122 @@
         type StackTopBelow top belowElement
             = TopDown top (List belowElement)
         ```
-      - rename `topAndBelow` to `topDown`
-      - rename `fromTopAndBelow` to `fromTopDown`
-      - rename `toTopAndBelow` to `toTopDown`
-  - rename `FocusList` module to `Slider`
-      - replace `ListFocusingHole possibleOrNever item` with
+      - removed `map2`
+      - removed `map2TopAndDown`
+      - removed `splitTop` in favor of `top`, `removeTop`
+      - renamed `topAndBelow` to `topDown`
+      - renamed `fromTopAndBelow` to `fromTopDown`
+      - renamed `toTopAndBelow` to `toTopDown`
+      - renamed `addOnTop` to `layOnTop`
+      - renamed `concat` to `flatten`
+      - added `glueOnTop`
+  - renamed `FocusList` module to `Scroll`
+      - replaced `ListFocusingGap possibleOrNever item` with
         ```elm
-        type alias Slider item possiblyOrNever focusedOnHoleTag =
+        type alias Scroll item possiblyOrNever focusedOnGapTag =
             = BeforeFocusAfter
                 (Hand (StackFilled item) Possibly Empty)
-                (Hand item possiblyOrNever focusedOnHoleTag)
+                (Hand item possiblyOrNever focusedOnGapTag)
                 (Hand (StackFilled item) Possibly Empty)
         
-        type FocusedOnHole
-            = FocusedOnHoleTag Never
+        type FocusedOnGap
+            = FocusedOnGapTag Never
         ```
-      - add
+      - added
         ```elm
-        type Arm
+        type Side
             = Before
             | After
         ```
-      - replace `previous`/`next` with
+      - renamed `adaptGapType` to `adaptTypeFocusedOnGap`
+      - replaced `previous`/`next` with
         ```elm
         focusItem :
-            Arm
-            -> Slider item possiblyOrNever_ FocusedOnHole
-            -> Hand (Slider item Never FocusedOnHole) Possibly Empty
+            Side
+            -> Scroll item possiblyOrNever_ FocusedOnGap
+            -> Hand (Scroll item Never FocusedOnGap) Possibly Empty
         ```
-      - replace `previousHole`/`nextHole` with
+      - replaced `previousGap`/`nextGap` with
         ```elm
-        focusHole :
-            Arm
-            -> Slider item Never FocusedOnHole
-            -> Slider item Possibly FocusedOnHole
+        focusGap :
+            Side
+            -> Scroll item Never FocusedOnGap
+            -> Scroll item Possibly FocusedOnGap
         ```
-      - replace `findForward isFound`/`findBackward isFound` with
+      - replaced `findForward isFound`/`findBackward isFound` with
         ```elm
         focusWhere :
-            Arm
+            Side
             -> (item -> Bool)
-            -> Slider item possiblyOrNever_ FocusedOnHole
-            -> Hand (Slider item Never FocusedOnHole) Possibly Empty
+            -> Scroll item possiblyOrNever_ FocusedOnGap
+            -> Hand (Scroll item Never FocusedOnGap) Possibly Empty
         ```
-      - replace `alterCurrent` with `alterFocusItem`
-      - replace `remove`, `plug` with
+      - renamed `removed` to `focusRemove`
+      - removed `alterCurrent` in favor of `focusAlter`
+      - removed `plug` in favor of `focusAlter`
+      - renamed `current` to `focusedItem`
+      - replaced `first`/`last` with
         ```elm
-        replaceFocus :
-            Hand item possiblyOrNeverAltered
-            -> Slider item possiblyOrNever FocusedOnHole
-            -> Slider item possiblyOrNeverAltered FocusedOnHole
+        focusItemEnd :
+            Side
+            -> Scroll item possiblyOrNever FocusedOnGap
+            -> Scroll item possiblyOrNever FocusedOnGap
         ```
-      - rename `current` to `itemFocus`
-      - replace `first`/`last` with
+      - replaced `beforeFirst`/`afterLast` with
         ```elm
-        focusEnd :
-            Arm
-            -> Slider item possiblyOrNever FocusedOnHole
-            -> Slider item possiblyOrNever FocusedOnHole
+        focusGapBeyondEnd :
+            Side
+            -> Scroll item possiblyOrNever FocusedOnGap
+            -> Scroll item Possibly FocusedOnGap
         ```
-      - replace `beforeFirst`/`afterLast` with
+      - renamed `focusingItem` to `focusedOnItem`
+      - replaced `before`/`after` with `side Side`
+      - replaced `alterBefore`/`alterAfter` with
         ```elm
-        focusBeyondEnd :
-            Arm
-            -> Slider item possiblyOrNever FocusedOnHole
-            -> Slider item Possibly FocusedOnHole
-        ```
-      - rename `focusingItem` to `withItemFocus`
-      - replace `before`/`after` with `arm Arm`
-      - replace `alterBefore`/`alterAfter` with
-        ```elm
-        alterArm :
-            Arm
+        alterSide :
+            Side
             ->
                 (Hand (StackFilled item) Possibly Empty
-                 -> Hand (StackFilled item) possiblyOrNeverArm_ Empty
+                 -> Hand (StackFilled item) possiblyOrNeverSide_ Empty
                 )
-            -> Slider item possiblyOrNever FocusedOnHole
-            -> Slider item possiblyOrNeverAltered FocusedOnHole
+            -> Scroll item possiblyOrNever FocusedOnGap
+            -> Scroll item possiblyOrNeverAltered FocusedOnGap
         ```
-      - replace `insertAfter item`/`insertBefore item` with `insert arm item`
-      - replace `squeezeInBefore list`/`squeezeInAfter List` with `squeezeIn arm list`
-      - replace `squeezeStackInBefore stack`/`squeezeStackInAfter stack` with `squeezeInStack arm`
-      - rename `mapParts` to `mapBeforeFocusAfter`
-      - rename `adaptHoleType` to `adaptFocusedOnHoleType`
-      - add
+      - replaced `insertAfter item`/`insertBefore item` with `insert side item`
+      - removed `squeezeInBefore List`/`squeezeInAfter List` in favor of `alterSide (Stack.glueOnTop List)`
+      - removed `squeezeStackInBefore stack`/`squeezeStackInAfter stack` in favor of `alterSide (Stack.stackOnTop stack)`
+      - replaced `prepend/append` with `glueToEnd side`
+      - replaced `prependStack/appendStack` with `stackToEnd side`
+      - replaced
+        ```elm
+        mapParts
+          { before : item ...
+          , current : item ...
+          , after : item ...
+          }
+        ```
+        with
+        ```elm
+        focusSidesMap
+            { before : ... Stacked item ...
+            , focus : Hand item ...
+            , after : ... Stacked item ...
+            }
+        ```
+      - renamed `adaptHoleType` to `adaptTypeFocusedOnGap`
+      - change `sideAlter (item ...)` to `sideAlter (... Stacked item ...)`
+      - added
         ```elm
         alterFocus :
             (Hand item possiblyOrNever Empty
              -> Hand item possiblyOrNeverAltered Empty
             )
-            -> Slider item possiblyOrNever FocusedOnHole
-            -> Slider item possiblyOrNeverAltered FocusedOnHole
+            -> Scroll item possiblyOrNever FocusedOnGap
+            -> Scroll item possiblyOrNeverAltered FocusedOnGap
         ```
-      - add
-        ```elm
-        replaceArm :
-            Arm
-            -> Hand (StackFilled item) possiblyOrNeverStack_ Empty
-            -> Slider item possiblyOrNever FocusedOnHole
-            -> Slider item possiblyOrNever FocusedOnHole
-        ```
-      - add `reverse`
-
-# changelog
+      - added `focusDrag`
+      - added `mirror`
+      - added `sideOpposite`
 
 #### 4.1.0
 
@@ -129,7 +152,7 @@
 
 ## 4.0.0
 
-  - add [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) dependency
+  - added [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) dependency
     to improve understandability of types
 
   - replaced `MaybeIs` module with `Fillable`

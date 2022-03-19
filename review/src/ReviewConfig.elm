@@ -79,27 +79,10 @@ config =
     , OnlyAllSingleUseTypeVarsEndWith_.rule
     , NoRecordAliasConstructor.rule
     , NoFunctionOutsideOfModules.rule
-        [ ( [ "Elm.CodeGen.fqVal"
-            , "Elm.CodeGen.fqFun"
-            , "Elm.CodeGen.fqConstruct"
-            , "Elm.CodeGen.fqNamedPattern"
-            , "Elm.CodeGen.fqTyped"
-            , "Elm.CodeGen.val"
-            , "Elm.CodeGen.fun"
-            , "Elm.CodeGen.construct"
-            , "Elm.CodeGen.namedPattern"
-            , "Elm.CodeGen.typed"
-            , "Elm.CodeGen.boolAnn"
-            , "Elm.CodeGen.intAnn"
-            , "Elm.CodeGen.floatAnn"
-            , "Elm.CodeGen.stringAnn"
-            , "Elm.CodeGen.charAnn"
-            , "Elm.CodeGen.listAnn"
-            , "Elm.CodeGen.setAnn"
-            , "Elm.CodeGen.dictAnn"
-            , "Elm.CodeGen.maybeAnn"
+        [ ( [ "Tuple.first"
+            , "Tuple.second"
             ]
-          , [ "Elm.Code" ]
+          , []
           )
         ]
     , NoDeprecated.rule NoDeprecated.defaults
