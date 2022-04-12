@@ -8,7 +8,7 @@ import Element.Border as UiBorder
 import Element.Events as UIn
 import Element.Font as Font
 import Element.Input as UIn
-import Hand exposing (Empty, Hand(..), fill, fillMap, fillMapFlat, fillOrOnEmpty, filled)
+import Hand exposing (Empty, Hand(..), fill, fillMap, fillMapFlat, fillElseOnEmpty, filled)
 import Html exposing (Html)
 import Html.Attributes as Html
 import Linear exposing (DirectionLinear(..))
@@ -124,7 +124,7 @@ update event model =
                 | playlist =
                     model.playlist
                         |> fillMapFlat
-                            (Scroll.toItem (Scroll.AtSide side index))
+                            (Scroll.to (Scroll.AtSide side index))
             }
 
         FocusTrackRemoveClicked ->
@@ -135,12 +135,12 @@ update event model =
                         |> fillMapFlat
                             (\playlist ->
                                 playlist
-                                    |> Scroll.toItem (Down |> Scroll.nearest)
+                                    |> Scroll.to (Down |> Scroll.nearest)
                                     |> fillMap filled
-                                    |> fillOrOnEmpty
+                                    |> fillElseOnEmpty
                                         (\_ ->
                                             playlist
-                                                |> Scroll.toItem (Up |> Scroll.nearest)
+                                                |> Scroll.to (Up |> Scroll.nearest)
                                         )
                             )
             }

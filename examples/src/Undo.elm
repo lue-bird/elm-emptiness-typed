@@ -6,7 +6,7 @@ import Element as Ui exposing (rgb, rgba)
 import Element.Background as UiBack
 import Element.Font as Font
 import Element.Input as UIn
-import Hand exposing (Empty, Hand(..), fill, fillMap, fillOrOnEmpty, filled)
+import Hand exposing (Empty, Hand(..), fill, fillMap, fillElseOnEmpty, filled)
 import Html exposing (Html)
 import Linear exposing (DirectionLinear(..))
 import Scroll exposing (FocusGap, Scroll)
@@ -93,8 +93,8 @@ update event eventScroll =
     case event of
         ReturnToState side ->
             eventScroll
-                |> Scroll.toItem (side |> Scroll.nearest)
-                |> fillOrOnEmpty (\_ -> eventScroll)
+                |> Scroll.to (side |> Scroll.nearest)
+                |> fillElseOnEmpty (\_ -> eventScroll)
 
         CountersChanged countersEvent ->
             let
