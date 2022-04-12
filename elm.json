@@ -3,7 +3,7 @@
     "name": "lue-bird/elm-emptiness-typed",
     "summary": "one type for emptiable and safe non-empty",
     "license": "MIT",
-    "version": "4.1.0",
+    "version": "5.0.0",
     "exposed-modules": [
         "Scroll",
         "Hand",
@@ -13,9 +13,11 @@
     "dependencies": {
         "elm/core": "1.0.0 <= v < 2.0.0",
         "lue-bird/elm-allowable-state": "1.0.0 <= v < 2.0.0",
-        "lue-bird/elm-linear-direction": "3.0.0 <= v < 4.0.0"
+        "lue-bird/elm-linear-direction": "4.1.0 <= v < 5.0.0"
     },
     "test-dependencies": {
-        "elm-explorations/test": "1.2.0 <= v < 2.0.0"
+        "elm-explorations/test": "1.2.0 <= v < 2.0.0",
+        "lue-bird/elm-no-record-type-alias-constructor-function": "1.0.3 <= v < 2.0.0",
+        "mdgriffith/elm-ui": "1.1.8 <= v < 2.0.0"
     }
 }
