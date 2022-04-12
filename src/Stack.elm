@@ -1,18 +1,19 @@
 module Stack exposing
     ( Stacked, StackTopBelow(..)
     , only, topDown, fromTopDown, fromList
-    , top, length
-    , layOnTop, removeTop
+    , top
+    , length, indexLast
+    , onTopLay, topRemove
     , reverse
-    , when, whenFilled
-    , glueOnTop, stackOnTop, stackOnTopTyped
+    , fills
+    , onTopGlue, onTopStack, onTopStackAdapt
     , flatten
-    , map, mapTop, mapBelowTop
+    , map, and, topMap, belowTopMap
     , foldFrom, fold
     , toList, toTopDown
     )
 
-{-| An **emptiable or non-empty** data structure where [`top`](#top), [`removeTop`](#removeTop), [`layOnTop`](#layOnTop) [`mapTop`](#mapTop) are `O(n)`.
+{-| An **emptiable or non-empty** data structure where [`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) [`topMap`](#topMap) are `O(n)`.
 
 @docs Stacked, StackTopBelow
 
@@ -26,43 +27,44 @@ module Stack exposing
 
 ## scan
 
-@docs top, length
+@docs top
+@docs length, indexLast
 
-[`removeTop`](#removeTop) brings out everything below the [`top`](#top).
+[`topRemove`](#topRemove) brings out everything below the [`top`](#top).
 
 
 ## alter
 
-@docs layOnTop, removeTop
+@docs onTopLay, topRemove
 @docs reverse
 
 
 ### filter
 
-@docs when, whenFilled
+@docs fills
 
 
 ### glue
 
-@docs glueOnTop, stackOnTop, stackOnTopTyped
+@docs onTopGlue, onTopStack, onTopStackAdapt
 @docs flatten
 
 
 ## transform
 
-@docs map, mapTop, mapBelowTop
+@docs map, and, topMap, belowTopMap
 @docs foldFrom, fold
 @docs toList, toTopDown
 
 -}
 
-import Hand exposing (Empty, Hand(..), empty, fillMapFlat, filled)
-import LinearDirection exposing (LinearDirection)
+import Hand exposing (Empty, Hand(..), empty, fill, fillAnd, fillMapFlat, filled)
+import Linear exposing (DirectionLinear(..))
 import List.Linear
 import Possibly exposing (Possibly)
 
 
-{-| A non-empty representation of a stack. [`top`](#top), [`removeTop`](#removeTop), [`layOnTop`](#layOnTop) [`mapTop`](#mapTop) are `O(n)`
+{-| A non-empty representation of a stack. [`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) [`topMap`](#topMap) are `O(n)`
 
 
 #### in arguments
@@ -82,9 +84,9 @@ We can treat it like any [`Hand`](Hand):
 
     import Hand exposing (Hand(..), Empty, filled, fillMap)
     import Possibly exposing (Possibly)
-    import Stack exposing (Stacked, top, layOnTop)
+    import Stack exposing (Stacked, top, onTopLay)
 
-    Hand.empty |> layOnTop "cherry" -- works
+    Hand.empty |> onTopLay "cherry" -- works
 
     toList : Empty possiblyOrNever_ (Stacked element) -> List element
     toList =
@@ -117,8 +119,8 @@ it's the result of:
   - [`only`](#only)
   - [`topDown`](#topDown)
   - [`fromTopDown`](#fromTopDown)
-  - [`layOnTop`](#layOnTop)
-  - [`mapTop`](#mapTop)
+  - [`onTopLay`](#onTopLay)
+  - [`topMap`](#topMap)
 
 -}
 type StackTopBelow topElement belowTopElement
@@ -128,10 +130,10 @@ type StackTopBelow topElement belowTopElement
 {-| A stack with just 1 single element.
 
     import Hand
-    import Stack exposing (layOnTop)
+    import Stack exposing (onTopLay)
 
     Stack.only ":)"
-    --> Hand.empty |> layOnTop ":)"
+    --> Hand.empty |> onTopLay ":)"
 
 -}
 only : top -> Hand (StackTopBelow top belowTopElement_) never_ Empty
@@ -201,10 +203,10 @@ fromList =
 
 {-| The first value.
 
-    import Stack exposing (top, layOnTop)
+    import Stack exposing (top, onTopLay)
 
     Stack.only 3
-        |> layOnTop 2
+        |> onTopLay 2
         |> top
     --> 2
 
@@ -221,10 +223,10 @@ top =
 
 {-| How many element there are.
 
-    import Stack exposing (layOnTop)
+    import Stack exposing (onTopLay)
 
     Stack.only 3
-        |> layOnTop 2
+        |> onTopLay 2
         |> Stack.length
     --> 2
 
@@ -238,8 +240,31 @@ length =
             Empty _ ->
                 0
 
+            Filled stacked ->
+                1 + (stacked |> filled |> indexLast)
+
+
+{-| The position of the element at the bottom.
+
+    import Stack exposing (onTopLay)
+
+    Stack.only 3
+        |> onTopLay 2
+        |> Stack.indexLast
+    --> 1
+
+-}
+indexLast :
+    Hand (StackTopBelow top_ belowElement_) Never Empty
+    -> Int
+indexLast =
+    \stack ->
+        case stack of
+            Empty _ ->
+                0
+
             Filled (TopDown _ belowTop_) ->
-                1 + List.length belowTop_
+                belowTop_ |> List.length
 
 
 
@@ -249,40 +274,40 @@ length =
 {-| Add an element to the front.
 
     import Hand
-    import Stack exposing (topDown, layOnTop)
+    import Stack exposing (topDown, onTopLay)
 
-    topDown 2 [ 3 ] |> layOnTop 1
+    topDown 2 [ 3 ] |> onTopLay 1
     --> topDown 1 [ 2, 3 ]
 
-    Hand.empty |> layOnTop 1
+    Hand.empty |> onTopLay 1
     --> Stack.only 1
 
 -}
-layOnTop :
+onTopLay :
     newTop
     -> Hand (Stacked belowElement) possiblyOrNever_ Empty
     -> Hand (StackTopBelow newTop belowElement) never_ Empty
-layOnTop toPutOnTopOfAllOtherElements =
+onTopLay toPutOnTopOfAllOtherElements =
     \stack ->
         topDown toPutOnTopOfAllOtherElements (stack |> toList)
 
 
 {-| Everything after the first value.
 
-    import Stack exposing (topDown, layOnTop, stackOnTop, removeTop)
+    import Stack exposing (topDown, onTopLay, onTopStack, topRemove)
 
     Stack.only 2
-        |> layOnTop 3
-        |> stackOnTop (topDown 1 [ 0 ])
-        |> removeTop
+        |> onTopLay 3
+        |> onTopStack (topDown 1 [ 0 ])
+        |> topRemove
     --> topDown 0 [ 3, 2 ]
     --: Hand (Stacked number_) Possibly Empty
 
 -}
-removeTop :
+topRemove :
     Hand (StackTopBelow top_ belowElement) Never Empty
     -> Hand (Stacked belowElement) Possibly Empty
-removeTop =
+topRemove =
     \stackFilled ->
         let
             (TopDown _ down) =
@@ -321,22 +346,22 @@ reverse =
 {-| Glue the elements of a `... Empty possiblyOrNever`/`Never` [`Stack`](#Stacked) to the [`top`](#top) of this [`Stack`](Stack).
 
     import Hand
-    import Stack exposing (topDown, stackOnTop, stackOnTopTyped)
+    import Stack exposing (topDown, onTopStack, onTopStackAdapt)
 
     Hand.empty
-        |> stackOnTopTyped (topDown 1 [ 2 ])
-        |> stackOnTop (topDown -2 [ -1, 0 ])
+        |> onTopStackAdapt (topDown 1 [ 2 ])
+        |> onTopStack (topDown -2 [ -1, 0 ])
     --> topDown -2 [ -1, 0, 1, 2 ]
 
-  - [`stackOnTop`](#stackOnTop) takes on the `possiblyOrNever Empty` type of the piped food
-  - [`stackOnTopTyped`](#stackOnTopTyped) takes on the `possiblyOrNever Empty` type of the argument
+  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever Empty` type of the piped food
+  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the `possiblyOrNever Empty` type of the argument
 
 -}
-stackOnTopTyped :
+onTopStackAdapt :
     Hand (Stacked element) possiblyOrNever Empty
     -> Hand (Stacked element) possiblyOrNeverIn_ Empty
     -> Hand (Stacked element) possiblyOrNever Empty
-stackOnTopTyped stackToPutAbove =
+onTopStackAdapt stackToPutAbove =
     \stack ->
         stackOnTopAndTakeOnType
             (\( possiblyOrNever, _ ) -> possiblyOrNever)
@@ -345,21 +370,21 @@ stackOnTopTyped stackToPutAbove =
 
 {-| Glue the elements of a stack to the end of the stack.
 
-    import Stack exposing (topDown, stackOnTop)
+    import Stack exposing (topDown, onTopStack)
 
     topDown 1 [ 2 ]
-        |> stackOnTop (topDown -1 [ 0 ])
+        |> onTopStack (topDown -1 [ 0 ])
     --> topDown -1 [ 0, 1, 2 ]
 
-  - [`stackOnTop`](#stackOnTop) takes on the `possiblyOrNever Empty` type of the piped food
-  - [`stackOnTopTyped`](#stackOnTopTyped) takes on the `possiblyOrNever Empty` type of the argument
+  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever Empty` type of the piped food
+  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the `possiblyOrNever Empty` type of the argument
 
 -}
-stackOnTop :
+onTopStack :
     Hand (Stacked element) possiblyOrNeverAppended_ Empty
     -> Hand (Stacked element) possiblyOrNever Empty
     -> Hand (Stacked element) possiblyOrNever Empty
-stackOnTop stackToPutAbove =
+onTopStack stackToPutAbove =
     \stack ->
         stackOnTopAndTakeOnType
             (\( _, possiblyOrNever ) -> possiblyOrNever)
@@ -389,25 +414,25 @@ stackOnTopAndTakeOnType takeOnType stacksDown =
 
 {-| Put the elements of a `List` on [`top`](#top).
 
-    import Stack exposing (topDown, stackOnTop)
+    import Stack exposing (topDown, onTopStack)
 
     topDown 1 [ 2 ]
-        |> Stack.glueOnTop [ -1, 0 ]
+        |> Stack.onTopGlue [ -1, 0 ]
     --> topDown -1 [ 0, 1, 2 ]
 
-`glueOnTop` only when the piped stack food is already `... Never Empty`.
+`onTopGlue` only when the piped stack food is already `... Never Empty`.
 Glue a stack on top with
 
-  - [`stackOnTop`](#stackOnTop) takes on the `possiblyOrNever Empty` type of the piped food
-  - [`stackOnTopTyped`](#stackOnTopTyped) takes on the **`possiblyOrNever Empty` type of the argument**
+  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever Empty` type of the piped food
+  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the **`possiblyOrNever Empty` type of the argument**
 
 -}
-glueOnTop :
+onTopGlue :
     List element
     -> Hand (Stacked element) possiblyOrNever Empty
     -> Hand (Stacked element) possiblyOrNever Empty
-glueOnTop stackToPutOnTop =
-    stackOnTop (stackToPutOnTop |> fromList)
+onTopGlue stackToPutOnTop =
+    onTopStack (stackToPutOnTop |> fromList)
 
 
 {-| Glue together a bunch of stacks.
@@ -443,7 +468,7 @@ flatten stackOfStacks =
                 belowTopLists
                     |> List.concatMap toList
                     |> fromList
-                    |> stackOnTopTyped topList
+                    |> onTopStackAdapt topList
             )
 
 
@@ -451,45 +476,24 @@ flatten stackOfStacks =
 --
 
 
-{-| Keep elements that satisfy a test.
-
-    import Stack exposing (topDown)
-
-    topDown 1 [ 2, 5, -3, 10 ]
-        |> Stack.when (\x -> x < 5)
-    --> topDown 1 [ 2, -3 ]
-    --: Empty Possibly (Stacked number_)
-
--}
-when :
-    (element -> Bool)
-    -> Hand (Stacked element) possiblyOrNever_ Empty
-    -> Hand (Stacked element) Possibly Empty
-when isGood =
-    \stack ->
-        stack
-            |> toList
-            |> List.filter isGood
-            |> fromList
-
-
-{-| Keep all [`filled`](Hand#filled) values and drop all [`empty`](Hand#empty) elements.
+{-| Keep all [`filled`](Hand#filled) elements
+and drop all [`empty`](Hand#empty) elements.
 
     import Hand exposing (filled)
     import Stack exposing (topDown)
 
     topDown Hand.empty [ Hand.empty ]
-        |> Stack.whenFilled
+        |> Stack.fills
     --> Hand.empty
 
     topDown (filled 1) [ Hand.empty, filled 3 ]
-        |> Stack.whenFilled
+        |> Stack.fills
     --> topDown 1 [ 3 ]
 
 As you can see, if only the top is [`fill`](Hand#fill) a value, the result is non-empty.
 
 -}
-whenFilled :
+fills :
     Hand
         (StackTopBelow
             (Hand topContent possiblyOrNever Empty)
@@ -502,7 +506,7 @@ whenFilled :
             (StackTopBelow topContent belowElementContent)
             possiblyOrNever
             Empty
-whenFilled =
+fills =
     \stackOfHands ->
         stackOfHands
             |> Hand.fillMapFlat
@@ -520,41 +524,84 @@ whenFilled =
 --
 
 
-{-| Apply a function to every element.
+{-| Change every element based on its current value and `{ index }`.
 
     import Stack exposing (topDown)
 
     topDown 1 [ 4, 9 ]
-        |> Stack.map negate
+        |> Stack.map (\_ -> negate)
     --> topDown -1 [ -4, -9 ]
+
+    topDown 1 [ 2, 3, 4 ]
+        |> Stack.map (\{ index } n -> index * n)
+    --> topDown 0 [ 2, 6, 12 ]
 
 -}
 map :
-    (aElement -> bElement)
-    -> Hand (Stacked aElement) possiblyOrNever Empty
-    -> Hand (Stacked bElement) possiblyOrNever Empty
+    ({ index : Int } -> element -> elementMapped)
+    -> Hand (Stacked element) possiblyOrNever Empty
+    -> Hand (Stacked elementMapped) possiblyOrNever Empty
 map changeElement =
     \stack ->
         stack
             |> Hand.fillMapFlat
                 (\(TopDown topElement down) ->
                     topDown
-                        (topElement |> changeElement)
-                        (down |> List.map changeElement)
+                        (topElement |> changeElement { index = 0 })
+                        (down
+                            |> List.indexedMap
+                                (\indexBelow ->
+                                    changeElement
+                                        { index = 1 + indexBelow }
+                                )
+                        )
                 )
 
 
-{-| Apply a function to every element of its removeTop.
+{-| Combine its elements with elements of a given stack at the same location.
+If one stack is longer, the extra elements are dropped.
 
-    import Stack exposing (topDown, mapBelowTop)
+    import Stack exposing (topDown)
+
+    topDown "alice" [ "bob", "chuck" ]
+        |> Stack.and (topDown 2 [ 5, 7, 8 ])
+    --> topDown ( "alice", 2 ) [ ( "bob", 5 ), ( "chuck", 7 ) ]
+
+    topDown 4 [ 5, 6 ]
+        |> Stack.and (topDown 1 [ 2, 3 ])
+        |> Stack.map (\_ ( n0, n1 ) -> n0 + n1)
+    --> topDown 5 [ 7, 9 ]
+
+-}
+and :
+    Hand (Stacked anotherElement) possiblyOrNever Empty
+    -> Hand (Stacked element) possiblyOrNever Empty
+    -> Hand (Stacked ( element, anotherElement )) possiblyOrNever Empty
+and anotherStack =
+    \stack ->
+        stack
+            |> fillAnd anotherStack
+            |> fillMapFlat
+                (\( TopDown topElement down, TopDown anotherTop anotherDown ) ->
+                    topDown
+                        ( topElement, anotherTop )
+                        (List.map2 Tuple.pair down anotherDown)
+                )
+
+
+{-| Change every element below its [`top`](#top)
+based on their `{ index }` in the whole stack and their current value.
+Their type is allowed to change.
+
+    import Stack exposing (topDown, belowTopMap)
 
     topDown 1 [ 4, 9 ]
-        |> mapBelowTop negate
+        |> belowTopMap (\_ -> negate)
     --> topDown 1 [ -4, -9 ]
 
 -}
-mapBelowTop :
-    (belowElement -> belowElementMapped)
+belowTopMap :
+    ({ index : Int } -> belowElement -> belowElementMapped)
     ->
         Hand
             (StackTopBelow top belowElement)
@@ -565,28 +612,35 @@ mapBelowTop :
             (StackTopBelow top belowElementMapped)
             possiblyOrNever
             Empty
-mapBelowTop changeTailElement =
-    Hand.fillMapFlat
+belowTopMap changeTailElement =
+    fillMapFlat
         (\(TopDown top_ down_) ->
-            topDown top_ (down_ |> List.map changeTailElement)
+            topDown
+                top_
+                (down_
+                    |> List.indexedMap
+                        (\index ->
+                            changeTailElement { index = index }
+                        )
+                )
         )
 
 
 {-| Change the [`top`](#top) element based on its current value.
 Its type is allowed to change.
 
-    import Stack exposing (topDown, mapTop)
+    import Stack exposing (topDown, topMap)
 
     topDown 1 [ 4, 9 ]
-        |> mapTop negate
+        |> topMap negate
     --> topDown -1 [ 4, 9 ]
 
 -}
-mapTop :
+topMap :
     (top -> topMapped)
     -> Hand (StackTopBelow top belowElement) possiblyOrNever Empty
     -> Hand (StackTopBelow topMapped belowElement) possiblyOrNever Empty
-mapTop changeTop =
+topMap changeTop =
     Hand.fillMapFlat
         (\(TopDown top_ down_) ->
             topDown (top_ |> changeTop) down_
@@ -595,52 +649,65 @@ mapTop changeTop =
 
 {-| Reduce in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    import LinearDirection exposing (LinearDirection(..))
+    import Linear exposing (DirectionLinear(..))
     import Stack exposing (topDown)
 
     topDown 'l' [ 'i', 'v', 'e' ]
-        |> Stack.foldFrom "" LastToFirst String.cons
+        |> Stack.foldFrom ( "", Down, String.cons )
     --> "live"
 
     topDown 'l' [ 'i', 'v', 'e' ]
-        |> Stack.foldFrom "" FirstToLast String.cons
+        |> Stack.foldFrom ( "", Up, String.cons )
     --> "evil"
+
+Be aware:
+
+  - `Down` = indexes decreasing, not: from the [`top`](#top) down
+  - `Up` = indexes increasing, not: from the bottom up
 
 -}
 foldFrom :
-    accumulationValue
-    -> LinearDirection
-    -> (element -> accumulationValue -> accumulationValue)
+    ( accumulationValue
+    , DirectionLinear
+    , element -> accumulationValue -> accumulationValue
+    )
     -> Hand (Stacked element) possiblyOrNever_ Empty
     -> accumulationValue
-foldFrom initialAccumulationValue direction reduce =
-    toList
-        >> List.Linear.foldFrom initialAccumulationValue direction reduce
+foldFrom ( initialAccumulationValue, direction, reduce ) =
+    \stack ->
+        stack
+            |> toList
+            |> List.Linear.foldFrom
+                ( initialAccumulationValue
+                , direction
+                , reduce
+                )
 
 
-{-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-where the initial result is the [`top`](#top).
+{-| Fold from the [`top`](#top) as the initial accumulation value.
 
-    import LinearDirection exposing (LinearDirection(..))
+    import Linear exposing (DirectionLinear(..))
     import Stack exposing (topDown)
 
     topDown 234 [ 345, 543 ]
-        |> Stack.fold FirstToLast max
+        |> Stack.fold max
     --> 543
+
+`fold` doesn't take a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+as an argument because at the time of writing, the best implementation would include a [`Stack.reverse`](#reverse).
 
 -}
 fold :
-    LinearDirection
-    -> (belowTopElement -> top -> top)
-    -> Hand (StackTopBelow top belowTopElement) Never Empty
+    (belowElement -> top -> top)
+    -> Hand (StackTopBelow top belowElement) Never Empty
     -> top
-fold direction reduce =
+fold reduce =
     \stackFilled ->
         let
             (TopDown top_ belowTop_) =
-                stackFilled |> Hand.fill
+                stackFilled |> fill
         in
-        List.Linear.foldFrom top_ direction reduce belowTop_
+        List.Linear.foldFrom ( top_, Up, reduce ) belowTop_
 
 
 {-| Convert it to a `List`.

@@ -1,37 +1,38 @@
 module Scroll exposing
-    ( Scroll(..), FocusedOnGap
-    , Side(..)
+    ( Scroll(..), FocusGap
+    , Location(..), nearest
     , empty, only
-    , focusedItem, focus
+    , focusItem, focus
     , side
-    , focusItem, focusGap
-    , focusItemEnd, focusGapBeyondEnd
-    , focusWhere
+    , length
+    , to, toGap
+    , toEnd, toEndGap
+    , toWhere
     , focusDrag
-    , sideOpposite
-    , mirror
-    , insert, sideAlter
-    , focusRemove, focusAlter
-    , focusedOnItem
+    , focusItemTry
     , map, focusSidesMap
+    , foldFrom, fold
     , toStack, toList
-    , adaptTypeFocusedOnGap
+    , mirror
+    , focusAlter, sideAlter
+    , focusGapAdapt
     )
 
 {-| Items rolled up on both sides of a focus
-→ good fit for dynamic choice selection: tabs, playlist, ...
+→ good fit for dynamic choice selection: tabs, playlist, timeline...
 
-`Scroll` can even focus a gap `Before` and `After` every item.
+[`Scroll`](#Scroll) can even focus a gap [`Down`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) and [`Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) every item.
 
 1.  🔎 focus on a gap between two items
 2.  🔌 plug that gap with a value
 3.  💰 profit
 
+@docs Scroll, FocusGap
 
-## type
 
-@docs Scroll, FocusedOnGap
-@docs Side
+## position
+
+@docs Location, nearest
 
 
 ## create
@@ -41,60 +42,53 @@ module Scroll exposing
 
 ## scan
 
-@docs focusedItem, focus
+@docs focusItem, focus
 @docs side
+@docs length
 
 
 ## move the focus
 
-@docs focusItem, focusGap
-@docs focusItemEnd, focusGapBeyondEnd
-@docs focusWhere
+@docs to, toGap
+@docs toEnd, toEndGap
+@docs toWhere
 @docs focusDrag
-
-
-## alter
-
-@docs sideOpposite
-@docs mirror
-
-
-### at one side of the focus
-
-@docs insert, sideAlter
-
-
-### at the focus
-
-@docs focusRemove, focusAlter
 
 
 ## transform
 
-@docs focusedOnItem
+@docs focusItemTry
 @docs map, focusSidesMap
+@docs foldFrom, fold
 @docs toStack, toList
+
+
+### alter
+
+@docs mirror
+@docs focusAlter, sideAlter
 
 
 ## type-level
 
-@docs adaptTypeFocusedOnGap
+@docs focusGapAdapt
 
 -}
 
-import Hand exposing (Empty, Hand(..), adaptTypeEmpty, alterFill, feedFill, fill, fillMap, fillMapFlat, filled)
+import Hand exposing (Empty, Hand(..), emptyAdapt, fill, fillMap, fillMapFlat, filled)
+import Linear exposing (DirectionLinear(..))
 import Possibly exposing (Possibly(..))
-import Stack exposing (Stacked, layOnTop, removeTop, stackOnTop, stackOnTopTyped, top)
+import Stack exposing (Stacked, onTopLay, onTopStack, onTopStackAdapt, top, topRemove)
 
 
 {-| Items rolled up on both sides of a focus
 → good fit for dynamic choice selection: tabs, playlist, ...
 
-`Scroll` can even focus a gap `Before` and `After` every item:
+`Scroll` can even focus a gap `Down` and `Up` every item:
 
-  - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... Never FocusedOnGap`
+  - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... Never FocusGap`
 
-  - `🍍 🍓 <?> 🍉 🍇`: `Scroll ...` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `FocusedOnGap`
+  - `🍍 🍓 <?> 🍉 🍇`: `Scroll ...` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `FocusGap`
 
     `<?>` means both are possible:
 
@@ -104,14 +98,14 @@ import Stack exposing (Stacked, layOnTop, removeTop, stackOnTop, stackOnTopTyped
 
 #### in arguments
 
-    empty : Scroll item_ Possibly FocusedOnGap
+    empty : Scroll item_ Possibly FocusGap
 
 
 #### in types
 
     type alias Model =
         RecordWithoutConstructorFunction
-            { choice : Scroll Option Never FocusedOnGap
+            { choice : Scroll Option Never FocusGap
             }
 
 where [`RecordWithoutConstructorFunction`](https://dark.elm.dmy.fr/packages/lue-bird/elm-no-record-type-alias-constructor-function/latest/)
@@ -131,9 +125,9 @@ type Scroll item possiblyOrNever focusedOnGapTag
 
 {-| A word in every [`Scroll`](#Scroll) type:
 
-  - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... Never FocusedOnGap`
+  - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... Never FocusGap`
 
-  - `🍍 🍓 <?> 🍉 🍇`: `Scroll ...` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `FocusedOnGap`
+  - `🍍 🍓 <?> 🍉 🍇`: `Scroll ...` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `FocusGap`
 
     `<?>` means both are possible:
 
@@ -141,47 +135,76 @@ type Scroll item possiblyOrNever focusedOnGapTag
       - `🍍 🍓 <🍊> 🍉 🍇`
 
 -}
-type FocusedOnGap
+type FocusGap
     = FocusedOnGapTag Never
 
 
 
---
+-- position
 
 
-{-| Direction looking from the focus:
-Either the [stack](Stack) to the left or to the right.
+{-| Position in a [`Scroll`](#Scroll) relative to its focus.
 
-    import Hand exposing (Hand, Empty, fillMapFlat)
-    import Stack exposing (Stacked, topDown)
-    import Scroll exposing (Side(..), focusItem)
+    import Linear exposing (DirectionLinear(..))
+    import Hand exposing (Hand, Empty, filled, fillMap, fillMapFlat)
+    import Stack exposing (topDown)
 
     Scroll.only 0
-        |> Scroll.sideAlter After
-            (\_ -> topDown 1 [ 2, 3 ])
-        |> focusItem After
-        |> fillMapFlat (focusItem After)
-        |> fillMapFlat (Scroll.side Before)
-    --> topDown 1 [ 0 ]
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.to (Scroll.AtSide Up 2)
+        |> fillMap Scroll.focusItem
+    --> filled 3
     --: Hand (Stacked number_) Possibly Empty
 
 -}
-type Side
-    = Before
-    | After
+type Location
+    = AtSide DirectionLinear Int
+    | AtFocus
 
 
-{-| Looking to the other [`Side`](#Side) of the focus: `Before` ⇆ `After`
+{-| The [`Location`](#Location) directly [`Down`|`Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) the focus.
+
+    import Hand exposing (Hand, Empty, filled, fillMap)
+    import Stack exposing (onTopLay, topDown)
+    import Scroll exposing (Scroll, FocusGap)
+    import Linear exposing (DirectionLinear(..))
+
+    Scroll.only "hello"
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown "scrollable" [ "world" ] )
+        |> Scroll.toEnd Up
+        |> Scroll.to (Down |> Scroll.nearest)
+        |> fillMap Scroll.focusItem
+    --> filled "scrollable"
+    --: Hand (Scroll String Never FocusGap) Possibly Empty
+
+    Scroll.empty
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown "world" [ "scrollable" ] )
+        |> Scroll.to (Down |> Scroll.nearest)
+    --> Scroll.only "world"
+    -->     |> Scroll.sideAlter
+    -->         ( Down, \_ -> Stack.only "scrollable" )
+    -->     |> filled
+    --: Hand (Scroll String Never FocusGap) Possibly Empty
+
+    Scroll.empty
+        |> Scroll.sideAlter
+            ( Up, onTopLay "foo" )
+        |> Scroll.to (Up |> Scroll.nearest)
+    --> filled (Scroll.only "foo")
+    --: Hand (Scroll String Never FocusGap) Possibly
+
+    nearest =
+        \side ->
+            Scroll.AtSide side 0
+
 -}
-sideOpposite : Side -> Side
-sideOpposite =
+nearest : DirectionLinear -> Location
+nearest =
     \side_ ->
-        case side_ of
-            Before ->
-                After
-
-            After ->
-                Before
+        AtSide side_ 0
 
 
 
@@ -202,29 +225,28 @@ It's the loneliest of all [`Scroll`](#Scroll)s.
     --> Hand.empty
 
 -}
-empty : Scroll item_ Possibly FocusedOnGap
+empty : Scroll item_ Possibly FocusGap
 empty =
     BeforeFocusAfter Hand.empty Hand.empty Hand.empty
 
 
 {-| A `Scroll` with a single focussed item in it,
-nothing `Before` and `After` it.
+nothing `Down` and `Up` it.
 
 ```monospace
 🍊  ->  <🍊>
 ```
 
     import Stack
-    import Scroll exposing (focusedItem)
 
-    Scroll.only "wat" |> focusedItem
+    Scroll.only "wat" |> Scroll.focusItem
     --> "wat"
 
     Scroll.only "wat" |> Scroll.toStack
     --> Stack.only "wat"
 
 -}
-only : element -> Scroll element never_ FocusedOnGap
+only : element -> Scroll element never_ FocusGap
 only currentItem =
     BeforeFocusAfter Hand.empty (filled currentItem) Hand.empty
 
@@ -240,21 +262,21 @@ only currentItem =
 ```
 
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusedItem, focusItemEnd)
+    import Linear exposing (DirectionLinear(..))
 
-    Scroll.only "hi there" |> focusedItem
+    Scroll.only "hi there" |> Scroll.focusItem
     --> "hi there"
 
     Scroll.only 1
-        |> Scroll.sideAlter After
-            (\_ -> topDown 2 [ 3, 4 ])
-        |> focusItemEnd After
-        |> focusedItem
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 2 [ 3, 4 ] )
+        |> Scroll.toEnd Up
+        |> Scroll.focusItem
     --> 4
 
 -}
-focusedItem : Scroll item Never FocusedOnGap -> item
-focusedItem =
+focusItem : Scroll item Never FocusGap -> item
+focusItem =
     \scroll -> scroll |> focus |> Hand.fill
 
 
@@ -266,49 +288,33 @@ focusedItem =
 ```
 
     import Hand exposing (filled, fill)
-    import Scroll exposing (focus)
 
-    Scroll.empty |> focus
+    Scroll.empty |> Scroll.focus
     --> Hand.empty
 
-    Scroll.only "hi there" |> focus |> fill
+    Scroll.only "hi there" |> Scroll.focus |> fill
     --> "hi there"
 
-[`focusedItem`](#focusedItem) is short for `focus |> fill`.
+[`focusItem`](#focusItem) is short for `focus |> fill`.
 
 -}
 focus :
-    Scroll item possiblyOrNever FocusedOnGap
+    Scroll item possiblyOrNever FocusGap
     -> Hand item possiblyOrNever Empty
 focus =
     \(BeforeFocusAfter _ focus_ _) ->
         focus_
 
 
-{-| Look to one [side](#Side) from the focus.
+{-| The [`Stack`](Stack) to one [side](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) of the focus.
 
-
-#### `side Before`
+`Down`
 
 ```monospace
 🍍←🍓) <🍊> 🍉 🍇
 ```
 
-    import Hand exposing (Hand, Empty, fillMapFlat)
-    import Stack exposing (Stacked, topDown)
-    import Scroll exposing (Side(..), focusItem)
-
-    Scroll.only 0
-        |> Scroll.sideAlter After
-            (\_ -> topDown 1 [ 2, 3 ])
-        |> focusItem After
-        |> fillMapFlat (focusItem After)
-        |> fillMapFlat (Scroll.side Before)
-    --> topDown 1 [ 0 ]
-    --: Hand (Stacked number_) Possibly Empty
-
-
-#### `side After`
+`Up`
 
 ```monospace
 🍍 🍓 <🍊> (🍉→🍇
@@ -316,58 +322,142 @@ focus =
 
     import Hand exposing (Hand, Empty, fillMapFlat)
     import Stack exposing (Stacked, topDown)
-    import Scroll exposing (Side(..), focusItem)
+    import Linear exposing (DirectionLinear(..))
 
     Scroll.only 0
-        |> Scroll.sideAlter After
-            (\_ -> topDown 1 [ 2, 3 ])
-        |> focusItem After
-        |> fillMapFlat (Scroll.side After)
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.to (Up |> Scroll.nearest)
+        |> fillMapFlat (Scroll.to (Up |> Scroll.nearest))
+        |> fillMapFlat (Scroll.side Down)
+    --> topDown 1 [ 0 ]
+    --: Hand (Stacked number_) Possibly Empty
+
+    Scroll.only 0
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.to (Up |> Scroll.nearest)
+        |> fillMapFlat (Scroll.side Up)
     --> topDown 2 [ 3 ]
     --: Hand (Stacked number_) Possibly Empty
 
 -}
 side :
-    Side
-    -> Scroll item possiblyOrNever_ FocusedOnGap
+    DirectionLinear
+    -> Scroll item possiblyOrNever_ FocusGap
     -> Hand (Stacked item) Possibly Empty
-side side_ =
-    \(BeforeFocusAfter sideBefore _ sideAfter) ->
-        case side_ of
-            Before ->
+side sideToAccess =
+    \scroll ->
+        let
+            (BeforeFocusAfter sideBefore _ sideAfter) =
+                scroll
+        in
+        case sideToAccess of
+            Down ->
                 sideBefore
 
-            After ->
+            Up ->
                 sideAfter
+
+
+{-| Counting all contained items.
+
+    import Stack exposing (topDown)
+    import Linear exposing (DirectionLinear(..))
+
+    Scroll.only 0
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown -1 [ -2 ] )
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.length
+    --> 6
+
+    Scroll.empty
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown -1 [ -2 ] )
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.length
+    --> 5
+
+-}
+length : Scroll item_ possiblyOrNever_ FocusGap -> Int
+length =
+    \(BeforeFocusAfter before focus_ after) ->
+        (before |> Stack.length)
+            + (case focus_ of
+                Filled _ ->
+                    1
+
+                Empty _ ->
+                    0
+              )
+            + (after |> Stack.length)
 
 
 
 --
 
 
-{-| Try to move the focus to the nearest item [`Before|After`](#Side) the focus.
+{-| Try to move the focus to the nearest item [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/).
+
+**Should not be exposed**
+
+-}
+toItemNearest :
+    DirectionLinear
+    -> Scroll item possiblyOrNever_ FocusGap
+    -> Hand (Scroll item never_ FocusGap) Possibly Empty
+toItemNearest side_ =
+    \scroll ->
+        (scroll |> side side_)
+            |> fillMap
+                (\stacked ->
+                    let
+                        sideNew =
+                            stacked |> filled |> topRemove
+
+                        focusNew =
+                            stacked |> filled |> top |> filled
+
+                        sideOppositeNew =
+                            (scroll |> side (side_ |> Linear.opposite))
+                                |> onTopStack (scroll |> focus |> fillMapFlat Stack.only)
+                    in
+                    case side_ of
+                        Down ->
+                            BeforeFocusAfter sideNew focusNew sideOppositeNew
+
+                        Up ->
+                            BeforeFocusAfter sideOppositeNew focusNew sideNew
+                )
 
 
-#### `focusItem Before`
+{-| Try to move the [`focus`](#focus) to the item at a given [`Scroll.Location`](#Location).
+
+
+#### `Scroll.to (Down |> Scroll.nearest)`
 
 ```monospace
 🍊 <🍉> 🍇  ->  <🍊> 🍉 🍇
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (Hand, Empty, filled, fillMap)
-    import Scroll exposing (Scroll, FocusedOnGap, Side(..), focusItem, focusItemEnd, focusedItem)
+    import Scroll exposing (Scroll, FocusGap)
 
-    Scroll.empty |> focusItem Before
+    Scroll.empty |> Scroll.to (Down |> Scroll.nearest)
     --> Hand.empty
 
     Scroll.only "hello"
-        |> Scroll.sideAlter After
-            (\_ -> topDown "scrollable" [ "world" ])
-        |> focusItemEnd After
-        |> focusItem Before
-        |> fillMap focusedItem
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown "scrollable" [ "world" ] )
+        |> Scroll.toEnd Up
+        |> Scroll.to (Down |> Scroll.nearest)
+        |> fillMap Scroll.focusItem
     --> filled "scrollable"
-    --: Hand (Scroll String Never FocusedOnGap) Possibly Empty
+    --: Hand (Scroll String Never FocusGap) Possibly Empty
 
 This also works from within gaps:
 
@@ -375,30 +465,34 @@ This also works from within gaps:
 🍊 🍉 <> 🍇  ->  🍊 <🍉> 🍇
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (Hand, Empty, filled)
-    import Scroll exposing (Scroll, FocusedOnGap, Side(..), focusItem)
+    import Stack exposing (onTopLay)
+    import Scroll exposing (Scroll, FocusGap)
 
     Scroll.empty
-        |> Scroll.insert Before "foo"
-        |> focusItem Before
+        |> Scroll.sideAlter
+            ( Down, onTopLay "foo" )
+        |> Scroll.to (Down |> Scroll.nearest)
     --> filled (Scroll.only "foo")
-    --: Hand (Scroll String Never FocusedOnGap) Possibly Empty
+    --: Hand (Scroll String Never FocusGap) Possibly Empty
 
 
-#### `focusItem After`
+#### `Scroll.to (Up |> Scroll.nearest)`
 
 ```monospace
 <🍊> 🍉 🍇  ->  🍊 <🍉> 🍇
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (Hand, Empty, filled, fillMap)
-    import Scroll exposing (Scroll, FocusedOnGap, Side(..), focusItem, focusedItem)
+    import Scroll exposing (Scroll, FocusGap)
 
     Scroll.only 0
-        |> Scroll.sideAlter After
-            (\_ -> topDown 1 [ 2, 3 ])
-        |> focusItem After
-        |> fillMap focusedItem
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.to (Up |> Scroll.nearest)
+        |> fillMap Scroll.focusItem
     --> filled 1
     --: Hand number_ Possibly Empty
 
@@ -408,412 +502,456 @@ This also works from within gaps:
 🍊 <> 🍉 🍇  ->  🍊 <🍉> 🍇
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (Hand, Empty, filled)
-    import Scroll exposing (Scroll, FocusedOnGap, Side(..), focusItem)
+    import Stack exposing (onTopLay)
+    import Scroll exposing (Scroll, FocusGap)
 
     Scroll.empty
-        |> Scroll.insert After "foo"
-        |> focusItem After
+        |> Scroll.sideAlter
+            ( Up, \_ -> Stack.only "foo" )
+        |> Scroll.to (Up |> Scroll.nearest)
     --> filled (Scroll.only "foo")
-    --: Hand (Scroll String Never FocusedOnGap) Possibly
+    --: Hand (Scroll String Never FocusGap) Possibly
 
 If there is no next item, the result is [`empty`](Hand#empty).
 
+    import Linear exposing (DirectionLinear(..))
     import Hand
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusedItem, focusItem, focusItemEnd)
 
-    Scroll.empty |> focusItem After
+    Scroll.empty |> Scroll.to (Up |> Scroll.nearest)
     --> Hand.empty
 
     Scroll.only 0
-        |> Scroll.sideAlter After
-            (\_ -> topDown 1 [ 2, 3 ])
-        |> focusItemEnd After
-        |> focusItem After
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.toEnd Up
+        |> Scroll.to (Up |> Scroll.nearest)
     --> Hand.empty
 
--}
-focusItem :
-    Side
-    -> Scroll item possiblyOrNever_ FocusedOnGap
-    -> Hand (Scroll item never_ FocusedOnGap) Possibly Empty
-focusItem side_ =
-    \scroll ->
-        (scroll |> side side_)
-            |> fillMap
-                (\stacked ->
-                    let
-                        sideNew =
-                            stacked |> filled |> removeTop
 
-                        focusNew =
-                            stacked |> filled |> top |> filled
+#### `Scroll.to Location`
 
-                        sideOppositeNew =
-                            (scroll |> side (side_ |> sideOpposite))
-                                |> alterFill
-                                    (layOnTop |> feedFill (scroll |> focus))
-                    in
-                    case side_ of
-                        Before ->
-                            BeforeFocusAfter sideNew focusNew sideOppositeNew
+    import Element as Ui
+    import Element.Input as UIn
+    import Hand exposing (fillMap)
+    import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
+    import Scroll exposing (FocusGap, Scroll)
+    import Stack
 
-                        After ->
-                            BeforeFocusAfter sideOppositeNew focusNew sideNew
+    type alias Model =
+        RecordWithoutConstructorFunction
+            { numbers : Scroll Int Never FocusGap
+            }
+
+    type Event
+        = NumberClicked Scroll.Location
+
+    update : Event -> Model -> ( Model, Cmd Event )
+    update event model =
+        case event of
+            NumberClicked location ->
+                ( { model
+                    | numbers =
+                        model.numbers
+                            |> Scroll.to location
+                            |> Hand.fillElseOnEmpty (\_ -> model.numbers)
+                            |> Scroll.focusAlter (fillMap (\n -> n + 1))
+                  }
+                , Cmd.none
                 )
 
+    interface : Model -> Ui.Element Event
+    interface =
+        \{ numbers } ->
+            numbers
+                |> Scroll.map numberInterface
+                |> Scroll.toList
+                |> Ui.column []
 
-{-| Move the focus to the gap directly [`Before|After`](#Side) the focus.
+    numberInterface :
+        Scroll.Location
+        -> Int
+        -> Ui.Element Event
+    numberInterface location =
+        \number ->
+            UIn.button []
+                { onPress = NumberClicked location |> Just
+                , label =
+                    number
+                        |> String.fromInt
+                        |> Ui.text
+                }
+
+The same _functionality_ is often provided as `duplicate : Scroll item ... -> Scroll (Scroll item) ...`
+
+  - [turboMaCk/non-empty-list-alias: `List.NonEmpty.Zipper.duplicate`](https://package.elm-lang.org/packages/turboMaCk/non-empty-list-alias/latest/List-NonEmpty-Zipper#duplicate)
+  - [miyamoen/select-list: `SelectList.selectedMap`](https://dark.elm.dmy.fr/packages/miyamoen/select-list/latest/SelectList#selectedMap)
+  - [jjant/elm-comonad-zipper: `Zipper.duplicate`](https://package.elm-lang.org/packages/jjant/elm-comonad-zipper/latest/Zipper#duplicate)
+  - [arowM/elm-reference: `Reference.List.unwrap`](https://dark.elm.dmy.fr/packages/arowM/elm-reference/latest/Reference-List#unwrap)
+
+Saving a [`Scroll`](#Scroll) with every item becomes expensive for long [`Scroll`](#Scroll)s, though!
+
+-}
+to :
+    Location
+    -> Scroll item possiblyOrNever_ FocusGap
+    -> Hand (Scroll item never_ FocusGap) Possibly Empty
+to location =
+    \scroll ->
+        case location of
+            AtFocus ->
+                scroll
+                    |> focusItemTry
+                    |> Hand.emptyAdapt (\_ -> Possible)
+
+            AtSide side_ sideIndex ->
+                case sideIndex of
+                    0 ->
+                        scroll |> toItemNearest side_
+
+                    sideIndexNot0 ->
+                        if sideIndexNot0 >= 1 then
+                            scroll
+                                |> toItemNearest side_
+                                |> fillMapFlat
+                                    (to (AtSide side_ (sideIndex - 1)))
+
+                        else
+                            Hand.empty
+
+
+{-| Move the focus to the gap directly [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/).
 Feel free to [plug](#focusAlter) that gap right up!
 
 
-#### `focusGap Before`
+#### `Scroll.toGap Down`
 
 ```monospace
 🍍 <🍊> 🍉  ->  🍍 <> 🍊 🍉
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (filled)
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusGap, focusAlter)
 
     Scroll.only "world"
-        |> focusGap Before
-        |> focusAlter (\_ -> filled "hello")
+        |> Scroll.toGap Down
+        |> Scroll.focusAlter (\_ -> "hello" |> filled)
         |> Scroll.toStack
     --> topDown "hello" [ "world" ]
 
 
-#### `focusGap After`
+#### `Scroll.toGap Up`
 
 ```monospace
 🍍 <🍊> 🍉  ->  🍍 🍊 <> 🍉
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (filled)
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusAlter, focusGap)
 
     Scroll.only "hello"
-        |> Scroll.sideAlter After
-            (\_ -> Stack.only "world")
-        |> focusGap After
-        |> focusAlter (\_ -> filled "scrollable")
+        |> Scroll.sideAlter
+            ( Up, \_ -> Stack.only "world" )
+        |> Scroll.toGap Up
+        |> Scroll.focusAlter (\_ -> filled "scrollable")
         |> Scroll.toStack
     --> topDown "hello" [ "scrollable", "world" ]
 
 -}
-focusGap :
-    Side
-    -> Scroll item Never FocusedOnGap
-    -> Scroll item Possibly FocusedOnGap
-focusGap side_ =
+toGap :
+    DirectionLinear
+    -> Scroll item Never FocusGap
+    -> Scroll item Possibly FocusGap
+toGap side_ =
     \(BeforeFocusAfter before focus_ after) ->
         case side_ of
-            Before ->
+            Down ->
                 BeforeFocusAfter
                     before
                     Hand.empty
-                    (after |> layOnTop (focus_ |> fill))
+                    (after |> onTopLay (focus_ |> fill))
 
-            After ->
+            Up ->
                 BeforeFocusAfter
-                    (before |> layOnTop (focus_ |> fill))
+                    (before |> onTopLay (focus_ |> fill))
                     Hand.empty
                     after
 
 
-{-| Focus the furthest item [`Before/After`](#Side) the focus.
+{-| Focus the furthest item [`Down/Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) the focus.
 
-
-#### `focusItemEnd Before`
+`Down`
 
 ```monospace
 🍍 🍓 <🍊> 🍉  ->  <🍍> 🍓 🍊 🍉
 ```
 
-    import Scroll exposing (Side(..), focusedItem)
-
-    Scroll.only 1
-        |> Scroll.sideAlter After
-            (\_ -> topDown 2 [ 3, 4 ])
-        |> Scroll.sideAlter Before
-            (\_ -> topDown 4 [ 3, 2 ])
-        |> Scroll.focusItemEnd Before
-        |> focusedItem
-    --> 2
-
-
-#### `focusItemEnd After`
+`Up`
 
 ```monospace
 🍓 <🍊> 🍉 🍇  ->  🍓 🍊 🍉 <🍇>
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (Hand, Empty)
     import Stack exposing (Stacked, topDown)
-    import Scroll exposing (Side(..), focusItemEnd, focusedItem)
 
     Scroll.only 1
-        |> Scroll.sideAlter After
-            (\_ -> topDown 2 [ 3, 4 ])
-        |> Scroll.focusItemEnd After
-        |> focusedItem
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 2 [ 3, 4 ] )
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown 4 [ 3, 2 ] )
+        |> Scroll.toEnd Down
+        |> Scroll.focusItem
+    --> 2
+
+    Scroll.only 1
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 2 [ 3, 4 ] )
+        |> Scroll.toEnd Up
+        |> Scroll.focusItem
     --> 4
 
     Scroll.only 1
-        |> Scroll.sideAlter After
-            (\_ -> topDown 2 [ 3, 4 ])
-        |> focusItemEnd After
-        |> Scroll.side Before
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 2 [ 3, 4 ] )
+        |> Scroll.toEnd Up
+        |> Scroll.side Down
     --> topDown 3 [ 2, 1 ]
     --: Hand (Stacked number_) Possibly Empty
 
 -}
-focusItemEnd :
-    Side
-    -> Scroll item possiblyOrNever FocusedOnGap
-    -> Scroll item possiblyOrNever FocusedOnGap
-focusItemEnd side_ =
+toEnd :
+    DirectionLinear
+    -> Scroll item possiblyOrNever FocusGap
+    -> Scroll item possiblyOrNever FocusGap
+toEnd end =
     \scroll ->
         let
             stackWithEndOnTop =
-                case side_ of
-                    After ->
+                case end of
+                    Up ->
                         mirror >> toStack
 
-                    Before ->
+                    Down ->
                         toStack
         in
-        case stackWithEndOnTop scroll |> fillMap filled of
+        case stackWithEndOnTop scroll of
             Empty possiblyOrNever ->
-                empty |> focusAlter (\_ -> Empty possiblyOrNever)
+                empty |> focusGapAdapt (\_ -> possiblyOrNever)
 
-            Filled stackFilled ->
-                only (stackFilled |> top)
-                    |> sideAlter (side_ |> sideOpposite)
-                        (\_ -> stackFilled |> removeTop)
+            Filled (Stack.TopDown top_ down) ->
+                case end of
+                    Down ->
+                        BeforeFocusAfter Hand.empty (top_ |> filled) (down |> Stack.fromList)
+
+                    Up ->
+                        BeforeFocusAfter (down |> Stack.fromList) (top_ |> filled) Hand.empty
 
 
-{-| Focus the gap beyond the furthest item [`Before|After`](#Side) the focus.
+{-| Focus the gap beyond the furthest item [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/).
 Remember that gaps surround everything!
 
-
-#### `focusGapBeyondEnd Before`
+`Down`
 
 ```monospace
 🍍 🍓 <🍊> 🍉  ->  <> 🍍 🍓 🍊 🍉
 ```
 
-    import Hand exposing (filled)
-    import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusAlter, focusGap, focusGapBeyondEnd)
-
-    Scroll.only 1
-            -- <1>
-        |> Scroll.sideAlter After
-            (\_ -> topDown 3 [ 4 ])
-            -- <1> 3 4
-        |> focusGap After
-            -- 1 <> 3 4
-        |> focusAlter (\_ -> filled 2)
-            -- 1 <2> 3 4
-        |> focusGapBeyondEnd Before
-            -- <> 1 2 3 4
-        |> focusAlter (\_ -> filled 0)
-            -- <0> 1 2 3 4
-        |> Scroll.toStack
-    --> topDown 0 [ 1, 2, 3, 4 ]
-
-
-#### `focusGapBeyondEnd After`
+`Up`
 
 ```monospace
 🍓 <🍊> 🍉  ->  🍓 🍊 🍉 <>
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (filled)
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusAlter, focusGapBeyondEnd)
 
     Scroll.only 1
             -- <1>
-        |> Scroll.sideAlter After
-            (\_ -> topDown 2 [ 3 ])
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 3 [ 4 ] )
+            -- <1> 3 4
+        |> Scroll.toGap Up
+            -- 1 <> 3 4
+        |> Scroll.focusAlter (\_ -> filled 2)
+            -- 1 <2> 3 4
+        |> Scroll.toEndGap Down
+            -- <> 1 2 3 4
+        |> Scroll.focusAlter (\_ -> filled 0)
+            -- <0> 1 2 3 4
+        |> Scroll.toStack
+    --> topDown 0 [ 1, 2, 3, 4 ]
+
+    Scroll.only 1
+            -- <1>
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 2 [ 3 ] )
             -- <1> 2 3
-        |> focusGapBeyondEnd After
+        |> Scroll.toEndGap Up
             -- 1 2 3 <>
-        |> focusAlter (\_ -> filled 4)
+        |> Scroll.focusAlter (\_ -> filled 4)
             -- 1 2 3 <4>
         |> Scroll.toStack
     --> topDown 1 [ 2, 3, 4 ]
 
 -}
-focusGapBeyondEnd :
-    Side
-    -> Scroll item possiblyOrNever_ FocusedOnGap
-    -> Scroll item Possibly FocusedOnGap
-focusGapBeyondEnd side_ =
+toEndGap :
+    DirectionLinear
+    -> Scroll item possiblyOrNever_ FocusGap
+    -> Scroll item Possibly FocusGap
+toEndGap side_ =
     \scroll ->
         case side_ of
-            Before ->
+            Down ->
                 BeforeFocusAfter
                     Hand.empty
                     Hand.empty
                     (scroll
                         |> toStack
-                        |> adaptTypeEmpty (\_ -> Possible)
+                        |> emptyAdapt (\_ -> Possible)
                     )
 
-            After ->
+            Up ->
                 BeforeFocusAfter
                     (scroll
                         |> mirror
                         |> toStack
-                        |> adaptTypeEmpty (\_ -> Possible)
+                        |> emptyAdapt (\_ -> Possible)
                     )
                     Hand.empty
                     Hand.empty
 
 
-{-| Move the focus to the nearest item [`Before|After`](#Side) that matches a predicate.
+{-| Move the focus to the nearest item [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) that matches a predicate.
 If no such item was found return with [`Hand.empty`](Hand#empty).
 
-
-#### `focusWhere Before`
-
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (filled, fillMap)
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusWhere, focusedItem)
+    import Linear exposing (DirectionLinear(..))
 
     Scroll.only 4
-        |> Scroll.sideAlter Before
-            (\_ -> topDown 2 [ -1, 0, 3 ])
-        |> focusWhere Before (\item -> item < 0)
-        |> Hand.fillMap focusedItem
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown 2 [ -1, 0, 3 ] )
+        |> Scroll.toWhere ( Down, \_ item -> item < 0 )
+        |> Hand.fillMap Scroll.focusItem
     --> filled -1
 
-
-#### `focusWhere After`
-
-    import Hand exposing (filled)
-    import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusWhere)
-
     Scroll.only 4
-        |> Scroll.sideAlter After
-            (\_ -> topDown 2 [ -1, 0, 3 ])
-        |> focusWhere After (\item -> item < 0)
-        |> fillMap focusedItem
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 2 [ -1, 0, 3 ] )
+        |> Scroll.toWhere ( Up, \_ item -> item < 0 )
+        |> fillMap focusItem
     --> filled -1
 
     Scroll.only -4
-        |> Scroll.sideAlter After
-            (\_ -> topDown 2 [ -1, 0, 3 ])
-        |> focusWhere After (\item -> item < 0)
-        |> fillMap focusedItem
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 2 [ -1, 0, 3 ] )
+        |> Scroll.toWhere ( Up, \_ item -> item < 0 )
+        |> fillMap focusItem
     --> filled -4
 
 -}
-focusWhere :
-    Side
-    -> (item -> Bool)
-    -> Scroll item possiblyOrNever_ FocusedOnGap
-    -> Hand (Scroll item never_ FocusedOnGap) Possibly Empty
-focusWhere side_ isFound =
-    \scroll ->
-        let
-            step () =
+toWhere :
+    ( DirectionLinear
+    , { index : Int } -> item -> Bool
+    )
+    -> Scroll item possiblyOrNever_ FocusGap
+    -> Hand (Scroll item never_ FocusGap) Possibly Empty
+toWhere ( side_, isFound ) =
+    let
+        scrollToNext next =
+            \scroll ->
                 scroll
-                    |> focusItem side_
-                    |> Hand.fillMapFlat (focusWhere side_ isFound)
-        in
-        case scroll |> focus of
-            Filled currentItem ->
-                if currentItem |> isFound then
-                    BeforeFocusAfter
-                        (scroll |> side Before)
-                        (filled currentItem)
-                        (scroll |> side After)
-                        |> filled
+                    |> toItemNearest side_
+                    |> Hand.fillMapFlat
+                        (toWhereFrom next)
 
-                else
-                    step ()
+        toWhereFrom { index } =
+            \scroll ->
+                case scroll |> focus of
+                    Filled currentItem ->
+                        if currentItem |> isFound { index = index } then
+                            BeforeFocusAfter
+                                (scroll |> side Down)
+                                (filled currentItem)
+                                (scroll |> side Up)
+                                |> filled
 
-            Empty _ ->
-                step ()
+                        else
+                            scroll |> scrollToNext { index = index + 1 }
+
+                    Empty _ ->
+                        scroll |> scrollToNext { index = index + 1 }
+    in
+    toWhereFrom { index = 0 }
 
 
-{-| Try to move the focus to the nearest item [`Before|After`](#Side) the focus.
+{-| Try to move the focus to the nearest item [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/).
 
-
-#### `focusDrag Before`
+`Down`
 
 ```monospace
 🍊 🍉 <🍓> 🍇  ->  🍊 <🍓> 🍉 🍇
 🍊 🍉 <> 🍇  ->  🍊 <> 🍉 🍇
 ```
 
-    import Hand exposing (Hand, Empty, fillMapFlat)
-    import Scroll exposing (Scroll, FocusedOnGap, Side(..), focusDrag)
-
-    Scroll.only 0
-        |> Scroll.sideAlter Before
-            (\_ -> topDown 1 [ 2, 3 ])
-        |> focusDrag Before
-        |> fillMapFlat Scroll.toStack
-    --> topDown 3 [ 2, 0, 1 ]
-    --: Hand (Stacked number_) Possibly Empty
-
-If there is no item `Before`, the result is [`empty`](Hand#empty).
-
-    import Hand
-    import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusDrag)
-
-    Scroll.only 0
-        |> Scroll.sideAlter After
-            (\_ -> topDown 1 [ 2, 3 ])
-        |> focusDrag Before
-    --> Hand.empty
-
-
-#### `focusDrag After`
+`Up`
 
 ```monospace
 🍊 <🍓> 🍉 🍇  ->  🍊 🍉 <🍓> 🍇
 🍊 <> 🍉 🍇  ->  🍊 🍉 <> 🍇
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (Hand, Empty, fillMapFlat)
-    import Scroll exposing (Scroll, FocusedOnGap, Side(..), focusDrag)
+    import Scroll exposing (Scroll, FocusGap)
 
     Scroll.only 0
-        |> Scroll.sideAlter After
-            (\_ -> topDown 1 [ 2, 3 ])
-        |> focusDrag After
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.focusDrag Down
+        |> fillMapFlat Scroll.toStack
+    --> topDown 3 [ 2, 0, 1 ]
+    --: Hand (Stacked number_) Possibly Empty
+
+    Scroll.only 0
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.focusDrag Up
         |> fillMapFlat Scroll.toStack
     --> topDown 1 [ 0, 2, 3 ]
     --: Hand (Stacked number_) Possibly Empty
 
-If there is no item `After`, the result is [`empty`](Hand#empty).
+If there is no nearest item, the result is [`empty`](Hand#empty).
 
+    import Linear exposing (DirectionLinear(..))
     import Hand
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusDrag)
 
     Scroll.only 0
-        |> Scroll.sideAlter Before
-            (\_ -> topDown 1 [ 2, 3 ])
-        |> focusDrag After
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.focusDrag Down
+    --> Hand.empty
+
+    Scroll.only 0
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown 1 [ 2, 3 ] )
+        |> Scroll.focusDrag Up
     --> Hand.empty
 
 -}
 focusDrag :
-    Side
-    -> Scroll item possiblyOrNever FocusedOnGap
-    -> Hand (Scroll item possiblyOrNever FocusedOnGap) Possibly Empty
+    DirectionLinear
+    -> Scroll item possiblyOrNever FocusGap
+    -> Hand (Scroll item possiblyOrNever FocusGap) Possibly Empty
 focusDrag side_ =
     \scroll ->
         (scroll |> side side_)
@@ -823,8 +961,8 @@ focusDrag side_ =
                     let
                         sideOppositeNew : Hand (Stacked item) Possibly Empty
                         sideOppositeNew =
-                            (scroll |> side (side_ |> sideOpposite))
-                                |> layOnTop (stackFilled |> top)
+                            (scroll |> side (side_ |> Linear.opposite))
+                                |> onTopLay (stackFilled |> top)
 
                         focus_ : Hand item possiblyOrNever Empty
                         focus_ =
@@ -832,13 +970,13 @@ focusDrag side_ =
 
                         sideNew : Hand (Stacked item) Possibly Empty
                         sideNew =
-                            stackFilled |> removeTop
+                            stackFilled |> topRemove
                     in
                     case side_ of
-                        Before ->
+                        Down ->
                             BeforeFocusAfter sideNew focus_ sideOppositeNew
 
-                        After ->
+                        Up ->
                             BeforeFocusAfter sideOppositeNew focus_ sideNew
                 )
 
@@ -847,269 +985,222 @@ focusDrag side_ =
 --
 
 
-{-| Remove the focussed thing and keep focusing on the created gap.
+{-| Look [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) the [`focus`](#focus) and operate directly an the [`Stack`](Stack) you see.
+
+
+#### `sideAlter ( DirectionLinear, \_ -> 🍒🍋 )`
+
+`Down`
 
 ```monospace
-🍓 <?> 🍉  ->  🍓 <> 🍉
+🍓 <🍊> 🍉
+      ↓
+🍋 🍒 <🍊> 🍉
 ```
 
-    import Hand exposing (filled, fillMap)
-    import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusItem, focusRemove, focusAlter)
-
-    Scroll.only "hello"
-        |> Scroll.sideAlter After
-            (\_ -> topDown "scrollable" [ "world" ])
-        |> focusItem After
-        |> fillMap focusRemove
-        |> fillMap Scroll.toList
-    --> filled [ "hello", "world" ]
-
-    focusRemove =
-        focusAlter (\_ -> Hand.empty)
-
--}
-focusRemove :
-    Scroll item possiblyOrNever_ FocusedOnGap
-    -> Scroll item Possibly FocusedOnGap
-focusRemove =
-    focusAlter (\_ -> Hand.empty)
-
-
-{-| Insert an item [`Before|After`](#Side) the focus.
-
-
-#### `insert Before`
+`Up`
 
 ```monospace
-      🍒
-🍍 🍓 ↓ <🍊> 🍉
+🍍 🍓 <🍊> 🍉
+      ↓
+🍍 🍓 <🍊> 🍒 🍋
 ```
 
-    import Stack exposing (topDown)
-
-    Scroll.only 123
-        |> Scroll.insert Before 456
-        |> Scroll.toStack
-    --> topDown 456 [ 123 ]
-
-
-#### `insert After`
-
-```monospace
-        🍒
-🍓 <🍊> ↓ 🍉 🍇
-```
-
-    import Stack exposing (topDown)
-
-    Scroll.only 123
-        |> Scroll.sideAlter After (\_ -> Stack.only 789)
-        |> Scroll.insert After 456
-        |> Scroll.toStack
-    --> topDown 123 [ 456, 789 ]
-
-You can insert multiple items using [`sideAlter`](#sideAlter)`(`[`Stack.glueOnTop`](Stack#glueOnTop)/[`stackOnTop`](Stack#stackOnTop) ... `)`.
-`insert` is just
-
-    import Stack exposing (layOnTop)
-
-    insert side item =
-        Scroll.sideAlter side (layOnTop item)
-
--}
-insert :
-    Side
-    -> item
-    -> Scroll item possiblyOrNever FocusedOnGap
-    -> Scroll item possiblyOrNever FocusedOnGap
-insert side_ toInsertNearFocus =
-    sideAlter side_ (layOnTop toInsertNearFocus)
-
-
-{-| Look [`Before|After`](#Side) the [`focus`](#focus) and operate directly an the [`Stack`](Stack) you see.
-
+    import Linear exposing (DirectionLinear(..))
     import Hand
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..))
 
     Scroll.only "selectoo"
-        |> Scroll.sideAlter Before
-            (\_ -> topDown "earlee" [ "agua", "enutai" ])
-        |> Scroll.sideAlter After
-            (\_ -> topDown "orangloo" [ "iquipy", "oice" ])
-        |> Scroll.sideAlter After
-            (\_ -> Hand.empty)
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown "earlee" [ "agua", "enutai" ] )
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown "orangloo" [ "iquipy", "oice" ] )
+        |> Scroll.sideAlter
+            ( Up, \_ -> Hand.empty )
         |> Scroll.toStack
     --> topDown "enutai" [ "agua", "earlee", "selectoo" ]
 
 
-#### `sideAlter Side (Stack.when ...)`
+#### `sideAlter ( DirectionLinear, Stack.map ... )`
 
+    import Linear exposing (DirectionLinear(..))
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..))
-
-    Scroll.only "selectoo"
-        |> Scroll.sideAlter Before
-            (\_ -> topDown "earlee" [ "agua", "enutai" ])
-        |> Scroll.sideAlter After
-            (\_ -> topDown "orangloo" [ "iquipy", "oice" ])
-        |> Scroll.sideAlter Before
-            (Stack.when (String.startsWith "e"))
-        |> Scroll.sideAlter After
-            (Stack.when (String.startsWith "o"))
-        |> Scroll.toStack
-    --> topDown "enutai" [ "earlee", "selectoo", "orangloo", "oice" ]
-
-
-#### `sideAlter Side (Stack.map ...)`
-
-    import Stack exposing (topDown)
-    import Scroll exposing (Side(..))
 
     Scroll.only "second"
-        |> Scroll.sideAlter Before
-            (\_ -> topDown "first" [ "zeroth" ])
-        |> Scroll.sideAlter Before
-            (Stack.map String.toUpper)
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown "first" [ "zeroth" ] )
+        |> Scroll.sideAlter
+            ( Down, Stack.map (\_ -> String.toUpper) )
         |> Scroll.toStack
     --> topDown "ZEROTH" [ "FIRST", "second" ]
 
     Scroll.only "zeroth"
-        |> Scroll.sideAlter After
-            (\_ -> topDown "first" [ "second" ])
-        |> Scroll.sideAlter After
-            (Stack.map String.toUpper)
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown "first" [ "second" ] )
+        |> Scroll.sideAlter
+            ( Up, Stack.map (\_ -> String.toUpper) )
         |> Scroll.toStack
     --> topDown "zeroth" [ "FIRST", "SECOND" ]
 
-Look to one [side](#Side) from the focus
+Look to one [side](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) from the focus
 and slide items in directly at the nearest location.
 
 
-#### `sideAlter Side (Stack.glueOnTop/stackOnTop ...)`
+#### `sideAlter ( DirectionLinear, Stack.onTopGlue/onTopStack 🍒🍋 )`
 
-`Before`
+`Down`
 
 ```monospace
       🍒🍋
 🍍 🍓 \↓/ <🍊> 🍉
 ```
 
-`After`
+`Up`
 
 ```monospace
         🍒🍋
 🍓 <🍊> \↓/ 🍉 🍇
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..))
 
     Scroll.only 0
-        |> Scroll.sideAlter Before
-            (Stack.glueOnTop [ -4, -5 ])
-        |> Scroll.sideAlter Before
-            (Stack.stackOnTop (topDown -1 [ -2, -3 ]))
+        |> Scroll.sideAlter
+            ( Down, Stack.onTopGlue [ -4, -5 ] )
+        |> Scroll.sideAlter
+            ( Down, Stack.onTopStack (topDown -1 [ -2, -3 ]) )
         |> Scroll.toStack
     --> topDown -5 [ -4, -3, -2, -1, 0 ]
 
     Scroll.only 0
-        |> Scroll.sideAlter After
-            (Stack.glueOnTop [ 4, 5 ])
-        |> Scroll.sideAlter After
-            (Stack.stackOnTop (topDown 1 [ 2, 3 ]))
+        |> Scroll.sideAlter
+            ( Up, Stack.onTopGlue [ 4, 5 ] )
+        |> Scroll.sideAlter
+            ( Up, Stack.onTopStack (topDown 1 [ 2, 3 ]) )
         |> Scroll.toStack
     --> topDown 0 [ 1, 2, 3, 4, 5 ]
 
 
-#### `Scroll.sideAlter Side (\side -> ... |> stackOnTop side)`
+#### `Scroll.sideAlter ( DirectionLinear, \side -> 🍒🍋 |> onTopStack side )`
 
-`Before`
+`Down`
 
 ```monospace
-🍒🍋
+🍋🍒
  \↓ 🍍 🍓 <🍊> 🍉
 ```
 
-`After`
+`Up`
 
 ```monospace
               🍒🍋
 🍓 <🍊> 🍉 🍇 ↓/
 ```
 
-    import Stack exposing (topDown, stackOnTop)
-    import Scroll exposing (Side(..), focusItemEnd)
+    import Linear exposing (DirectionLinear(..))
+    import Stack exposing (topDown, onTopStack)
 
     Scroll.only 1
-        |> Scroll.sideAlter After
-            (\after -> topDown 2 [ 3, 4 ] |> stackOnTop after)
-        |> focusItemEnd After
-        |> Scroll.sideAlter Before
-            (\before -> topDown 7 [ 6, 5 ] |> stackOnTop before)
+        |> Scroll.sideAlter
+            ( Up, \after -> topDown 2 [ 3, 4 ] |> onTopStack after )
+        |> Scroll.toEnd Up
+        |> Scroll.sideAlter
+            ( Down, \before -> topDown 7 [ 6, 5 ] |> onTopStack before )
         |> Scroll.toStack
     --> topDown 5 [ 6, 7, 1, 2, 3, 4 ]
 
     Scroll.only 123
-        |> Scroll.sideAlter After
-            (\after -> Stack.only 456 |> stackOnTop after)
-        |> Scroll.sideAlter After
-            (\after -> topDown 789 [ 0 ] |> stackOnTop after)
+        |> Scroll.sideAlter
+            ( Up, \after -> Stack.only 456 |> onTopStack after )
+        |> Scroll.sideAlter
+            ( Up, \after -> topDown 789 [ 0 ] |> onTopStack after )
         |> Scroll.toStack
     --> topDown 123 [ 456, 789, 0 ]
 
+
+#### `sideAlter ( DirectionLinear,`[`Stack.onTopLay`](Stack#onTopLay) `... )`
+
+`Down`
+
+```monospace
+      🍒
+🍍 🍓 ↓ <🍊> 🍉
+```
+
+
+#### `Up`
+
+```monospace
+        🍒
+🍓 <🍊> ↓ 🍉 🍇
+```
+
+    import Linear exposing (DirectionLinear(..))
+    import Stack exposing (topDown, onTopLay)
+
+    Scroll.only 123
+        |> Scroll.sideAlter
+            ( Down, onTopLay 456 )
+        |> Scroll.toStack
+    --> topDown 456 [ 123 ]
+
+    Scroll.only 123
+        |> Scroll.sideAlter
+            ( Up, \_ -> Stack.only 789 )
+        |> Scroll.sideAlter
+            ( Up, onTopLay 456 )
+        |> Scroll.toStack
+    --> topDown 123 [ 456, 789 ]
+
 -}
 sideAlter :
-    Side
-    ->
-        (Hand (Stacked item) Possibly Empty
-         -> Hand (Stacked item) possiblyOrNever_ Empty
-        )
-    -> Scroll item possiblyOrNever FocusedOnGap
-    -> Scroll item possiblyOrNever FocusedOnGap
-sideAlter side_ sideStackAlter =
-    let
-        alterSideStack sideStack =
-            sideStack
-                |> sideStackAlter
-                |> Hand.adaptTypeEmpty (\_ -> Possible)
-    in
-    case side_ of
-        Before ->
-            focusSidesMap
-                { before = alterSideStack
-                , focus = identity
-                , after = identity
-                }
+    ( DirectionLinear
+    , Hand (Stacked item) Possibly Empty
+      -> Hand (Stacked item) possiblyOrNever_ Empty
+    )
+    -> Scroll item possiblyOrNever FocusGap
+    -> Scroll item possiblyOrNever FocusGap
+sideAlter ( facedSide, sideStackAlter ) =
+    \scroll ->
+        scroll
+            |> focusSidesMap
+                { side =
+                    \stackSide ->
+                        if stackSide == facedSide then
+                            \sideStack ->
+                                sideStack
+                                    |> sideStackAlter
+                                    |> Hand.emptyAdapt (\_ -> Possible)
 
-        After ->
-            focusSidesMap
-                { before = identity
+                        else
+                            identity
                 , focus = identity
-                , after = alterSideStack
                 }
 
 
-{-| Swap the [stack](Stack) on the [`side Before`](#side) the [`focus`](#focus)
-with the [stack](Stack) on the [`side After`](#side) it.
+{-| Swap the [stack](Stack) on the [`side Down`](#side) the [`focus`](#focus)
+with the [stack](Stack) on the [`side Up`](#side).
 
 ```monospace
 🍓 <🍊> 🍉 🍇  <->  🍇 🍉 <🍊> 🍓
 ```
 
+    import Linear exposing (DirectionLinear(..))
+    import Stack exposing (topDown)
+
     Scroll.only 1
-        |> Scroll.sideAlter After
-            (\_ -> topDown 2 [ 3, 4 ])
-        |> Scroll.sideAlter Before
-            (\_ -> topDown 4 [ 3, 2 ])
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 2 [ 3, 4 ] )
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown 4 [ 3, 2 ] )
 
 In contrast to `List` or [stack](Stack), this can be done in `O(1)` time.
 
 -}
 mirror :
-    Scroll item possiblyOrNever FocusedOnGap
-    -> Scroll item possiblyOrNever FocusedOnGap
+    Scroll item possiblyOrNever FocusGap
+    -> Scroll item possiblyOrNever FocusGap
 mirror =
     \(BeforeFocusAfter before_ focus_ after_) ->
         BeforeFocusAfter after_ focus_ before_
@@ -1121,15 +1212,15 @@ mirror =
 
 {-| Change every item based on its current value.
 
+    import Linear exposing (DirectionLinear(..))
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..))
 
     Scroll.only "first"
-        |> Scroll.sideAlter Before
-            (\_ -> Stack.only "zeroth")
-        |> Scroll.sideAlter After
-            (\_ -> topDown "second" [ "third" ])
-        |> Scroll.map String.toUpper
+        |> Scroll.sideAlter
+            ( Down, \_ -> Stack.only "zeroth" )
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown "second" [ "third" ] )
+        |> Scroll.map (\_ -> String.toUpper)
         |> Scroll.toStack
     --> topDown "ZEROTH" [ "FIRST", "SECOND", "THIRD" ]
 
@@ -1137,49 +1228,172 @@ mirror =
 
 -}
 map :
-    (item -> itemMapped)
-    -> Scroll item possiblyOrNever FocusedOnGap
-    -> Scroll itemMapped possiblyOrNever FocusedOnGap
+    (Location -> item -> mappedItem)
+    -> Scroll item possiblyOrNever FocusGap
+    -> Scroll mappedItem possiblyOrNever FocusGap
 map changeItem =
     \scroll ->
         scroll
             |> focusSidesMap
-                { before = Stack.map changeItem
-                , focus = fillMap changeItem
-                , after = Stack.map changeItem
+                { side =
+                    \side_ ->
+                        Stack.map
+                            (\{ index } ->
+                                changeItem (AtSide side_ index)
+                            )
+                , focus = fillMap (changeItem AtFocus)
                 }
 
 
+{-| Fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+from the first item [`Up|Down`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+as the initial accumulation value.
+
+    import Linear exposing (DirectionLinear(..))
+    import Stack exposing (topDown)
+
+    Scroll.only 234
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 345 [ 543 ] )
+        |> Scroll.fold ( Up, max )
+    --> 543
+
+-}
+fold :
+    ( DirectionLinear
+    , item -> item -> item
+    )
+    -> Scroll item Never FocusGap
+    -> item
+fold ( direction, reduce ) =
+    \scroll ->
+        (scroll |> side (direction |> Linear.opposite))
+            |> onTopLay
+                (scroll
+                    |> side direction
+                    |> onTopLay (scroll |> focusItem)
+                    |> Stack.fold reduce
+                )
+            |> Stack.fold reduce
+
+
+{-| Reduce in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+
+    import Linear exposing (DirectionLinear(..))
+    import Stack exposing (topDown)
+
+    Scroll.only 'e'
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown 'v' [ 'i', 'l' ] )
+        |> Scroll.foldFrom ( "", Down, String.cons )
+    --> "live"
+
+    Scroll.only 'e'
+        |> Scroll.sideAlter
+            ( Down, \_ -> topDown 'v' [ 'i', 'l' ] )
+        |> Scroll.foldFrom ( "", Up, String.cons )
+    --> "evil"
+
+-}
+foldFrom :
+    ( accumulationValue
+    , DirectionLinear
+    , item -> accumulationValue -> accumulationValue
+    )
+    -> Scroll item Never FocusGap
+    -> accumulationValue
+foldFrom ( accumulationValueInitial, direction, reduce ) =
+    \(BeforeFocusAfter before focus_ after) ->
+        after
+            |> Stack.foldFrom
+                ( before
+                    |> onTopLay (focus_ |> fill)
+                    |> Stack.foldFrom
+                        ( accumulationValueInitial
+                        , direction |> Linear.opposite
+                        , reduce
+                        )
+                , direction
+                , reduce
+                )
+
+
 {-| Alter the focus – [item or gap](Hand) – based on its current value.
+
+
+#### `Scroll.focusAlter (\_ -> 🍊 |> filled)`
+
+```monospace
+🍊  ->  🍓 <?> 🍉  ->  🍓 <🍊> 🍉
+```
+
+    import Linear exposing (DirectionLinear(..))
+    import Hand exposing (filled, fillMap)
+    import Stack exposing (topDown, onTopLay)
+
+    Scroll.empty
+            -- <>
+        |> Scroll.sideAlter
+            ( Down, onTopLay "🍓" )
+            -- "🍓" <>
+        |> Scroll.sideAlter
+            ( Up, onTopLay "🍉" )
+            -- "🍓" <> "🍉"
+        |> Scroll.focusAlter (\_ -> "🍊" |> filled)
+            -- "🍓" <"🍊"> "🍉"
+        |> Scroll.toStack
+    --> topDown "🍓" [ "🍊", "🍉" ]
+
+
+#### `Scroll.focusAlter (\_ -> Hand.empty)`
+
+```monospace
+🍓 <?> 🍉  ->  🍓 <> 🍉
+```
+
+    import Linear exposing (DirectionLinear(..))
+    import Hand exposing (filled, fillMap)
+    import Stack exposing (topDown)
+
+    Scroll.only "hello"
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown "scrollable" [ "world" ] )
+        |> Scroll.to (Up |> Scroll.nearest)
+        |> fillMap (Scroll.focusAlter (\_ -> Hand.empty))
+        |> fillMap Scroll.toList
+    --> filled [ "hello", "world" ]
+
+
+#### `Scroll.focusAlter (?🍒 -> ?🍊)`
 
 ```monospace
 (?🍒 -> ?🍊)  ->  🍓 <?🍒> 🍉  ->  🍓 <?🍊> 🍉
 ```
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (filled, fillMap)
-    import Stack exposing (topDown)
-    import Scroll exposing (focusAlter)
-
-    focusRemove =
-        focusAlter (\_ -> Hand.empty)
+    import Stack exposing (topDown, onTopLay)
 
     Scroll.empty
             -- <>
-        |> Scroll.insert Before "🍓"
+        |> Scroll.sideAlter
+            ( Down, onTopLay "🍓" )
             -- "🍓" <>
-        |> Scroll.insert After "🍉"
+        |> Scroll.sideAlter
+            ( Up, onTopLay "🍉" )
             -- "🍓" <> "🍉"
-        |> focusAlter (\_ -> filled "🍊")
+        |> Scroll.focusAlter
+            (\_ -> filled "🍊")
             -- "🍓" <"🍊"> "🍉"
         |> Scroll.toStack
     --> topDown "🍓" [ "🍊", "🍉" ]
 
     Scroll.only "first"
-        |> Scroll.sideAlter Before
-            (\_ -> Stack.only "zeroth")
-        |> Scroll.sideAlter After
-            (\_ -> topDown "second" [ "third" ])
-        |> focusAlter (fillMap String.toUpper)
+        |> Scroll.sideAlter
+            ( Down, \_ -> Stack.only "zeroth" )
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown "second" [ "third" ] )
+        |> Scroll.focusAlter (fillMap String.toUpper)
         |> Scroll.toStack
     --> topDown "zeroth" [ "FIRST", "second", "third" ]
 
@@ -1188,85 +1402,95 @@ focusAlter :
     (Hand item possiblyOrNever Empty
      -> Hand item possiblyOrNeverAltered Empty
     )
-    -> Scroll item possiblyOrNever FocusedOnGap
-    -> Scroll item possiblyOrNeverAltered FocusedOnGap
+    -> Scroll item possiblyOrNever FocusGap
+    -> Scroll item possiblyOrNeverAltered FocusGap
 focusAlter focusHandAlter =
-    \scroll ->
+    \(BeforeFocusAfter before focus_ after) ->
         BeforeFocusAfter
-            (scroll |> side Before)
-            (scroll |> focus |> focusHandAlter)
-            (scroll |> side After)
+            before
+            (focus_ |> focusHandAlter)
+            after
 
 
 {-| Change the [`focus`](#focus),
-the [`side`](#side)s `Before` and `After`
+the [`side`](#side)s `Down` and `Up`
 using different functions.
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (filled, fillMap)
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusSidesMap, focusGap, focusAlter)
 
     Scroll.only "first"
-        |> Scroll.sideAlter After
-            (\_ -> Stack.only "second")
-        |> focusGap After
-        |> focusAlter (\_ -> filled "one-and-a-halfth")
-        |> focusSidesMap
-            { before =
-                Stack.map (\item -> "before: " ++ item)
+        |> Scroll.sideAlter
+            ( Up, \_ -> Stack.only "second" )
+        |> Scroll.toGap Up
+        |> Scroll.focusAlter (\_ -> filled "one-and-a-halfth")
+        |> Scroll.focusSidesMap
+            { side =
+                \side ->
+                    Stack.map
+                        (\_ item ->
+                            String.concat
+                                [ side |> sideToString, ": ", item ]
+                        )
             , focus =
                 fillMap (\item -> "focused item: " ++ item)
-            , after =
-                Stack.map (\item -> "after: " ++ item)
             }
         |> Scroll.toStack
-    --> topDown
-    -->     "before: first"
-    -->     [ "focused item: one-and-a-halfth"
-    -->     , "after: second"
-    -->     ]
+    --→
+    topDown
+        "before: first"
+        [ "focused item: one-and-a-halfth"
+        , "after: second"
+        ]
 
-[`map`](#map) transforms every item
-independent of its location relative to the [`focus`](#focus).
+    sideToString =
+        \side ->
+            case side of
+                Down ->
+                    "before"
+
+                Up ->
+                    "after"
+
+[`map`](#map) transforms every item.
 
 -}
 focusSidesMap :
-    { before :
-        Hand (Stacked item) Possibly Empty
-        -> Hand (Stacked itemMapped) possiblyOrNeverMappedBefore_ Empty
-    , focus :
+    { focus :
         Hand item possiblyOrNever Empty
-        -> Hand itemMapped possiblyOrNeverMapped Empty
-    , after :
-        Hand (Stacked item) Possibly Empty
-        -> Hand (Stacked itemMapped) possiblyOrNeverMappedAfter_ Empty
+        -> Hand mappedItem possiblyOrNeverMapped Empty
+    , side :
+        DirectionLinear
+        -> Hand (Stacked item) Possibly Empty
+        -> Hand (Stacked mappedItem) possiblyOrNeverMappedBefore_ Empty
     }
-    -> Scroll item possiblyOrNever FocusedOnGap
-    -> Scroll itemMapped possiblyOrNeverMapped FocusedOnGap
+    -> Scroll item possiblyOrNever FocusGap
+    -> Scroll mappedItem possiblyOrNeverMapped FocusGap
 focusSidesMap changeFocusAndSideStacks =
     \(BeforeFocusAfter sideBefore focus_ sideAfter) ->
         BeforeFocusAfter
             (sideBefore
-                |> changeFocusAndSideStacks.before
-                |> adaptTypeEmpty (\_ -> Possible)
+                |> changeFocusAndSideStacks.side Down
+                |> emptyAdapt (\_ -> Possible)
             )
             (focus_ |> changeFocusAndSideStacks.focus)
             (sideAfter
-                |> changeFocusAndSideStacks.after
-                |> adaptTypeEmpty (\_ -> Possible)
+                |> changeFocusAndSideStacks.side Up
+                |> emptyAdapt (\_ -> Possible)
             )
 
 
 {-| Converts it to a `List`, rolled out to both ends:
 
+    import Linear exposing (DirectionLinear(..))
     import Stack
-    import Scroll exposing (Side(..))
 
     Scroll.only 456
-        |> Scroll.sideAlter Before
-            (\_ -> Stack.only 123)
-        |> Scroll.sideAlter After
-            (\_ -> Stack.only 789)
+        |> Scroll.sideAlter
+            ( Down, \_ -> Stack.only 123 )
+        |> Scroll.sideAlter
+            ( Up, \_ -> Stack.only 789 )
         |> Scroll.toList
     --> [ 123, 456, 789 ]
 
@@ -1274,7 +1498,7 @@ Only use this if you need a list in the end.
 Otherwise, use [`toStack`](#toStack) to preserve some information about its length.
 
 -}
-toList : Scroll item possiblyOrNever_ FocusedOnGap -> List item
+toList : Scroll item possiblyOrNever_ FocusGap -> List item
 toList =
     \scroll ->
         scroll
@@ -1284,37 +1508,37 @@ toList =
 
 {-| Roll out the `Scroll` to both ends into a [`Stack`](Stack):
 
+    import Linear exposing (DirectionLinear(..))
     import Hand exposing (filled)
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusGap, focusAlter)
 
     Scroll.empty
         |> Scroll.toStack
     --> Hand.empty
 
     Scroll.only 123
-        |> Scroll.sideAlter After
-            (\_ -> Stack.only 789)
-        |> focusGap After
-        |> focusAlter (\_-> filled 456)
+        |> Scroll.sideAlter
+            ( Up, \_ -> Stack.only 789 )
+        |> Scroll.toGap Up
+        |> Scroll.focusAlter (\_-> filled 456)
         |> Scroll.toStack
     --> topDown 123 [ 456, 789 ]
 
 the type information gets carried over, so
 
-    Item -> Stack.Never
-    Possibly
+    Never Scroll.FocusGap -> Stacked Never Empty
+    Possibly Scroll.FocusGap -> Stacked Possibly Empty
 
 -}
 toStack :
-    Scroll item possiblyOrNever FocusedOnGap
+    Scroll item possiblyOrNever FocusGap
     -> Hand (Stacked item) possiblyOrNever Empty
 toStack =
     \(BeforeFocusAfter before_ focus_ after_) ->
         after_
-            |> stackOnTopTyped
+            |> onTopStackAdapt
                 (focus_ |> fillMapFlat Stack.only)
-            |> stackOnTop
+            |> onTopStack
                 (before_ |> Stack.reverse)
 
 
@@ -1327,25 +1551,25 @@ toStack =
 
     import Hand
     import Stack exposing (topDown)
-    import Scroll exposing (Side(..), focusGap, focusedOnItem)
+    import Linear exposing (DirectionLinear(..))
 
     Scroll.only 3
-        |> Scroll.sideAlter After
-            (\_ -> topDown 2 [ 1 ])
-        |> focusGap After
-        |> focusedOnItem
+        |> Scroll.sideAlter
+            ( Up, \_ -> topDown 2 [ 1 ] )
+        |> Scroll.toGap Up
+        |> Scroll.focusItemTry
     --> Hand.empty
 
 -}
-focusedOnItem :
-    Scroll item possiblyOrNever FocusedOnGap
-    -> Hand (Scroll item never_ FocusedOnGap) possiblyOrNever Empty
-focusedOnItem =
+focusItemTry :
+    Scroll item possiblyOrNever FocusGap
+    -> Hand (Scroll item never_ FocusGap) possiblyOrNever Empty
+focusItemTry =
     \scroll ->
         (scroll |> focus)
             |> Hand.fillMap
                 (\focusedItem_ ->
-                    scroll |> focusAlter (\_ -> filled focusedItem_)
+                    scroll |> focusAlter (\_ -> focusedItem_ |> filled)
                 )
 
 
@@ -1355,26 +1579,27 @@ focusedOnItem =
 
 {-| Change the `possiblyOrNever` type
 
-  - A `Scroll ... possiblyOrNever FocusedOnGap`
+  - A `Scroll ... possiblyOrNever FocusGap`
     can't be used as a `Scroll ... Possibly`?
 
         import Possibly exposing (Possibly(..))
 
-        Scroll.adaptTypeFocusedOnGap (always Possible)
+        Scroll.focusGapAdapt (always Possible)
 
-  - A `Scroll ... Never FocusedOnGap`
-    can't be unified with `Scroll ... Possibly` or `possiblyOrNever FocusedOnGap`?
+  - A `Scroll ... Never FocusGap`
+    can't be unified with `Scroll ... Possibly` or `possiblyOrNever FocusGap`?
 
-        Scroll.adaptTypeFocusedOnGap never
+        Scroll.focusGapAdapt never
 
-Please read more at [`Hand.adaptTypeEmpty`](Hand#adaptTypeEmpty).
+Please read more at [`Hand.emptyAdapt`](Hand#emptyAdapt).
 
 -}
-adaptTypeFocusedOnGap :
-    (possiblyOrNever -> possiblyOrNeverAdapted)
-    -> Scroll item possiblyOrNever FocusedOnGap
-    -> Scroll item possiblyOrNeverAdapted FocusedOnGap
-adaptTypeFocusedOnGap neverOrAlwaysPossible =
+focusGapAdapt :
+    (possiblyOrNever -> adaptedPossiblyOrNever)
+    -> Scroll item possiblyOrNever FocusGap
+    -> Scroll item adaptedPossiblyOrNever FocusGap
+focusGapAdapt neverOrAlwaysPossible =
     \scroll ->
         scroll
-            |> focusAlter (Hand.adaptTypeEmpty neverOrAlwaysPossible)
+            |> focusAlter
+                (Hand.emptyAdapt neverOrAlwaysPossible)

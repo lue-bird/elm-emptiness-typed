@@ -2,11 +2,11 @@ module Hand exposing
     ( Hand(..), Empty
     , empty, filled, fromMaybe
     , fillMap, fillMapFlat
+    , fillAnd
     , flatten
-    , fill, fillOrWhenEmpty
+    , fill, fillElseOnEmpty
     , toMaybe
-    , feedFill, alterFill
-    , adaptTypeEmpty
+    , emptyAdapt
     )
 
 {-| An emptiable-able value.
@@ -46,30 +46,15 @@ stops the compiler from creating a constructor function for `Model`.
 ## transform
 
 @docs fillMap, fillMapFlat
-
-[`feedFill`](#feedFill) comes in handy when multiple arguments need to be [`filled`](#filled):
-
-    import Hand exposing (filled, fillMapFlat, feedFill)
-
-    (\a b c -> ( a, b, c ))
-        |> feedFill (filled 3)
-        |> fillMapFlat (feedFill (filled 4))
-        |> fillMapFlat (feedFill (filled 5))
-    --> filled ( 3, 4, 5 )
-
+@docs fillAnd
 @docs flatten
-@docs fill, fillOrWhenEmpty
+@docs fill, fillElseOnEmpty
 @docs toMaybe
-
-
-## transform other data
-
-@docs feedFill, alterFill
 
 
 ## type-level
 
-@docs adaptTypeEmpty
+@docs emptyAdapt
 
 -}
 
@@ -197,33 +182,33 @@ toMaybe =
 fill : Hand fill Never Empty -> fill
 fill =
     \handFilled ->
-        handFilled |> fillOrWhenEmpty never
+        handFilled |> fillElseOnEmpty never
 
 
 {-| Lazily use a fallback value if the [`Hand`](#Hand) is [`empty`](#empty).
 
     import Possibly exposing (Possibly(..))
-    import Hand exposing (Hand(..), fillOrWhenEmpty)
+    import Hand exposing (Hand(..), fillElseOnEmpty)
     import Dict
 
     Dict.empty
         |> Dict.get "Hannah"
         |> Hand.fromMaybe
-        |> fillOrWhenEmpty (\_ -> "unknown")
+        |> fillElseOnEmpty (\_ -> "unknown")
     --> "unknown"
 
     fill =
-        fillOrWhenEmpty never
+        fillElseOnEmpty never
 
     fatten =
-        fillOrWhenEmpty Empty
+        fillElseOnEmpty Empty
 
 -}
-fillOrWhenEmpty :
+fillElseOnEmpty :
     (possiblyOrNever -> fill)
     -> Hand fill possiblyOrNever Empty
     -> fill
-fillOrWhenEmpty fallbackWhenEmpty =
+fillElseOnEmpty fallbackWhenEmpty =
     \hand ->
         case hand of
             Filled fill_ ->
@@ -279,15 +264,15 @@ or [`flatMap`](https://package.elm-lang.org/packages/ccapndave/elm-flat-map/1.2.
     extraValidation : Parsed -> Hand Parsed Possibly Empty
 
 For any number of arguments:
-[`feedFill`](#feedFill)`|> fillMapFlat (feedFill ...) |> ... |>`[`flatten`](#flatten):
+[`fillAnd`](#fillAnd)`... |> ... |>`[`fillMapFlat`](#fillMapFlat):
 
-    import Hand exposing (filled, fillMapFlat, feedFill)
+    import Hand exposing (filled, fillMapFlat, fillAnd)
 
-    (\a b c -> filled ( a, b, c ))
-        |> feedFill (filled 3)
-        |> fillMapFlat (feedFill (filled 4))
-        |> fillMapFlat (feedFill (filled 5))
-        |> Hand.flatten
+    (filled 3)
+        |> fillAnd (filled 4)
+        |> fillAnd (filled 5)
+        |> fillMapFlat
+            (\( ( a, b ), c ) -> filled ( a, b, c ))
     --> filled ( 3, 4, 5 )
 
 -}
@@ -324,73 +309,40 @@ flatten :
     -> Hand fill possiblyOrNever Empty
 flatten =
     \hand ->
-        hand |> fillOrWhenEmpty Empty
+        hand |> fillElseOnEmpty Empty
 
 
-{-| If the given function is [`filled`](#filled), alter the incoming value.
+{-| If the incoming food and the given argument are
+[`filled`](#filled), give a [`filled`](#filled) tuple of both [`fill`](#fill)s back.
 
-    import Hand exposing (filled, alterFill, feedFill)
-    import Stack exposing (topDown, layOnTop)
+If any is [`empty`](#empty), give a [`Hand.empty`](#empty) back.
 
-    Stack.only 'u'
-        |> alterFill (layOnTop |> feedFill (filled '*'))
-        |> alterFill (layOnTop |> feedFill Hand.empty)
-    --> topDown '*' [ 'u' ]
-    --: Hand (Stacked Char) Possibly Empty
+[`fillAnd`](#fillAnd) comes in handy when **multiple arguments** need to be [`filled`](#filled):
 
--}
-alterFill :
-    Hand (food -> food) possiblyOrNever_ Empty
-    -> food
-    -> food
-alterFill handAlterFood =
-    case handAlterFood of
-        Filled alterFood ->
-            \food -> food |> alterFood
+    import Hand exposing (filled, fillMap, fillAnd)
 
-        Empty _ ->
-            \food -> food
-
-
-{-| If the given argument is
-
-  - [`filled`](#filled), give its [`fill`](#fill) to the incoming function.
-
-  - [`empty`](#empty), come back with [`Hand.empty`](#empty):
-
-```
-import Hand exposing (filled, feedFill)
-
-(\n -> n + 2) |> feedFill (filled 3)
---> filled 5
-
-(\n -> n + 2) |> feedFill Hand.empty
---> Hand.empty
-```
-
-> That's just `fillMap` with flipped arguments
-
-you're completely right.
-
-[`feedFill`](#feedFill) comes in handy when multiple arguments need to be [`filled`](#filled):
-
-    import Hand exposing (filled, fillMapFlat, feedFill)
-
-    (\a b c -> ( a, b, c ))
-        |> feedFill (filled 3)
-        |> fillMapFlat (feedFill (filled 4))
-        |> fillMapFlat (feedFill (filled 5))
-    --> filled ( 3, 4, 5 )
+    filled 3
+        |> fillAnd (filled 4)
+        |> fillAnd (filled 5)
+        |> fillMap (\( ( a0, a1 ), a2 ) -> a0^a1 - a2^2)
+    --> filled 56
 
 -}
-feedFill :
-    Hand argument possiblyOrNever Empty
-    -> (argument -> applied)
-    -> Hand applied possiblyOrNever Empty
-feedFill handArgument =
-    \function ->
-        fillMap (\argument -> function argument)
-            handArgument
+fillAnd :
+    Hand anotherFill possiblyOrNever Empty
+    -> Hand fill possiblyOrNever Empty
+    -> Hand ( fill, anotherFill ) possiblyOrNever Empty
+fillAnd argument =
+    \soFar ->
+        case ( soFar, argument ) of
+            ( Filled soFarFill, Filled argumentFill ) ->
+                ( soFarFill, argumentFill ) |> Filled
+
+            ( Empty possible, _ ) ->
+                Empty possible
+
+            ( _, Empty possible ) ->
+                Empty possible
 
 
 
@@ -415,7 +367,7 @@ An `Empty possiblyOrNever` can't be used as `Empty Possibly`
     fromStack stackFilled =
         stackFilled
             --: `possiblyOrNever_` but we need `Possibly`
-            |> Hand.adaptTypeEmpty (always Possible)
+            |> Hand.emptyAdapt (always Possible)
 
 
 #### An argument or a type declaration value is `Empty Never`
@@ -436,16 +388,16 @@ The `Never Empty` can't be unified with `Possibly Empty` or a type variable
         else
             aStack
                 --: `Never` but we need `possiblyOrNever`
-                |> Hand.adaptTypeEmpty never
+                |> Hand.emptyAdapt never
 
 makes both branches return `possiblyOrNever`.
 
 -}
-adaptTypeEmpty :
-    (possiblyOrNever -> possiblyOrNeverAdapted)
+emptyAdapt :
+    (possiblyOrNever -> adaptedPossiblyOrNever)
     -> Hand fill possiblyOrNever Empty
-    -> Hand fill possiblyOrNeverAdapted Empty
-adaptTypeEmpty neverOrAlwaysPossible =
+    -> Hand fill adaptedPossiblyOrNever Empty
+emptyAdapt neverOrAlwaysPossible =
     \handFilled ->
         case handFilled of
             Empty possiblyOrNever ->

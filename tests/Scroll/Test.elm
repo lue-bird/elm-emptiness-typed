@@ -1,18 +1,20 @@
 module Scroll.Test exposing (tests)
 
-import Expect
+import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
 import Hand exposing (fillMapFlat, filled)
-import Scroll exposing (Side(..), focusGap, focusGapBeyondEnd, focusItem, focusItemEnd, sideOpposite)
-import Stack exposing (removeTop, top)
-import Stack.Test exposing (expectEqualStack, fuzzStackFilled)
+import Linear exposing (DirectionLinear(..))
+import Possibly exposing (Possibly)
+import Scroll exposing (FocusGap, Scroll)
+import Stack exposing (top, topRemove)
+import Stack.Test exposing (expectEqualStack, stackFilledFuzz, stackFuzz)
 import Test exposing (Test, describe, test)
 
 
 tests : Test
 tests =
     describe "Scroll"
-        [ describe "alter" [ glueToEndTest ]
+        [ describe "alter" [ glueToEndTest, mirrorTest ]
         , describe "navigate" [ focusItemTest ]
         , describe "transform" [ toStackTest ]
         ]
@@ -22,24 +24,42 @@ tests =
 -- alter
 
 
+mirrorTest : Test
+mirrorTest =
+    describe "mirror"
+        [ Test.fuzz
+            (scrollFuzz Fuzz.int)
+            "(mirror >> mirror) = identity"
+            (\scroll ->
+                scroll
+                    |> Scroll.mirror
+                    |> Scroll.mirror
+                    |> expectEqualScroll scroll
+            )
+        ]
+
+
 glueToEndTest : Test
 glueToEndTest =
     describe "sideAlter"
         [ describe "replace"
-            [ Test.fuzz (fuzzStackFilled Fuzz.int)
-                "Before"
+            [ Test.fuzz
+                (stackFilledFuzz Fuzz.int)
+                "Down"
                 (\stack ->
                     Scroll.only (stack |> top)
-                        |> Scroll.sideAlter Before (\_ -> stack |> removeTop)
+                        |> Scroll.sideAlter
+                            ( Down, \_ -> stack |> topRemove )
                         |> Scroll.toStack
                         |> expectEqualStack (stack |> Stack.reverse)
                 )
-            , Test.fuzz (fuzzStackFilled Fuzz.int)
-                "After"
+            , Test.fuzz
+                (stackFilledFuzz Fuzz.int)
+                "Up"
                 (\stack ->
                     Scroll.only (stack |> top)
-                        |> Scroll.sideAlter After
-                            (\_ -> stack |> removeTop)
+                        |> Scroll.sideAlter
+                            ( Up, \_ -> stack |> topRemove )
                         |> Scroll.toStack
                         |> expectEqualStack stack
                 )
@@ -58,68 +78,80 @@ focusItemTest =
             Fuzz.constant
                 (\focus_ sideStack side ->
                     Scroll.only focus_
-                        |> Scroll.sideAlter side (\_ -> sideStack)
+                        |> Scroll.sideAlter
+                            ( side, \_ -> sideStack )
                 )
                 |> Fuzz.andMap Fuzz.int
-                |> Fuzz.andMap (fuzzStackFilled Fuzz.int)
+                |> Fuzz.andMap (stackFilledFuzz Fuzz.int)
 
-        sideAndScrollFuzz scrollFuzz =
+        sideAndScrollFuzz scrollFuzz_ =
             Fuzz.constant
                 (\side scroll ->
-                    { side = side, scroll = scroll side }
+                    { side = side
+                    , scroll = scroll side
+                    }
                 )
                 |> Fuzz.andMap sideFuzz
-                |> Fuzz.andMap scrollFuzz
+                |> Fuzz.andMap scrollFuzz_
     in
-    describe "focusItem"
-        [ Test.fuzz (sideAndScrollFuzz scrollFocusSideFuzz)
-            "items exist on the Side"
+    describe "Scroll.to"
+        [ Test.fuzz
+            (sideAndScrollFuzz scrollFocusSideFuzz)
+            "items exist on the DirectionLinear"
             (\{ scroll, side } ->
                 scroll
-                    |> focusItem side
+                    |> Scroll.to (side |> Scroll.nearest)
                     |> fillMapFlat (Scroll.side side)
                     |> Expect.equal
                         (scroll
                             |> Scroll.side side
-                            |> fillMapFlat (Stack.removeTop << filled)
+                            |> fillMapFlat (Stack.topRemove << filled)
                         )
             )
-        , Test.fuzz (sideAndScrollFuzz scrollFocusSideFuzz)
-            "no items on the Side"
+        , Test.fuzz
+            (sideAndScrollFuzz scrollFocusSideFuzz)
+            "no items on the DirectionLinear"
             (\{ scroll, side } ->
                 scroll
-                    |> focusItem (side |> sideOpposite)
+                    |> Scroll.to
+                        (side |> Linear.opposite |> Scroll.nearest)
                     |> Expect.equal Hand.empty
             )
-        , Test.fuzz (sideAndScrollFuzz scrollFocusSideFuzz)
-            "`(focusGapBeyondEnd Side >> focusItem (Side |> sideOpposite)) == focusItemEnd Side`"
+        , Test.fuzz
+            (sideAndScrollFuzz scrollFocusSideFuzz)
+            "`(Scroll.toEndGap DirectionLinear >> Scroll.to (DirectionLinear |> Linear.opposite)) == Scroll.toEnd DirectionLinear`"
             (\{ scroll, side } ->
                 scroll
-                    |> focusGapBeyondEnd side
-                    |> focusItem (side |> sideOpposite)
+                    |> Scroll.toEndGap side
+                    |> Scroll.to
+                        (side |> Linear.opposite |> Scroll.nearest)
                     |> Expect.equal
-                        (scroll |> focusItemEnd side |> filled)
+                        (scroll |> Scroll.toEnd side |> filled)
             )
-        , Test.fuzz (sideAndScrollFuzz scrollFocusSideFuzz)
-            "`(focusGap Side >> focusItem Side) == focusItem Side`"
+        , Test.fuzz
+            (sideAndScrollFuzz scrollFocusSideFuzz)
+            "`(Scroll.toGap DirectionLinear >> Scroll.to DirectionLinear) == Scroll.to DirectionLinear`"
             (\{ scroll, side } ->
                 scroll
-                    |> focusGap side
-                    |> focusItem side
-                    |> Expect.equal (scroll |> focusItem side)
+                    |> Scroll.toGap side
+                    |> Scroll.to (side |> Scroll.nearest)
+                    |> Expect.equal
+                        (scroll |> Scroll.to (side |> Scroll.nearest))
             )
-        , Test.fuzz (sideAndScrollFuzz scrollFocusSideFuzz)
-            "`(focusItemEnd Side >> focusItem Side) == Hand.empty`"
+        , Test.fuzz
+            (sideAndScrollFuzz scrollFocusSideFuzz)
+            "`(Scroll.toEnd DirectionLinear >> Scroll.to DirectionLinear) == Hand.empty`"
             (\{ scroll, side } ->
                 scroll
-                    |> focusItemEnd side
-                    |> focusItem side
+                    |> Scroll.toEnd side
+                    |> Scroll.to (side |> Scroll.nearest)
                     |> Expect.equal Hand.empty
             )
-        , Test.fuzz (sideAndScrollFuzz scrollFocusSideFuzz)
-            "repeating `focusItem Side` length times results in empty"
+        , Test.fuzz
+            (sideAndScrollFuzz scrollFocusSideFuzz)
+            "repeating `Scroll.to (DirectionLinear |> Scroll.nearest)` length times results in empty"
             (\{ scroll, side } ->
-                focusItem side
+                Scroll.to (side |> Scroll.nearest)
                     |> List.repeat
                         (1 + (scroll |> Scroll.side side |> Stack.length))
                     |> List.foldl fillMapFlat (scroll |> filled)
@@ -154,9 +186,39 @@ toStackTest =
 -- common
 
 
-sideFuzz : Fuzzer Side
+expectEqualScroll :
+    Scroll item possiblyOrNever FocusGap
+    -> Scroll item possiblyOrNever FocusGap
+    -> Expectation
+expectEqualScroll expectedScroll =
+    \actualScroll ->
+        actualScroll
+            |> Expect.equal expectedScroll
+
+
+sideFuzz : Fuzzer DirectionLinear
 sideFuzz =
     Fuzz.oneOf
-        [ Before |> Fuzz.constant
-        , After |> Fuzz.constant
+        [ Down |> Fuzz.constant
+        , Up |> Fuzz.constant
         ]
+
+
+scrollFuzz : Fuzzer item -> Fuzzer (Scroll item Possibly FocusGap)
+scrollFuzz itemFuzz =
+    Fuzz.constant
+        (\before focusOnly after ->
+            focusOnly
+                |> Scroll.sideAlter
+                    ( Down, \_ -> before )
+                |> Scroll.sideAlter
+                    ( Up, \_ -> after )
+        )
+        |> Fuzz.andMap (stackFuzz itemFuzz)
+        |> Fuzz.andMap
+            (Fuzz.oneOf
+                [ Scroll.empty |> Fuzz.constant
+                , itemFuzz |> Fuzz.map Scroll.only
+                ]
+            )
+        |> Fuzz.andMap (stackFuzz itemFuzz)

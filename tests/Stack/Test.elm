@@ -1,16 +1,18 @@
-module Stack.Test exposing (expectEqualStack, fuzzStackFilled, tests)
+module Stack.Test exposing (expectEqualStack, stackFilledFuzz, stackFuzz, tests)
 
 import Expect
 import Fuzz exposing (Fuzzer)
 import Hand exposing (Empty, Hand)
-import Stack exposing (Stacked, removeTop, top, topDown)
+import Possibly exposing (Possibly)
+import Stack exposing (Stacked, top, topDown, topRemove)
 import Test exposing (Test, describe)
 
 
 tests : Test
 tests =
     describe "Stack"
-        [ Test.fuzz
+        [ describe "alter" [ reverseTest ]
+        , Test.fuzz
             (Fuzz.list Fuzz.int)
             "fromList |> toList = identity"
             (\list ->
@@ -32,14 +34,42 @@ tests =
                         )
             )
         , Test.fuzz
-            (fuzzStackFilled Fuzz.int)
-            "topDown: top=head removeTop=tail"
+            (stackFilledFuzz Fuzz.int)
+            "topDown: top=head topRemove=tail"
             (\stackFilled ->
                 stackFilled
                     |> Expect.equal
                         (topDown (stackFilled |> top)
-                            (stackFilled |> removeTop |> Stack.toList)
+                            (stackFilled |> topRemove |> Stack.toList)
                         )
+            )
+        ]
+
+
+reverseTest : Test
+reverseTest =
+    describe "reverse"
+        [ Test.fuzz
+            (stackFuzz Fuzz.int)
+            "(reverse >> toList) = (toList >> reverse)"
+            (\stack ->
+                stack
+                    |> Stack.reverse
+                    |> Stack.toList
+                    |> Expect.equalLists
+                        (stack
+                            |> Stack.toList
+                            |> List.reverse
+                        )
+            )
+        , Test.fuzz
+            (stackFuzz Fuzz.int)
+            "(reverse >> reverse) = identity"
+            (\stack ->
+                stack
+                    |> Stack.reverse
+                    |> Stack.reverse
+                    |> expectEqualStack stack
             )
         ]
 
@@ -59,10 +89,18 @@ expectEqualStack expectedStack =
                 (expectedStack |> Stack.toList)
 
 
-fuzzStackFilled :
+stackFilledFuzz :
     Fuzzer element
     -> Fuzzer (Hand (Stacked element) never_ Empty)
-fuzzStackFilled elementFuzz =
+stackFilledFuzz elementFuzz =
     Fuzz.constant topDown
         |> Fuzz.andMap elementFuzz
         |> Fuzz.andMap (Fuzz.list elementFuzz)
+
+
+stackFuzz :
+    Fuzzer element
+    -> Fuzzer (Hand (Stacked element) Possibly Empty)
+stackFuzz elementFuzz =
+    Fuzz.list elementFuzz
+        |> Fuzz.map Stack.fromList
