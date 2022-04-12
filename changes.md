@@ -4,6 +4,10 @@
 
 # changelog
 
+#### 5.0.1
+
+  - section "`Scroll` alternatives" `mapIndexed`, `mapOver` → `map (Location -> ...)` missing
+
 ## 5.0.0
 
   - renamed `module Fillable` to `Hand`
