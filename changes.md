@@ -1,9 +1,13 @@
+## 6.0.0 plans
+
+  - add `bounded-nat` for `length`, `Stack.repeat`, `Stack.range`, `Location`, `Stack.map` etc.
+
 # changelog
 
 ## 5.0.0
 
-  - renamed `Fillable` module to `Hand`
-      - replaced `Empty possiblyOrNever fill` with
+  - renamed `module Fillable` to `Hand`
+      - replaced `type Empty possiblyOrNever fill` with
         ```elm
         type Hand fill possiblyOrNever emptyTag = ..as before..
 
@@ -11,17 +15,15 @@
             = EmptyTag Never
         ```
       - renamed `filling` to `fill`
-      - renamed `toFillingOrIfEmpty` to `fillOrWhereEmpty`
+      - renamed `toFillingOrIfEmpty` to `fillElseOnEmpty`
       - renamed `map` to `fillMap`
-      - removed `map2` in favor of `feedFill` pipeline style
-      - removed `ifFilled` in favor of `alterFill`
+      - removed `map2` in favor of `fillAnd` pipeline style
+      - removed `ifFilled`
       - renamed `andThen` to `fillMapFlat`
-      - renamed `adaptType` to `adaptTypeEmpty`
+      - renamed `adaptType` to `emptyAdapt`
       - added `flatten`
-      - added `feedFill`
-      - added `alterFill`
-  - in `Stack`
-      - replaced `StackWithTop`/`StackFilled` type with
+  - in `module Stack`
+      - replaced `StackWithTop`, `StackFilled` type with
         ```elm
         type alias Stacked element =
             StackTopBelow element element
@@ -31,14 +33,41 @@
         ```
       - removed `map2`
       - removed `map2TopAndDown`
-      - removed `splitTop` in favor of `top`, `removeTop`
+      - changed `map (item -> ...)`
+        to `map ({ index : Int } -> item -> ...)`
+      - renamed `mapTop` to `topMap`
+      - renamed `mapBelowTop (item -> ...)`
+        to `belowTopMap ({ index : Int } -> item -> ...)`
+      - renamed `removeTop` to `topRemove`
+      - removed `splitTop` in favor of `top`, `topRemove`
       - renamed `topAndBelow` to `topDown`
       - renamed `fromTopAndBelow` to `fromTopDown`
       - renamed `toTopAndBelow` to `toTopDown`
-      - renamed `addOnTop` to `layOnTop`
+      - renamed `addOnTop` to `onTopLay`
       - renamed `concat` to `flatten`
-      - added `glueOnTop`
-  - renamed `FocusList` module to `Scroll`
+      - renamed `whenFilled` to `fills`
+      - removed `when` in favor of `fills`
+      - renamed `stackOnTop` to `onTopStack`
+      - renamed `stackOnTopTyped` to `onTopStackAdapt`
+      - changed `foldFrom base direction reduce`
+        to `foldFrom ( base, direction, reduce )`
+      - corrected
+        ```elm
+        fold :
+            LinearDirection
+            -> (belowTopElement -> top -> top)
+            -> Empty Never (StackWithTop top belowTopElement)
+            -> top
+        ```
+        to
+        ```elm
+        fold :
+            (belowElement -> top -> top)
+            -> Hand (StackTopBelow top belowElement) Never Empty
+            -> top
+        ```
+      - added `onTopGlue`
+  - renamed `module FocusList` to `Scroll`
       - replaced `ListFocusingGap possibleOrNever item` with
         ```elm
         type alias Scroll item possiblyOrNever focusedOnGapTag =
@@ -47,74 +76,76 @@
                 (Hand item possiblyOrNever focusedOnGapTag)
                 (Hand (StackFilled item) Possibly Empty)
         
-        type FocusedOnGap
-            = FocusedOnGapTag Never
+        type FocusGap
+            = FocusGapTag Never
         ```
       - added
         ```elm
-        type Side
-            = Before
-            | After
+        type Location
+            = AtFocus
+            | AtSide DirectionLinear Int
         ```
-      - renamed `adaptGapType` to `adaptTypeFocusedOnGap`
       - replaced `previous`/`next` with
         ```elm
-        focusItem :
-            Side
-            -> Scroll item possiblyOrNever_ FocusedOnGap
-            -> Hand (Scroll item Never FocusedOnGap) Possibly Empty
+        to :
+            Location
+            -> Scroll item possiblyOrNever_ FocusGap
+            -> Hand (Scroll item Never FocusGap) Possibly Empty
         ```
       - replaced `previousGap`/`nextGap` with
         ```elm
-        focusGap :
-            Side
-            -> Scroll item Never FocusedOnGap
-            -> Scroll item Possibly FocusedOnGap
+        toGap :
+            DirectionLinear
+            -> Scroll item Never FocusGap
+            -> Scroll item Possibly FocusGap
         ```
       - replaced `findForward isFound`/`findBackward isFound` with
         ```elm
-        focusWhere :
-            Side
-            -> (item -> Bool)
-            -> Scroll item possiblyOrNever_ FocusedOnGap
-            -> Hand (Scroll item Never FocusedOnGap) Possibly Empty
+        toWhere :
+            ( DirectionLinear, item -> Bool )
+            -> Scroll item possiblyOrNever_ FocusGap
+            -> Hand (Scroll item Never FocusGap) Possibly Empty
         ```
-      - renamed `removed` to `focusRemove`
-      - removed `alterCurrent` in favor of `focusAlter`
-      - removed `plug` in favor of `focusAlter`
-      - renamed `current` to `focusedItem`
+      - removed `removed`
+        in favor of `focusAlter (\_ -> Hand.empty)`
+      - removed `alterCurrent focusItemAlter`
+        in favor of `focusAlter (Hand.fillMap focusItemAlter)`
+      - removed `plug focusItemNew`
+        in favor of `focusAlter (focusItemNew |> Hand.filled)`
+      - renamed `current` to `focusItem`
       - replaced `first`/`last` with
         ```elm
-        focusItemEnd :
-            Side
-            -> Scroll item possiblyOrNever FocusedOnGap
-            -> Scroll item possiblyOrNever FocusedOnGap
+        toEnd :
+            DirectionLinear
+            -> Scroll item possiblyOrNever FocusGap
+            -> Scroll item possiblyOrNever FocusGap
         ```
       - replaced `beforeFirst`/`afterLast` with
         ```elm
-        focusGapBeyondEnd :
-            Side
-            -> Scroll item possiblyOrNever FocusedOnGap
-            -> Scroll item Possibly FocusedOnGap
+        toEndGap :
+            DirectionLinear
+            -> Scroll item possiblyOrNever FocusGap
+            -> Scroll item Possibly FocusGap
         ```
-      - renamed `focusingItem` to `focusedOnItem`
-      - replaced `before`/`after` with `side Side`
+      - renamed `focusingItem` to `focusItemTry`
+      - replaced `before`/`after` with `side DirectionLinear`
       - replaced `alterBefore`/`alterAfter` with
         ```elm
-        alterSide :
-            Side
-            ->
-                (Hand (StackFilled item) Possibly Empty
-                 -> Hand (StackFilled item) possiblyOrNeverSide_ Empty
-                )
-            -> Scroll item possiblyOrNever FocusedOnGap
-            -> Scroll item possiblyOrNeverAltered FocusedOnGap
+        sideAlter :
+            ( DirectionLinear
+            , Hand (StackFilled item) Possibly Empty
+              -> Hand (StackFilled item) possiblyOrNeverSide_ Empty
+            )
+            -> Scroll item possiblyOrNever FocusGap
+            -> Scroll item possiblyOrNeverAltered FocusGap
         ```
-      - replaced `insertAfter item`/`insertBefore item` with `insert side item`
-      - removed `squeezeInBefore List`/`squeezeInAfter List` in favor of `alterSide (Stack.glueOnTop List)`
-      - removed `squeezeStackInBefore stack`/`squeezeStackInAfter stack` in favor of `alterSide (Stack.stackOnTop stack)`
-      - replaced `prepend/append` with `glueToEnd side`
-      - replaced `prependStack/appendStack` with `stackToEnd side`
+      - removed `insertAfter item`/`insertBefore item` 
+        in favor of `sideAlter ( direction, Stack.onTopLay item )`
+      - removed `squeezeInBefore List`/`squeezeInAfter List` in favor of `sideAlter (Stack.onTopGlue List)`
+      - removed `squeezeStackInBefore stack`/`squeezeStackInAfter stack`
+        in favor of `sideAlter ( DirectionLinear, Stack.onTopStack stack )`
+      - removed `prepend/append/prependStack/appendStack`
+        in favor of `sideAlter ( DirectionLinear, \side -> stack |> Stack.onTopStack/-Glue side )`
       - replaced
         ```elm
         mapParts
@@ -126,25 +157,30 @@
         with
         ```elm
         focusSidesMap
-            { before : ... Stacked item ...
+            { side : DirectionLinear -> ... Stacked item ...
             , focus : Hand item ...
-            , after : ... Stacked item ...
             }
         ```
-      - renamed `adaptHoleType` to `adaptTypeFocusedOnGap`
-      - change `sideAlter (item ...)` to `sideAlter (... Stacked item ...)`
+      - renamed `adaptHoleType` to `focusGapAdapt`
+      - changed `sideAlter (item ...)` to `sideAlter (... Stacked item ...)`
+      - changed `map (item -> ...)` to `map (Location -> item -> ...)`
       - added
         ```elm
-        alterFocus :
+        focusAlter :
             (Hand item possiblyOrNever Empty
              -> Hand item possiblyOrNeverAltered Empty
             )
-            -> Scroll item possiblyOrNever FocusedOnGap
-            -> Scroll item possiblyOrNeverAltered FocusedOnGap
+            -> Scroll item possiblyOrNever FocusGap
+            -> Scroll item possiblyOrNeverAltered FocusGap
         ```
+      - added `sideOpposite`
+      - added `nearest : DirectionLinear -> Location`
+      - added `length`
+      - added `toWhere`
       - added `focusDrag`
       - added `mirror`
-      - added `sideOpposite`
+      - added `fold`
+      - added `foldFrom`
 
 #### 4.1.0
 
