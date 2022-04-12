@@ -1,86 +1,248 @@
-module Examples.Undo.Entire exposing (..)
+module Undo exposing (main)
 
-import Pivot as P exposing (Pivot)
+import Browser
+import Common exposing (interactColor)
+import Element as Ui exposing (rgb, rgba)
+import Element.Background as UiBack
+import Element.Font as Font
+import Element.Input as UIn
+import Hand exposing (Empty, Hand(..), fill, fillMap, fillOrOnEmpty, filled)
+import Html exposing (Html)
+import Linear exposing (DirectionLinear(..))
+import Scroll exposing (FocusGap, Scroll)
+import Stack exposing (Stacked)
 
 
 
 -- This was the model before.
 
 
-type alias Counters =
-    { counter1 : Int
-    , counter2 : Int
+type alias CountersModel =
+    { counter0 : Int
+    , counter1 : Int
     }
 
 
-initRec : Counters
-initRec =
-    { counter1 = 0
-    , counter2 = 0
+countersInitial : CountersModel
+countersInitial =
+    { counter0 = 0
+    , counter1 = 0
     }
 
 
-type RecMsg
-    = NoOp
-    | Inc1
-    | Inc2
 
-
-
--- This was the update function before.
-
-
-updateRec : RecMsg -> Counters -> Counters
-updateRec msgRec rec =
-    case msgRec of
-        Inc1 ->
-            { rec | counter1 = rec.counter1 + 1 }
-
-        Inc2 ->
-            { rec | counter2 = rec.counter2 + 1 }
-
-        NoOp ->
-            rec
-
-
-
--- Now we wrap it all in a pivot.
+-- Now we wrap it all in a Scroll
 
 
 type alias Model =
-    Pivot Counters
+    Scroll CountersModel Never FocusGap
 
 
-init : Model
-init =
-    initRec
-        |> P.singleton
+modelInitial : Model
+modelInitial =
+    countersInitial
+        |> Scroll.only
 
 
-type Msg
-    = New RecMsg
-    | Undo
-    | Redo
+main : Program () Model Event
+main =
+    Browser.element
+        { init = \() -> ( modelInitial, Cmd.none )
+        , view = interface
+        , update =
+            \msg model -> ( update msg model, Cmd.none )
+        , subscriptions = subscribe
+        }
 
 
-update : Msg -> Model -> Model
-update msg model =
-    case msg of
-        Undo ->
-            model
-                |> P.withRollback P.goL
 
-        Redo ->
-            model
-                |> P.withRollback P.goR
+-- This was the update logic before
 
-        New msgRec ->
+
+type CountersEvent
+    = Increment0
+    | Increment1
+
+
+subscribe : Model -> Sub event_
+subscribe =
+    \_ -> Sub.none
+
+
+countersUpdate : CountersEvent -> CountersModel -> CountersModel
+countersUpdate countersEvent counters =
+    case countersEvent of
+        Increment0 ->
+            { counters | counter0 = counters.counter0 + 1 }
+
+        Increment1 ->
+            { counters | counter1 = counters.counter1 + 1 }
+
+
+
+-- Now it's all about Scrolls
+
+
+type Event
+    = CountersChanged CountersEvent
+    | ReturnToState DirectionLinear
+
+
+update : Event -> Model -> Model
+update event eventScroll =
+    case event of
+        ReturnToState side ->
+            eventScroll
+                |> Scroll.toItem (side |> Scroll.nearest)
+                |> fillOrOnEmpty (\_ -> eventScroll)
+
+        CountersChanged countersEvent ->
             let
-                -- Creating the next state.
                 next =
-                    P.getC model
-                        |> updateRec msgRec
+                    eventScroll
+                        |> Scroll.focusItem
+                        |> countersUpdate countersEvent
             in
-            -- Adding the next state.
-            model
-                |> P.appendGoR next
+            -- Adding the next state
+            eventScroll
+                |> Scroll.toGap Up
+                |> Scroll.focusAlter (\_ -> next |> filled)
+
+
+
+--
+
+
+interface : Model -> Html Event
+interface =
+    \eventScroll ->
+        [ eventScroll
+            |> Scroll.focusItem
+            |> countersInterface
+            |> Ui.map CountersChanged
+        , eventScroll
+            |> scrollToEventInterface
+        ]
+            |> Ui.column
+                [ Ui.spacing 58
+                , Ui.centerX
+                , Ui.centerY
+                , Font.color (rgb 1 1 1)
+                , Font.family [ Font.monospace ]
+                , Font.size 50
+                ]
+            |> Ui.layout
+                [ UiBack.color (rgb 0 0 0) ]
+
+
+scrollToEventInterface :
+    Scroll element_ possiblyOrNever_ FocusGap
+    -> Ui.Element Event
+scrollToEventInterface =
+    \eventScroll ->
+        [ eventScroll
+            |> Scroll.side Down
+            |> eventScrollToOneSideInterface Down
+        , eventScroll
+            |> Scroll.side Up
+            |> eventScrollToOneSideInterface Up
+        ]
+            |> Ui.row
+                [ Ui.spacing 6
+                , Ui.centerX
+                ]
+
+
+eventScrollToOneSideInterface :
+    DirectionLinear
+    -> Hand (Stacked element_) possiblyOrNever_ Empty
+    -> Ui.Element Event
+eventScrollToOneSideInterface side =
+    \sideStack ->
+        let
+            length =
+                sideStack |> Stack.length
+        in
+        [ length
+            |> String.fromInt
+            |> Ui.text
+            |> Ui.el
+                [ Font.size 24
+                , Ui.centerX
+                ]
+        , case sideStack of
+            Empty _ ->
+                side
+                    |> timeMovementInterface
+                    |> Ui.el [ Ui.transparent True ]
+
+            Filled _ ->
+                UIn.button []
+                    { onPress = ReturnToState side |> Just
+                    , label =
+                        side
+                            |> timeMovementInterface
+                            |> Ui.el [ Font.color interactColor ]
+                    }
+        ]
+            |> Ui.column []
+
+
+timeMovementInterface : DirectionLinear -> Ui.Element event_
+timeMovementInterface side =
+    side
+        |> timeMovementSymbol
+        |> Ui.text
+
+
+timeMovementSymbol : DirectionLinear -> String
+timeMovementSymbol =
+    \side ->
+        case side of
+            Down ->
+                "⟲"
+
+            Up ->
+                "⟳"
+
+
+
+--
+
+
+countersInterface : CountersModel -> Ui.Element CountersEvent
+countersInterface =
+    \counters ->
+        [ [ counters.counter0 |> counterInterface
+          , Increment0 |> incrementInterface
+          ]
+        , [ counters.counter1 |> counterInterface
+          , Increment1 |> incrementInterface
+          ]
+        ]
+            |> List.map (Ui.column [ Ui.spacing 8 ])
+            |> Ui.row [ Ui.spacing 16 ]
+
+
+counterInterface : Int -> Ui.Element event_
+counterInterface =
+    \counter ->
+        counter
+            |> String.fromInt
+            |> Ui.text
+            |> Ui.el
+                [ Ui.centerX
+                , Ui.centerY
+                ]
+
+
+incrementInterface : CountersEvent -> Ui.Element CountersEvent
+incrementInterface countersEvent =
+    UIn.button
+        [ Ui.centerX
+        , Ui.centerY
+        , Font.color interactColor
+        ]
+        { onPress = countersEvent |> Just
+        , label = "+" |> Ui.text
+        }
