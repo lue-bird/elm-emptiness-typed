@@ -53,8 +53,8 @@ update event model =
             ( { model
                 | numbers =
                     model.numbers
-                        |> Linear.at ( Up, index )
-                        |> List.Linear.alter (\n -> n + 1)
+                        |> List.Linear.elementAlter
+                            ( ( Up, index ), \n -> n + 1 )
               }
             , Cmd.none
             )
