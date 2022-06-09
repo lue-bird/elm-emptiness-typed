@@ -24,12 +24,12 @@ module Hand exposing
 
 #### in type declarations
 
-    import Hand exposing (Empty)
+    import Hand exposing (Empty, Hand)
     import Stack exposing (Stacked)
 
     type alias Model =
         WithoutConstructorFunction
-            { searchKeyWords : Empty Never (Stacked String)
+            { searchKeyWords : Hand (Stacked String) Never Empty
             }
 
 where [`RecordWithoutConstructorFunction`](https://dark.elm.dmy.fr/packages/lue-bird/elm-no-record-type-alias-constructor-function/latest/)
@@ -370,7 +370,7 @@ An `Empty possiblyOrNever` can't be used as `Empty Possibly`
             |> Hand.emptyAdapt (always Possible)
 
 
-#### An argument or a type declaration value is `Empty Never`
+#### An argument or a type declaration value is `Never Empty`
 
 The `Never Empty` can't be unified with `Possibly Empty` or a type variable
 
