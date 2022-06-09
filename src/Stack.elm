@@ -1,6 +1,6 @@
 module Stack exposing
     ( Stacked, StackTopBelow(..)
-    , only, topDown, fromTopDown, fromList
+    , only, topDown, fromTopDown, fromList, fromString
     , top
     , length, indexLast
     , onTopLay, topRemove
@@ -10,7 +10,7 @@ module Stack exposing
     , flatten
     , map, and, topMap, belowTopMap
     , foldFrom, fold
-    , toList, toTopDown
+    , toTopDown, toList, toString
     )
 
 {-| An **emptiable or non-empty** data structure where [`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) [`topMap`](#topMap) are `O(n)`.
@@ -22,7 +22,7 @@ module Stack exposing
 
 [`Hand.empty`](Hand#empty) to create an `Empty Possibly` stack.
 
-@docs only, topDown, fromTopDown, fromList
+@docs only, topDown, fromTopDown, fromList, fromString
 
 
 ## scan
@@ -54,7 +54,7 @@ module Stack exposing
 
 @docs map, and, topMap, belowTopMap
 @docs foldFrom, fold
-@docs toList, toTopDown
+@docs toTopDown, toList, toString
 
 -}
 
@@ -195,6 +195,33 @@ fromList =
 
             top_ :: belowTop_ ->
                 topDown top_ belowTop_
+
+
+{-| Convert a `String` to a `Hand (Stacked Char) Possibly Empty`.
+The `String`s head becomes [`top`](#top), its tail is shoved down below.
+
+    import Possibly exposing (Possibly)
+    import Hand
+    import Stack exposing (topDown)
+
+    "" |> Stack.fromString
+    --> Hand.empty
+
+    "hello" |> Stack.fromString
+    --> topDown 'h' [ 'e', 'l', 'l', 'o' ]
+    --: Hand (Stacked Char) Possibly Empty
+
+When constructing from known elements, always prefer
+
+    import Stack exposing (topDown)
+
+    onTopLay 'h' ("ello" |> Stack.fromString)
+
+-}
+fromString : String -> Hand (Stacked Char) Possibly Empty
+fromString =
+    \string ->
+        string |> String.toList |> fromList
 
 
 
@@ -732,6 +759,23 @@ toList =
 
             Empty _ ->
                 []
+
+
+{-| Convert it to a `String`.
+
+    import Stack exposing (topDown)
+
+    topDown 'H' [ 'i' ] |> Stack.toString
+    --> "Hi"
+
+Don't try to use this prematurely.
+Keeping type information as long as possible is always a win.
+
+-}
+toString : Hand (Stacked Char) possiblyOrNever_ Empty -> String
+toString =
+    \stack ->
+        stack |> toList |> String.fromList
 
 
 {-| Convert to a non-empty list tuple `( top, List belowElement )`.
