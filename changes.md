@@ -4,6 +4,12 @@
 
 # changelog
 
+### 5.1.0
+
+  - `Scroll`
+      - `fromString` add
+      - `toString` add
+
 #### 5.0.1
 
   - section "`Scroll` alternatives" `mapIndexed`, `mapOver` → `map (Location -> ...)` missing
