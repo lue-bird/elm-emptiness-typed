@@ -6,7 +6,7 @@
 
 ### 5.1.0
 
-  - `Scroll`
+  - `Stack`
       - `fromString` add
       - `toString` add
 
