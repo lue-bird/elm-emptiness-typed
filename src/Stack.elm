@@ -9,7 +9,7 @@ module Stack exposing
     , onTopGlue, onTopStack, onTopStackAdapt
     , flatten
     , map, and, topMap, belowTopMap
-    , foldFrom, fold
+    , foldFrom, fold, sum
     , toTopDown, toList, toString
     )
 
@@ -53,7 +53,7 @@ module Stack exposing
 ## transform
 
 @docs map, and, topMap, belowTopMap
-@docs foldFrom, fold
+@docs foldFrom, fold, sum
 @docs toTopDown, toList, toString
 
 -}
@@ -735,6 +735,21 @@ fold reduce =
                 stackFilled |> fill
         in
         List.Linear.foldFrom ( top_, Up, reduce ) belowTop_
+
+
+{-| ∑ Total each element number.
+
+    topDown 1 [ 2, 3 ] |> Stack.sum
+    --> 6
+    topDown 1 (List.repeat 5 1) |> Stack.sum
+    --> 6
+    Stack.sum Hand.empty
+    --> 0
+
+-}
+sum : Hand (Stacked number) Never Empty -> number
+sum =
+    foldFrom ( 0, Up, \current soFar -> soFar + current )
 
 
 {-| Convert it to a `List`.
