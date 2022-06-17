@@ -2,11 +2,12 @@
 
   - add `bounded-nat` for `length`, `Stack.repeat`, `Stack.range`, `Location`, `Stack.map` etc.
 
-### 5.1.0 plans
-
-  - `Stack.sum` add
-
 # changelog
+
+### 5.2.0
+
+  - `Stack`
+      - `sum` add
 
 ### 5.1.0
 
