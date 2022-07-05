@@ -1259,21 +1259,20 @@ as the initial accumulation value.
 
 -}
 fold :
-    ( DirectionLinear
-    , item -> item -> item
-    )
+    DirectionLinear
+    -> (item -> item -> item)
     -> Scroll item Never FocusGap
     -> item
-fold ( direction, reduce ) =
+fold direction reduce =
     \scroll ->
         (scroll |> side (direction |> Linear.opposite))
             |> onTopLay
                 (scroll
                     |> side direction
                     |> onTopLay (scroll |> focusItem)
-                    |> Stack.fold reduce
+                    |> Stack.fold direction reduce
                 )
-            |> Stack.fold reduce
+            |> Stack.fold direction reduce
 
 
 {-| Reduce in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -1295,26 +1294,24 @@ fold ( direction, reduce ) =
 
 -}
 foldFrom :
-    ( accumulationValue
-    , DirectionLinear
-    , item -> accumulationValue -> accumulationValue
-    )
+    accumulationValue
+    -> DirectionLinear
+    -> (item -> accumulationValue -> accumulationValue)
     -> Scroll item Never FocusGap
     -> accumulationValue
-foldFrom ( accumulationValueInitial, direction, reduce ) =
+foldFrom accumulationValueInitial direction reduce =
     \(BeforeFocusAfter before focus_ after) ->
         after
             |> Stack.foldFrom
-                ( before
+                (before
                     |> onTopLay (focus_ |> fill)
                     |> Stack.foldFrom
-                        ( accumulationValueInitial
-                        , direction |> Linear.opposite
-                        , reduce
-                        )
-                , direction
-                , reduce
+                        accumulationValueInitial
+                        (direction |> Linear.opposite)
+                        reduce
                 )
+                direction
+                reduce
 
 
 {-| Alter the focus – [item or gap](Emptiable) – based on its current value.

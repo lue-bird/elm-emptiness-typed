@@ -654,8 +654,7 @@ Its type is allowed to change.
 
     import Stack exposing (topDown, topMap)
 
-    topDown 1 [ 4, 9 ]
-        |> topMap negate
+    topDown 1 [ 4, 9 ] |> topMap negate
     --> topDown -1 [ 4, 9 ]
 
 -}
@@ -676,11 +675,11 @@ topMap changeTop =
     import Stack exposing (topDown)
 
     topDown 'l' [ 'i', 'v', 'e' ]
-        |> Stack.foldFrom ( "", Down, String.cons )
+        |> Stack.foldFrom "" Down String.cons
     --> "live"
 
     topDown 'l' [ 'i', 'v', 'e' ]
-        |> Stack.foldFrom ( "", Up, String.cons )
+        |> Stack.foldFrom "" Up String.cons
     --> "evil"
 
 Be aware:
@@ -690,13 +689,12 @@ Be aware:
 
 -}
 foldFrom :
-    ( accumulationValue
-    , DirectionLinear
-    , element -> accumulationValue -> accumulationValue
-    )
+    accumulationValue
+    -> DirectionLinear
+    -> (element -> accumulationValue -> accumulationValue)
     -> Emptiable (Stacked element) possiblyOrNever_
     -> accumulationValue
-foldFrom ( initialAccumulationValue, direction, reduce ) =
+foldFrom initialAccumulationValue direction reduce =
     \stack ->
         stack
             |> toList
@@ -713,41 +711,58 @@ foldFrom ( initialAccumulationValue, direction, reduce ) =
     import Stack exposing (topDown)
 
     topDown 234 [ 345, 543 ]
-        |> Stack.fold max
+        |> Stack.fold { direction = Up, reduce = max }
     --> 543
 
-`fold` doesn't take a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-as an argument because at the time of writing, the best implementation would include a [`Stack.reverse`](#reverse).
+Be aware:
+
+  - `Down` = indexes decreasing, not: from the [`top`](#top) down
+  - `Up` = indexes increasing, not: from the bottom up
 
 -}
 fold :
-    (belowElement -> top -> top)
-    -> Emptiable (StackTopBelow top belowElement) Never
-    -> top
-fold reduce =
+    DirectionLinear
+    -> (element -> element -> element)
+    -> Emptiable (Stacked element) Never
+    -> element
+fold direction reduce =
     \stackFilled ->
-        let
-            (TopDown top_ belowTop_) =
-                stackFilled |> fill
-        in
-        List.Linear.foldFrom ( top_, Up, reduce ) belowTop_
+        stackFilled
+            |> toList
+            |> List.Linear.foldFrom
+                ( Nothing
+                , direction
+                , \element soFar ->
+                    (case soFar of
+                        Nothing ->
+                            element
+
+                        Just reducedSoFar ->
+                            reducedSoFar |> reduce element
+                    )
+                        |> Just
+                )
+            |> -- impossible
+               Maybe.withDefault (stackFilled |> top)
 
 
-{-| ∑ Total each element number.
+{-| ∑ Total every element number.
 
     import Emptiable
 
     topDown 1 [ 2, 3 ] |> Stack.sum
     --> 6
+
     topDown 1 (List.repeat 5 1) |> Stack.sum
     --> 6
-    Stack.sum Emptiable.empty
+
+    Emptiable.empty |> Stack.sum
     --> 0
 
 -}
 sum : Emptiable (Stacked number) possiblyOrNever_ -> number
 sum =
-    foldFrom ( 0, Up, \current soFar -> soFar + current )
+    foldFrom 0 Up (\current soFar -> soFar + current)
 
 
 {-| Convert it to a `List`.

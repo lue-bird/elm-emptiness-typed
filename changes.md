@@ -24,7 +24,67 @@
         ```elm
         : Emptiable (Stacked number) possiblyOrNever_ -> number
         ```
-
+      - `fold` changed
+        ```elm
+        (belowElement -> top -> top)
+        -> Hand (StackTopBelow top belowElement) Never Empty
+        -> top
+        ```
+        →
+        ```elm
+        Linear.DirectionLinear
+        -> (element -> element -> element)
+        -> Emptiable (Stacked element) Never
+        -> element
+        ```
+      - `foldFrom` changed
+        ```elm
+        ( accumulationValue
+        , DirectionLinear
+        , element -> accumulationValue -> accumulationValue
+        )
+        -> Hand (Stacked element) possiblyOrNever_ Empty
+        -> accumulationValue
+        ```
+        →
+        ```elm
+        accumulationValue
+        -> Linear.DirectionLinear
+        -> (element -> accumulationValue -> accumulationValue)
+        -> Emptiable.Emptiable (Stack.Stacked element) possiblyOrNever_
+        -> accumulationValue
+        ```
+  - `Scroll`
+      - `fold` changed
+        ```elm
+        ( DirectionLinear, item -> item -> item )
+        -> Scroll item Never FocusGap
+        -> item
+        ```
+        →
+        ```elm
+        DirectionLinear
+        -> (item -> item -> item)
+        -> Scroll item Never FocusGap
+        -> item
+        ```
+      - `foldFrom` changed
+        ```elm
+        ( accumulationValue
+        , DirectionLinear
+        , item -> accumulationValue -> accumulationValue
+        )
+        -> Scroll item Never FocusGap
+        -> accumulationValue
+        ```
+        →
+        ```elm
+        accumulationValue
+        -> DirectionLinear
+        -> (item -> accumulationValue -> accumulationValue)
+        -> Scroll item Never FocusGap
+        -> accumulationValue
+        ```
 
 ### 5.2.0
 
