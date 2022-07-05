@@ -13,7 +13,7 @@ module Stack exposing
     , toTopDown, toList, toText
     )
 
-{-| An **emptiable or non-empty** data structure where [`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) [`topMap`](#topMap) are `O(n)`.
+{-| 📚 An **emptiable or non-empty** structure where [`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) [`topMap`](#topMap) are `O(n)`.
 
 @docs Stacked, StackTopBelow
 
@@ -64,7 +64,8 @@ import List.Linear
 import Possibly exposing (Possibly)
 
 
-{-| A non-empty representation of a stack. [`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) [`topMap`](#topMap) are `O(n)`
+{-| The representation of a non-empty stack on the `Filled` case.
+[`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) [`topMap`](#topMap) are `O(n)`
 
 
 #### in arguments
