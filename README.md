@@ -4,8 +4,8 @@
 
 **_🗨️ Read about [allowable state](https://package.elm-lang.org/packages/lue-bird/elm-allowable-state/latest/) first _**
 
+A `Maybe` value that can be made non-empty depending on what we know – an "emptiable-able" value:
 [`Emptiable`](Emptiable) `.....  Never |` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
-is a convenience layer for an emptiable-able value:
 
 ```elm
 import Emptiable exposing (Emptiable, filled, fill, fillMap)
@@ -17,12 +17,12 @@ first : Emptiable TextFilled Never -> Char
 first =
     fill >> \(TextFilled firstChar _) -> firstChar
 
-fillMap (filled >> first)
---: Emptiable TextFilled possiblyOrNever
---: -> Emptiable Char possiblyOrNever
+maybeFirst :
+    Emptiable TextFilled possiblyOrNever
+    -> Emptiable Char possiblyOrNever
+maybeFirst =
+    fillMap (filled >> first)
 ```
-
-→ `Emptiable TextFilled Never|Possibly` is like a type-safe `Maybe TextFilled` 🌿
 
 ## [`Stack`](Stack)
 
@@ -34,10 +34,11 @@ Handle lists that are [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm
 import Emptiable exposing (Emptiable)
 import Stack exposing (Stacked, topDown, onTopStack, onTopLay, toTopDown)
 
-Stack.only 0
-    |> onTopStack (topDown 1 [ 2, 3 ])
+Emptiable.empty
+        --: Emptiable (Stacked element_) Possibly
+    |> onTopLay 0
         --: Emptiable (Stacked number_) never_
-    |> onTopLay 5
+    |> onTopStack (topDown 1 [ 2, 3 ])
         --: Emptiable (Stacked number_) never_
     |> toTopDown
 --> ( 5, [ 1, 2, 3, 0 ] )
