@@ -18,14 +18,11 @@ module Scroll exposing
     , focusGapAdapt
     )
 
-{-| Items rolled up on both sides of a focus
+{-| 📜 Items rolled up on both sides of a focus
+
 → good fit for dynamic choice selection: tabs, playlist, timeline...
 
-[`Scroll`](#Scroll) can even focus a gap [`Down`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) and [`Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) every item.
-
-1.  🔎 focus on a gap between two items
-2.  🔌 plug that gap with a value
-3.  💰 profit
+[`Scroll`](#Scroll) can even focus a gap [`Down` or `Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) from every item.
 
 @docs Scroll, FocusGap
 
@@ -81,7 +78,8 @@ import Possibly exposing (Possibly(..))
 import Stack exposing (Stacked, onTopLay, onTopStack, onTopStackAdapt, top, topRemove)
 
 
-{-| Items rolled up on both sides of a focus
+{-| 📜 Items rolled up on both sides of a focus
+
 → good fit for dynamic choice selection: tabs, playlist, ...
 
 `Scroll` can even focus a gap `Down` and `Up` every item:
