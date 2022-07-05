@@ -151,10 +151,11 @@ topDown top_ belowTop_ =
     TopDown top_ belowTop_ |> filled
 
 
-{-| Convert from a tuple `( top, List belowElement )`.
+{-| Take a tuple `( top, List belowElement )`
+from another source like [turboMaCk/non-empty-list-alias](https://dark.elm.dmy.fr/packages/turboMaCk/non-empty-list-alias/latest/List-NonEmpty#NonEmpty)
+and convert it to an `Emptiable (StackTopBelow top belowElement) never_`
 
-Use [`topDown`](#topDown) if you don't already have a tuple to convert from
-(for example coming from [turboMaCk/non-empty-list-alias](https://dark.elm.dmy.fr/packages/turboMaCk/non-empty-list-alias/latest/List-NonEmpty#NonEmpty))
+Use [`topDown`](#topDown) if you don't already have a tuple to convert from.
 
 -}
 fromTopDown :
@@ -790,15 +791,17 @@ toText =
         stack |> toList |> String.fromList
 
 
-{-| Convert to a non-empty list tuple `( top, List belowElement )`.
-
-Currently equivalent to [`fill`](Emptiable#fill).
+{-| Convert to a non-empty list tuple `( top, List belowElement )`
+to be used by another library.
 
     import Stack exposing (topDown, toTopDown)
 
     topDown "hi" [ "there", "👋" ]
         |> toTopDown
     --> ( "hi", [ "there", "👋" ] )
+
+Don't use [`toTopDown`](#toTopDown) to destructure a stack.
+Instead: [`Stack.top`](Stack#top), [`Stack.topRemove`](#topRemove)
 
 -}
 toTopDown :
@@ -808,6 +811,6 @@ toTopDown =
     \filledStack ->
         let
             (TopDown top_ below_) =
-                filledStack |> Emptiable.fill
+                filledStack |> fill
         in
         ( top_, below_ )
