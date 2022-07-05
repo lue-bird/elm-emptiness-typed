@@ -111,7 +111,7 @@ import Stack exposing (Stacked, onTopLay, onTopStack, onTopStackAdapt, top, topR
 
 `Scroll` can even focus a gap `Down` and `Up` every item:
 
-  - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... Never FocusGap`
+  - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... FocusGap Never`
 
   - `🍍 🍓 <?> 🍉 🍇`: `Scroll ...` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `FocusGap`
 
@@ -123,21 +123,21 @@ import Stack exposing (Stacked, onTopLay, onTopStack, onTopStackAdapt, top, topR
 
 #### in arguments
 
-    empty : Scroll item_ Possibly FocusGap
+    empty : Scroll item_ FocusGap Possibly
 
 
 #### in types
 
     type alias Model =
         RecordWithoutConstructorFunction
-            { choice : Scroll Option Never FocusGap
+            { choice : Scroll Option FocusGap Never
             }
 
 where [`RecordWithoutConstructorFunction`](https://dark.elm.dmy.fr/packages/lue-bird/elm-no-record-type-alias-constructor-function/latest/)
 stops the compiler from creating a constructor function for `Model`.
 
 -}
-type Scroll item possiblyOrNever focusedOnGapTag
+type Scroll item focusedOnGapTag possiblyOrNever
     = BeforeFocusAfter
         (Emptiable (Stacked item) Possibly)
         (Emptiable item possiblyOrNever)
@@ -149,7 +149,7 @@ type Scroll item possiblyOrNever focusedOnGapTag
 
 {-| A word in every [`Scroll`](#Scroll) type:
 
-  - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... Never FocusGap`
+  - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... FocusGap Never`
 
   - `🍍 🍓 <?> 🍉 🍇`: `Scroll ...` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `FocusGap`
 
@@ -201,7 +201,7 @@ type Location
         |> Scroll.to (Down |> Scroll.nearest)
         |> fillMap Scroll.focusItem
     --> filled "scrollable"
-    --: Emptiable (Scroll String Never FocusGap) Possibly
+    --: Emptiable (Scroll String FocusGap Never) Possibly
 
     Scroll.empty
         |> Scroll.sideAlter
@@ -211,14 +211,14 @@ type Location
     -->     |> Scroll.sideAlter
     -->         ( Down, \_ -> Stack.only "scrollable" )
     -->     |> filled
-    --: Emptiable (Scroll String Never FocusGap) Possibly
+    --: Emptiable (Scroll String FocusGap Never) Possibly
 
     Scroll.empty
         |> Scroll.sideAlter
             ( Up, onTopLay "foo" )
         |> Scroll.to (Up |> Scroll.nearest)
     --> filled (Scroll.only "foo")
-    --: Emptiable (Scroll String Never FocusGap) Possibly
+    --: Emptiable (Scroll String FocusGap Never) Possibly
 
     nearest =
         \side ->
@@ -249,7 +249,7 @@ It's the loneliest of all [`Scroll`](#Scroll)s.
     --> Emptiable.empty
 
 -}
-empty : Scroll item_ Possibly FocusGap
+empty : Scroll item_ FocusGap Possibly
 empty =
     BeforeFocusAfter Emptiable.empty Emptiable.empty Emptiable.empty
 
@@ -270,7 +270,7 @@ nothing `Down` and `Up` it.
     --> Stack.only "wat"
 
 -}
-only : element -> Scroll element never_ FocusGap
+only : element -> Scroll element FocusGap never_
 only currentItem =
     BeforeFocusAfter Emptiable.empty (filled currentItem) Emptiable.empty
 
@@ -299,7 +299,7 @@ only currentItem =
     --> 4
 
 -}
-focusItem : Scroll item Never FocusGap -> item
+focusItem : Scroll item FocusGap Never -> item
 focusItem =
     \scroll -> scroll |> focus |> Emptiable.fill
 
@@ -323,11 +323,10 @@ focusItem =
 
 -}
 focus :
-    Scroll item possiblyOrNever FocusGap
+    Scroll item FocusGap possiblyOrNever
     -> Emptiable item possiblyOrNever
 focus =
-    \(BeforeFocusAfter _ focus_ _) ->
-        focus_
+    \(BeforeFocusAfter _ focus_ _) -> focus_
 
 
 {-| The [`Stack`](Stack) to one [side](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) of the focus.
@@ -368,7 +367,7 @@ focus =
 -}
 side :
     DirectionLinear
-    -> Scroll item possiblyOrNever_ FocusGap
+    -> Scroll item FocusGap possiblyOrNever_
     -> Emptiable (Stacked item) Possibly
 side sideToAccess =
     \scroll ->
@@ -406,7 +405,7 @@ side sideToAccess =
     --> 5
 
 -}
-length : Scroll item_ possiblyOrNever_ FocusGap -> Int
+length : Scroll item_ FocusGap possiblyOrNever_ -> Int
 length =
     \(BeforeFocusAfter before focus_ after) ->
         (before |> Stack.length)
@@ -431,8 +430,8 @@ length =
 -}
 toItemNearest :
     DirectionLinear
-    -> Scroll item possiblyOrNever_ FocusGap
-    -> Emptiable (Scroll item never_ FocusGap) Possibly
+    -> Scroll item FocusGap possiblyOrNever_
+    -> Emptiable (Scroll item FocusGap never_) Possibly
 toItemNearest side_ =
     \scroll ->
         (scroll |> side side_)
@@ -481,7 +480,7 @@ toItemNearest side_ =
         |> Scroll.to (Down |> Scroll.nearest)
         |> fillMap Scroll.focusItem
     --> filled "scrollable"
-    --: Emptiable (Scroll String Never FocusGap) Possibly
+    --: Emptiable (Scroll String FocusGap Never) Possibly
 
 This also works from within gaps:
 
@@ -499,7 +498,7 @@ This also works from within gaps:
             ( Down, onTopLay "foo" )
         |> Scroll.to (Down |> Scroll.nearest)
     --> filled (Scroll.only "foo")
-    --: Emptiable (Scroll String Never FocusGap) Possibly
+    --: Emptiable (Scroll String FocusGap Never) Possibly
 
 
 #### `Scroll.to (Up |> Scroll.nearest)`
@@ -536,7 +535,7 @@ This also works from within gaps:
             ( Up, \_ -> Stack.only "foo" )
         |> Scroll.to (Up |> Scroll.nearest)
     --> filled (Scroll.only "foo")
-    --: Emptiable (Scroll String Never FocusGap) Possibly
+    --: Emptiable (Scroll String FocusGap Never) Possibly
 
 If there is no next item, the result is [`empty`](Emptiable#empty).
 
@@ -566,7 +565,7 @@ If there is no next item, the result is [`empty`](Emptiable#empty).
 
     type alias Model =
         RecordWithoutConstructorFunction
-            { numbers : Scroll Int Never FocusGap
+            { numbers : Scroll Int FocusGap Never
             }
 
     type Event
@@ -620,8 +619,8 @@ Saving a [`Scroll`](#Scroll) with every item becomes expensive for long [`Scroll
 -}
 to :
     Location
-    -> Scroll item possiblyOrNever_ FocusGap
-    -> Emptiable (Scroll item never_ FocusGap) Possibly
+    -> Scroll item FocusGap possiblyOrNever_
+    -> Emptiable (Scroll item FocusGap never_) Possibly
 to location =
     \scroll ->
         case location of
@@ -688,8 +687,8 @@ Feel free to [plug](#focusAlter) that gap right up!
 -}
 toGap :
     DirectionLinear
-    -> Scroll item Never FocusGap
-    -> Scroll item Possibly FocusGap
+    -> Scroll item FocusGap Never
+    -> Scroll item FocusGap Possibly
 toGap side_ =
     \(BeforeFocusAfter before focus_ after) ->
         case side_ of
@@ -751,8 +750,8 @@ toGap side_ =
 -}
 toEnd :
     DirectionLinear
-    -> Scroll item possiblyOrNever FocusGap
-    -> Scroll item possiblyOrNever FocusGap
+    -> Scroll item FocusGap possiblyOrNever
+    -> Scroll item FocusGap possiblyOrNever
 toEnd end =
     \scroll ->
         let
@@ -827,8 +826,8 @@ Remember that gaps surround everything!
 -}
 toEndGap :
     DirectionLinear
-    -> Scroll item possiblyOrNever_ FocusGap
-    -> Scroll item Possibly FocusGap
+    -> Scroll item FocusGap possiblyOrNever_
+    -> Scroll item FocusGap Possibly
 toEndGap side_ =
     \scroll ->
         case side_ of
@@ -886,8 +885,8 @@ toWhere :
     ( DirectionLinear
     , { index : Int } -> item -> Bool
     )
-    -> Scroll item possiblyOrNever_ FocusGap
-    -> Emptiable (Scroll item never_ FocusGap) Possibly
+    -> Scroll item FocusGap possiblyOrNever_
+    -> Emptiable (Scroll item FocusGap never_) Possibly
 toWhere ( side_, isFound ) =
     let
         scrollToNext next =
@@ -974,8 +973,8 @@ If there is no nearest item, the result is [`empty`](Emptiable#empty).
 -}
 focusDrag :
     DirectionLinear
-    -> Scroll item possiblyOrNever FocusGap
-    -> Emptiable (Scroll item possiblyOrNever FocusGap) Possibly
+    -> Scroll item FocusGap possiblyOrNever
+    -> Emptiable (Scroll item FocusGap possiblyOrNever) Possibly
 focusDrag side_ =
     \scroll ->
         (scroll |> side side_)
@@ -1183,8 +1182,8 @@ sideAlter :
     , Emptiable (Stacked item) Possibly
       -> Emptiable (Stacked item) possiblyOrNever_
     )
-    -> Scroll item possiblyOrNever FocusGap
-    -> Scroll item possiblyOrNever FocusGap
+    -> Scroll item FocusGap possiblyOrNever
+    -> Scroll item FocusGap possiblyOrNever
 sideAlter ( facedSide, sideStackAlter ) =
     \scroll ->
         scroll
@@ -1223,8 +1222,8 @@ In contrast to `List` or [stack](Stack), this can be done in `O(1)` time.
 
 -}
 mirror :
-    Scroll item possiblyOrNever FocusGap
-    -> Scroll item possiblyOrNever FocusGap
+    Scroll item FocusGap possiblyOrNever
+    -> Scroll item FocusGap possiblyOrNever
 mirror =
     \(BeforeFocusAfter before_ focus_ after_) ->
         BeforeFocusAfter after_ focus_ before_
@@ -1253,8 +1252,8 @@ mirror =
 -}
 map :
     (Location -> item -> mappedItem)
-    -> Scroll item possiblyOrNever FocusGap
-    -> Scroll mappedItem possiblyOrNever FocusGap
+    -> Scroll item FocusGap possiblyOrNever
+    -> Scroll mappedItem FocusGap possiblyOrNever
 map changeItem =
     \scroll ->
         scroll
@@ -1286,7 +1285,7 @@ as the initial accumulation value.
 fold :
     DirectionLinear
     -> (item -> item -> item)
-    -> Scroll item Never FocusGap
+    -> Scroll item FocusGap Never
     -> item
 fold direction reduce =
     \scroll ->
@@ -1322,7 +1321,7 @@ foldFrom :
     accumulationValue
     -> DirectionLinear
     -> (item -> accumulationValue -> accumulationValue)
-    -> Scroll item Never FocusGap
+    -> Scroll item FocusGap Never
     -> accumulationValue
 foldFrom accumulationValueInitial direction reduce =
     \(BeforeFocusAfter before focus_ after) ->
@@ -1423,8 +1422,8 @@ focusAlter :
     (Emptiable item possiblyOrNever
      -> Emptiable item possiblyOrNeverAltered
     )
-    -> Scroll item possiblyOrNever FocusGap
-    -> Scroll item possiblyOrNeverAltered FocusGap
+    -> Scroll item FocusGap possiblyOrNever
+    -> Scroll item FocusGap possiblyOrNeverAltered
 focusAlter focusHandAlter =
     \(BeforeFocusAfter before focus_ after) ->
         BeforeFocusAfter
@@ -1486,8 +1485,8 @@ focusSidesMap :
         -> Emptiable (Stacked item) Possibly
         -> Emptiable (Stacked mappedItem) possiblyOrNeverMappedBefore_
     }
-    -> Scroll item possiblyOrNever FocusGap
-    -> Scroll mappedItem possiblyOrNeverMapped FocusGap
+    -> Scroll item FocusGap possiblyOrNever
+    -> Scroll mappedItem FocusGap possiblyOrNeverMapped
 focusSidesMap changeFocusAndSideStacks =
     \(BeforeFocusAfter sideBefore focus_ sideAfter) ->
         BeforeFocusAfter
@@ -1519,7 +1518,7 @@ Only use this if you need a list in the end.
 Otherwise, use [`toStack`](#toStack) to preserve some information about its length.
 
 -}
-toList : Scroll item possiblyOrNever_ FocusGap -> List item
+toList : Scroll item FocusGap possiblyOrNever_ -> List item
 toList =
     \scroll ->
         scroll
@@ -1552,7 +1551,7 @@ the type information gets carried over, so
 
 -}
 toStack :
-    Scroll item possiblyOrNever FocusGap
+    Scroll item FocusGap possiblyOrNever
     -> Emptiable (Stacked item) possiblyOrNever
 toStack =
     \(BeforeFocusAfter before_ focus_ after_) ->
@@ -1583,8 +1582,8 @@ toStack =
 
 -}
 focusItemTry :
-    Scroll item possiblyOrNever FocusGap
-    -> Emptiable (Scroll item never_ FocusGap) possiblyOrNever
+    Scroll item FocusGap possiblyOrNever
+    -> Emptiable (Scroll item FocusGap never_) possiblyOrNever
 focusItemTry =
     \scroll ->
         (scroll |> focus)
@@ -1600,15 +1599,15 @@ focusItemTry =
 
 {-| Change the `possiblyOrNever` type
 
-  - A `Scroll ... possiblyOrNever FocusGap`
+  - A `Scroll ... FocusGap possiblyOrNever`
     can't be used as a `Scroll ... Possibly`?
 
         import Possibly exposing (Possibly(..))
 
         Scroll.focusGapAdapt (always Possible)
 
-  - A `Scroll ... Never FocusGap`
-    can't be unified with `Scroll ... Possibly` or `possiblyOrNever FocusGap`?
+  - A `Scroll ... FocusGap Never`
+    can't be unified with `Scroll ... Possibly` or `FocusGap possiblyOrNever`?
 
         Scroll.focusGapAdapt never
 
@@ -1617,8 +1616,8 @@ Please read more at [`Emptiable.emptyAdapt`](Emptiable#emptyAdapt).
 -}
 focusGapAdapt :
     (possiblyOrNever -> adaptedPossiblyOrNever)
-    -> Scroll item possiblyOrNever FocusGap
-    -> Scroll item adaptedPossiblyOrNever FocusGap
+    -> Scroll item FocusGap possiblyOrNever
+    -> Scroll item FocusGap adaptedPossiblyOrNever
 focusGapAdapt neverOrAlwaysPossible =
     \scroll ->
         scroll

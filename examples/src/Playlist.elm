@@ -20,7 +20,7 @@ import Stack exposing (Stacked, topDown)
 
 type alias Model =
     RecordWithoutConstructorFunction
-        { playlist : Emptiable (Scroll Track Never FocusGap) Possibly
+        { playlist : Emptiable (Scroll Track FocusGap Never) Possibly
         , urlOfTrackToAdd : String
         }
 
@@ -45,7 +45,7 @@ modelInitial =
     }
 
 
-scrollInitial : Scroll Track never_ FocusGap
+scrollInitial : Scroll Track FocusGap never_
 scrollInitial =
     -- add your own track urls
     -- PR your fav art :)
@@ -229,7 +229,7 @@ interface =
                 ]
 
 
-playlistInterface : Scroll Track Never FocusGap -> Ui.Element Event
+playlistInterface : Scroll Track FocusGap Never -> Ui.Element Event
 playlistInterface =
     \playlist ->
         playlist

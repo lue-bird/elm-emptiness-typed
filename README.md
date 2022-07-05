@@ -62,16 +62,16 @@ import Stack exposing (topDown)
 import Scroll exposing (Scroll, FocusGap)
 
 Scroll.empty
-        --: Scroll item_ Possibly FocusGap
+        --: Scroll item_ FocusGap Possibly
     |> Scroll.focusAlter (\_ -> -1 |> filled)
-        --: Scroll number_ never_ FocusGap
+        --: Scroll number_ FocusGap never_
     |> Scroll.sideAlter
         ( Up, \_ -> topDown 1 [ 2, 3 ] )
-        --: Scroll number_ never_ FocusGap
+        --: Scroll number_ FocusGap never_
     |> Scroll.toGap Up
-        --: Scroll number_ Possibly FocusGap
+        --: Scroll number_ FocusGap Possibly
     |> Scroll.focusAlter (\_ -> 0 |> filled)
-        --: Scroll number_ never_ FocusGap
+        --: Scroll number_ FocusGap never_
     |> Scroll.toStack
 --> topDown -1 [ 0, 1, 2, 3 ]
 ```

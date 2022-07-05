@@ -187,8 +187,8 @@ toStackTest =
 
 
 expectEqualScroll :
-    Scroll item possiblyOrNever FocusGap
-    -> Scroll item possiblyOrNever FocusGap
+    Scroll item FocusGap possiblyOrNever
+    -> Scroll item FocusGap possiblyOrNever
     -> Expectation
 expectEqualScroll expectedScroll =
     \actualScroll ->
@@ -204,7 +204,7 @@ sideFuzz =
         ]
 
 
-scrollFuzz : Fuzzer item -> Fuzzer (Scroll item Possibly FocusGap)
+scrollFuzz : Fuzzer item -> Fuzzer (Scroll item FocusGap Possibly)
 scrollFuzz itemFuzz =
     Fuzz.constant
         (\before focusOnly after ->

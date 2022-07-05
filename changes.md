@@ -37,7 +37,7 @@
         -> Emptiable (Stacked element) Never
         -> element
         ```
-      - `foldFrom` changed
+      - `foldFrom` made curry-able
         ```elm
         ( accumulationValue
         , DirectionLinear
@@ -49,13 +49,17 @@
         →
         ```elm
         accumulationValue
-        -> Linear.DirectionLinear
+        -> DirectionLinear
         -> (element -> accumulationValue -> accumulationValue)
-        -> Emptiable.Emptiable (Stack.Stacked element) possiblyOrNever_
+        -> Emptiable (Stacked element) possiblyOrNever_
         -> accumulationValue
         ```
   - `Scroll`
-      - `fold` changed
+      - `type Scroll`
+        `type Scroll item neverOrPossibly FocusGap`
+        →
+        `type Scroll item FocusGap neverOrPossibly`
+      - `fold` made curry-able
         ```elm
         ( DirectionLinear, item -> item -> item )
         -> Scroll item Never FocusGap
@@ -65,10 +69,10 @@
         ```elm
         DirectionLinear
         -> (item -> item -> item)
-        -> Scroll item Never FocusGap
+        -> Scroll item FocusGap Never
         -> item
         ```
-      - `foldFrom` changed
+      - `foldFrom` made curry-able
         ```elm
         ( accumulationValue
         , DirectionLinear
@@ -82,7 +86,7 @@
         accumulationValue
         -> DirectionLinear
         -> (item -> accumulationValue -> accumulationValue)
-        -> Scroll item Never FocusGap
+        -> Scroll item FocusGap Never
         -> accumulationValue
         ```
 

@@ -35,7 +35,7 @@ countersInitial =
 
 
 type alias Model =
-    Scroll CountersModel Never FocusGap
+    Scroll CountersModel FocusGap Never
 
 
 modelInitial : Model
@@ -136,7 +136,7 @@ interface =
 
 
 scrollToEventInterface :
-    Scroll element_ possiblyOrNever_ FocusGap
+    Scroll element_ FocusGap possiblyOrNever_
     -> Ui.Element Event
 scrollToEventInterface =
     \eventScroll ->
