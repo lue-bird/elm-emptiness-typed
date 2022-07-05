@@ -2,10 +2,9 @@
 
 # [emptiness typed](https://package.elm-lang.org/packages/lue-bird/elm-emptiness-typed/latest/)
 
-**_🗨️ Read about [allowable state](https://package.elm-lang.org/packages/lue-bird/elm-allowable-state/latest/) first _**
+**_🔗 Read about [allowable state](https://package.elm-lang.org/packages/lue-bird/elm-allowable-state/latest/) first _**
 
-## 
-[`Emptiable`](Emptiable) `.....  Never |` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
+## [`Emptiable`](Emptiable) `.....  Never |` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
 
 A `Maybe` value that can be made non-empty depending on what we know – an "emptiable-able" value
 
@@ -30,7 +29,7 @@ maybeFirst =
 
 Handle lists that are [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) or `Never` [`Emptiable`](Emptiable#Emptiable) in one go.
 
-`Emptiable ... Never` allows safe `Maybe`-free [`top`](Stack#top), [`topRemove`](Stack#topRemove), [`fold`](Stack#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
+`Emptiable ... Never` allows safe `Maybe`-free [`top`](Stack#top), [`topRemove`](Stack#topRemove), [`fold`](Stack#fold) (for finding the maximum etc.; some call it "fold1"), ...
 
 ```elm
 import Emptiable exposing (Emptiable)
@@ -46,7 +45,7 @@ Emptiable.empty
 --> ( 5, [ 1, 2, 3, 0 ] )
 ```
 
-## [`Scroll`](Scroll)
+## 📜 [`Scroll`](Scroll)
 
 Items rolled up on both sides of a focus
 
