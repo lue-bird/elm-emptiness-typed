@@ -1278,7 +1278,7 @@ as the initial accumulation value.
     Scroll.only 234
         |> Scroll.sideAlter
             ( Up, \_ -> topDown 345 [ 543 ] )
-        |> Scroll.fold ( Up, max )
+        |> Scroll.fold Up max
     --> 543
 
 -}
@@ -1307,13 +1307,13 @@ fold direction reduce =
     Scroll.only 'e'
         |> Scroll.sideAlter
             ( Down, \_ -> topDown 'v' [ 'i', 'l' ] )
-        |> Scroll.foldFrom ( "", Down, String.cons )
+        |> Scroll.foldFrom "" Down String.cons
     --> "live"
 
     Scroll.only 'e'
         |> Scroll.sideAlter
             ( Down, \_ -> topDown 'v' [ 'i', 'l' ] )
-        |> Scroll.foldFrom ( "", Up, String.cons )
+        |> Scroll.foldFrom "" Up String.cons
     --> "evil"
 
 -}

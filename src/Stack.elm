@@ -712,7 +712,7 @@ foldFrom initialAccumulationValue direction reduce =
     import Stack exposing (topDown)
 
     topDown 234 [ 345, 543 ]
-        |> Stack.fold { direction = Up, reduce = max }
+        |> Stack.fold Up max
     --> 543
 
 Be aware:
