@@ -9,7 +9,7 @@ module Emptiable exposing
     , emptyAdapt
     )
 
-{-| An emptiable-able value.
+{-| 📦 A `Maybe` value that can be made non-empty depending on what we know – an "emptiable-able" value
 
 
 #### in arguments
@@ -60,7 +60,7 @@ stops the compiler from creating a constructor function for `Model`.
 import Possibly exposing (Possibly(..))
 
 
-{-| Like `Maybe`, but able to know at type-level whether `Empty` is a possibility.
+{-| 📦 Like `Maybe`, but able to know at type-level whether `Empty` is a possibility.
 
     import Emptiable exposing (Emptiable, filled, fill)
 
