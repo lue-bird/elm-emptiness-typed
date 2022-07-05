@@ -52,7 +52,7 @@ Items rolled up on both sides of a focus
 → good fit for dynamic choice selection: tabs, playlist, ...
 [↑ examples](https://github.com/lue-bird/elm-emptiness-typed/tree/master/examples)
 
-`Scroll` can even focus a gap `Down` and `Up` every item.
+`Scroll` can even focus a gap [`Down` or `Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) from every item.
 
 
 ```elm
