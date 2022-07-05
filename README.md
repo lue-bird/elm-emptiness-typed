@@ -4,7 +4,7 @@
 
 **_🧩 Read about [allowable state](https://package.elm-lang.org/packages/lue-bird/elm-allowable-state/latest/) first_**
 
-## [`Emptiable`](Emptiable) `.....  Never |` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
+## 📦 [`Emptiable`](Emptiable) `.....  Never |` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
 
 A `Maybe` value that can be made non-empty depending on what we know – an "emptiable-able" value
 
@@ -25,7 +25,7 @@ maybeFirst =
     fillMap (filled >> first)
 ```
 
-## [`Stack`](Stack)
+## 📚 [`Stack`](Stack)
 
 Handle lists that are [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) or `Never` [`Emptiable`](Emptiable#Emptiable) in one go.
 
