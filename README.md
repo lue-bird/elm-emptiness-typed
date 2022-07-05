@@ -42,7 +42,7 @@ Emptiable.empty
     |> onTopStack (topDown 1 [ 2, 3 ])
         --: Emptiable (Stacked number_) never_
     |> toTopDown
---> ( 5, [ 1, 2, 3, 0 ] )
+--> ( 1, [ 2, 3, 0 ] )
 ```
 
 ## 📜 [`Scroll`](Scroll)
