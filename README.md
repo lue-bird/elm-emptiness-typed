@@ -2,7 +2,7 @@
 
 # [emptiness typed](https://package.elm-lang.org/packages/lue-bird/elm-emptiness-typed/latest/)
 
-**_🔗 Read about [allowable state](https://package.elm-lang.org/packages/lue-bird/elm-allowable-state/latest/) first _**
+**_🧩 Read about [allowable state](https://package.elm-lang.org/packages/lue-bird/elm-allowable-state/latest/) first_**
 
 ## [`Emptiable`](Emptiable) `.....  Never |` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
 
