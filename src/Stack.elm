@@ -1,6 +1,6 @@
 module Stack exposing
     ( Stacked, StackTopBelow(..)
-    , only, topDown, fromTopDown, fromList, fromString
+    , only, topDown, fromTopDown, fromList, fromText
     , top
     , length, indexLast
     , onTopLay, topRemove
@@ -10,7 +10,7 @@ module Stack exposing
     , flatten
     , map, and, topMap, belowTopMap
     , foldFrom, fold, sum
-    , toTopDown, toList, toString
+    , toTopDown, toList, toText
     )
 
 {-| An **emptiable or non-empty** data structure where [`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) [`topMap`](#topMap) are `O(n)`.
@@ -22,7 +22,7 @@ module Stack exposing
 
 [`Hand.empty`](Hand#empty) to create an `Empty Possibly` stack.
 
-@docs only, topDown, fromTopDown, fromList, fromString
+@docs only, topDown, fromTopDown, fromList, fromText
 
 
 ## scan
@@ -54,7 +54,7 @@ module Stack exposing
 
 @docs map, and, topMap, belowTopMap
 @docs foldFrom, fold, sum
-@docs toTopDown, toList, toString
+@docs toTopDown, toList, toText
 
 -}
 
@@ -204,10 +204,10 @@ The `String`s head becomes [`top`](#top), its tail is shoved down below.
     import Hand
     import Stack exposing (topDown)
 
-    "" |> Stack.fromString
+    "" |> Stack.fromText
     --> Hand.empty
 
-    "hello" |> Stack.fromString
+    "hello" |> Stack.fromText
     --> topDown 'h' [ 'e', 'l', 'l', 'o' ]
     --: Hand (Stacked Char) Possibly Empty
 
@@ -215,11 +215,11 @@ When constructing from known elements, always prefer
 
     import Stack exposing (topDown)
 
-    onTopLay 'h' ("ello" |> Stack.fromString)
+    onTopLay 'h' ("ello" |> Stack.fromText)
 
 -}
-fromString : String -> Hand (Stacked Char) Possibly Empty
-fromString =
+fromText : String -> Hand (Stacked Char) Possibly Empty
+fromText =
     \string ->
         string |> String.toList |> fromList
 
@@ -780,15 +780,15 @@ toList =
 
     import Stack exposing (topDown)
 
-    topDown 'H' [ 'i' ] |> Stack.toString
+    topDown 'H' [ 'i' ] |> Stack.toText
     --> "Hi"
 
 Don't try to use this prematurely.
 Keeping type information as long as possible is always a win.
 
 -}
-toString : Hand (Stacked Char) possiblyOrNever_ Empty -> String
-toString =
+toText : Hand (Stacked Char) possiblyOrNever_ Empty -> String
+toText =
     \stack ->
         stack |> toList |> String.fromList
 

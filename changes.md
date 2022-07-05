@@ -1,8 +1,14 @@
-## 6.0.0 plans
+## 7.0.0 plans
 
   - add `bounded-nat` for `length`, `Stack.repeat`, `Stack.range`, `Location`, `Stack.map` etc.
 
 # changelog
+
+## 6.0.0
+
+  - `Stack`
+      - `toString` → `toText`
+      - `fromString` → `fromText`
 
 ### 5.2.0
 
