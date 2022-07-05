@@ -8,7 +8,7 @@ import Element.Border as UiBorder
 import Element.Events as UIn
 import Element.Font as Font
 import Element.Input as UIn
-import Hand exposing (Empty, Hand(..), fill, fillMap, fillMapFlat, fillElseOnEmpty, filled)
+import Emptiable exposing (Emptiable(..), fill, fillMap, fillMapFlat, fillElseOnEmpty, filled)
 import Html exposing (Html)
 import Html.Attributes as Html
 import Linear exposing (DirectionLinear(..))
@@ -20,7 +20,7 @@ import Stack exposing (Stacked, topDown)
 
 type alias Model =
     RecordWithoutConstructorFunction
-        { playlist : Hand (Scroll Track Never FocusGap) Possibly Empty
+        { playlist : Emptiable (Scroll Track Never FocusGap) Possibly
         , urlOfTrackToAdd : String
         }
 
@@ -131,7 +131,7 @@ update event model =
             { model
                 | playlist =
                     model.playlist
-                        |> fillMap (Scroll.focusAlter (\_ -> Hand.empty))
+                        |> fillMap (Scroll.focusAlter (\_ -> Emptiable.empty))
                         |> fillMapFlat
                             (\playlist ->
                                 playlist

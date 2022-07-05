@@ -4,41 +4,41 @@
 
 **_🗨️ Read about [allowable state](https://package.elm-lang.org/packages/lue-bird/elm-allowable-state/latest/) first _**
 
-[`Hand`](Hand) `. . .  Never |` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `Empty`
+[`Emptiable`](Emptiable) `.....  Never |` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
 is a convenience layer for an emptiable-able value:
 
 ```elm
-import Hand exposing (Hand, Empty, filled, fill, fillMap)
+import Emptiable exposing (Emptiable, filled, fill, fillMap)
 
 type TextFilled
     = TextFilled Char String
 
-first : Hand TextFilled Never Empty -> Char
+first : Emptiable TextFilled Never -> Char
 first =
     fill >> \(TextFilled firstChar _) -> firstChar
 
 fillMap (filled >> first)
---: Hand TextFilled possiblyOrNever Empty
---: -> Hand Char possiblyOrNever Empty
+--: Emptiable TextFilled possiblyOrNever
+--: -> Emptiable Char possiblyOrNever
 ```
 
-→ `Hand TextFilled Never|Possibly Empty` is like a type-safe `Maybe TextFilled` 🌿
+→ `Emptiable TextFilled Never|Possibly` is like a type-safe `Maybe TextFilled` 🌿
 
 ## [`Stack`](Stack)
 
-Handle lists that are [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) or `Never` [`Empty`](Hand#Empty) in one go.
+Handle lists that are [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) or `Never` [`Emptiable`](Emptiable#Emptiable) in one go.
 
-`Never Empty` allows safe `Maybe`-free [`top`](Stack#top), [`topRemove`](Stack#topRemove), [`fold`](Stack#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
+`Emptiable ... Never` allows safe `Maybe`-free [`top`](Stack#top), [`topRemove`](Stack#topRemove), [`fold`](Stack#fold) (useful for finding the maximum, etc. some call it "fold1"), ...
 
 ```elm
-import Hand exposing (Hand, Empty)
+import Emptiable exposing (Emptiable)
 import Stack exposing (Stacked, topDown, onTopStack, onTopLay, toTopDown)
 
 Stack.only 0
     |> onTopStack (topDown 1 [ 2, 3 ])
-        --: Hand (Stacked number_) never_ Empty
+        --: Emptiable (Stacked number_) never_
     |> onTopLay 5
-        --: Hand (Stacked number_) never_ Empty
+        --: Emptiable (Stacked number_) never_
     |> toTopDown
 --> ( 5, [ 1, 2, 3, 0 ] )
 ```
@@ -55,7 +55,7 @@ Items rolled up on both sides of a focus
 
 ```elm
 import Linear exposing (DirectionLinear(..))
-import Hand exposing (filled)
+import Emptiable exposing (filled)
 import Stack exposing (topDown)
 import Scroll exposing (Scroll, FocusGap)
 

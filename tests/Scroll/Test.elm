@@ -1,8 +1,8 @@
 module Scroll.Test exposing (tests)
 
+import Emptiable exposing (fillMapFlat, filled)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
-import Hand exposing (fillMapFlat, filled)
 import Linear exposing (DirectionLinear(..))
 import Possibly exposing (Possibly)
 import Scroll exposing (FocusGap, Scroll)
@@ -115,7 +115,7 @@ focusItemTest =
                 scroll
                     |> Scroll.to
                         (side |> Linear.opposite |> Scroll.nearest)
-                    |> Expect.equal Hand.empty
+                    |> Expect.equal Emptiable.empty
             )
         , Test.fuzz
             (sideAndScrollFuzz scrollFocusSideFuzz)
@@ -140,12 +140,12 @@ focusItemTest =
             )
         , Test.fuzz
             (sideAndScrollFuzz scrollFocusSideFuzz)
-            "`(Scroll.toEnd DirectionLinear >> Scroll.to DirectionLinear) == Hand.empty`"
+            "`(Scroll.toEnd DirectionLinear >> Scroll.to DirectionLinear) == Emptiable.empty`"
             (\{ scroll, side } ->
                 scroll
                     |> Scroll.toEnd side
                     |> Scroll.to (side |> Scroll.nearest)
-                    |> Expect.equal Hand.empty
+                    |> Expect.equal Emptiable.empty
             )
         , Test.fuzz
             (sideAndScrollFuzz scrollFocusSideFuzz)
@@ -155,7 +155,7 @@ focusItemTest =
                     |> List.repeat
                         (1 + (scroll |> Scroll.side side |> Stack.length))
                     |> List.foldl fillMapFlat (scroll |> filled)
-                    |> Expect.equal Hand.empty
+                    |> Expect.equal Emptiable.empty
             )
         ]
 
@@ -171,7 +171,7 @@ toStackTest =
             (\_ ->
                 Scroll.empty
                     |> Scroll.toStack
-                    |> Expect.equal Hand.empty
+                    |> Expect.equal Emptiable.empty
             )
         , test "only"
             (\_ ->

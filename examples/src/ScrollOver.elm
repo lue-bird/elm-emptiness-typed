@@ -6,7 +6,7 @@ import Element as Ui exposing (rgb)
 import Element.Background as UiBack
 import Element.Font as Font
 import Element.Input as UIn
-import Hand exposing (fillMap)
+import Emptiable exposing (fillMap)
 import Html exposing (Html)
 import Linear exposing (DirectionLinear(..))
 import List.Linear

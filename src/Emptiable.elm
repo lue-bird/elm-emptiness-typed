@@ -1,5 +1,5 @@
-module Hand exposing
-    ( Hand(..), Empty
+module Emptiable exposing
+    ( Emptiable(..)
     , empty, filled, fromMaybe
     , fillMap, fillMapFlat
     , fillAnd
@@ -14,28 +14,27 @@ module Hand exposing
 
 #### in arguments
 
-    import Hand exposing (Empty)
     import Stack exposing (Stacked)
 
-    fill : Hand fill Never Empty -> fill
+    fill : Emptiable fill Never -> fill
 
-    top : Hand (Stacked element) Never Empty -> element
+    top : Emptiable (Stacked element) Never -> element
 
 
 #### in type declarations
 
-    import Hand exposing (Empty, Hand)
+    import Emptiable exposing (Emptiable)
     import Stack exposing (Stacked)
 
     type alias Model =
         WithoutConstructorFunction
-            { searchKeyWords : Hand (Stacked String) Never Empty
+            { searchKeyWords : Emptiable (Stacked String) Never
             }
 
 where [`RecordWithoutConstructorFunction`](https://dark.elm.dmy.fr/packages/lue-bird/elm-no-record-type-alias-constructor-function/latest/)
 stops the compiler from creating a constructor function for `Model`.
 
-@docs Hand, Empty
+@docs Emptiable
 
 
 ## create
@@ -61,78 +60,65 @@ stops the compiler from creating a constructor function for `Model`.
 import Possibly exposing (Possibly(..))
 
 
-{-| Like `Maybe`, but able to know at type-level whether [`Empty`](#Empty) is possible.
+{-| Like `Maybe`, but able to know at type-level whether `Empty` is a possibility.
 
-    import Hand exposing (Hand, Empty, filled, fill)
+    import Emptiable exposing (Emptiable, filled, fill)
 
     [ filled 1, filled 7 ]
-        --: List (Hand number_ never_ Empty)
+        --: List (Emptiable number_ never_)
         |> List.map fill
     --> [ 1, 7 ]
 
-[`Hand.Empty`](#Empty) alone probably won't be that useful,
+[`Emptiable`](#Emptiable) by itself probably won't be that useful,
 but it can make data structures type-safely non-emptiable:
 
-    import Hand exposing (fillMap)
+    import Emptiable exposing (fillMap)
 
-    top : Hand (Stacked element) Never Empty -> element
+    top : Emptiable (Stacked element) Never -> element
 
     fillMap Dict.NonEmpty.head
-    --: Hand (NonEmptyDict comparable v) possiblyOrNever Empty
-    --: -> Hand ( comparable, v ) possiblyOrNever Empty
+    --: Emptiable (NonEmptyDict comparable v) possiblyOrNever
+    --: -> Emptiable ( comparable, v ) possiblyOrNever
 
 Go take a look at all the data structures in this package.
 
 -}
-type Hand fill possiblyOrNever emptyTag
+type Emptiable fill possiblyOrNever
     = Empty possiblyOrNever
     | Filled fill
 
 
-{-| A word used in the [`Hand`](#Hand) type:
-
-    top : Hand (Stacked element) Never Empty -> element
-
-    when :
-        Hand ... possiblyOrNever_ Empty
-        -> Hand ... Possibly Empty
-
--}
-type Empty
-    = EmptyTag Never
-
-
 {-| Insert joke about life here.
 
-    Hand.empty
-        |> Hand.fillMap (\x -> x / 0)
-    --> Hand.empty
+    Emptiable.empty
+        |> Emptiable.fillMap (\x -> x / 0)
+    --> Emptiable.empty
 
 -}
-empty : Hand filling_ Possibly Empty
+empty : Emptiable filling_ Possibly
 empty =
     Empty Possible
 
 
-{-| A [`Hand.Empty`](#Empty) that certainly exists, allowing type-safe extraction.
+{-| [`Emptiable`](#Emptiable) that certainly exists, allowing type-safe extraction.
 
-    import Hand exposing (filled, fill)
+    import Emptiable exposing (filled, fill)
 
     filled "Bami" |> fill
     --> "Bami"
 
 -}
-filled : fill -> Hand fill never_ Empty
+filled : fill -> Emptiable fill never_
 filled =
     \fillContent -> Filled fillContent
 
 
-{-| Convert a `Maybe` to a [`Hand`](#Hand)`Possibly`[`Hand`](#Empty).
+{-| Convert a `Maybe` to an [`Emptiable`](#Emptiable) `Possibly`.
 
-To _create_ new [`Hand`](#Hand)s, use [`filled`](#filled) and [`empty`](#empty) instead!
+To _create_ new [`Emptiable`](#Emptiable)s, use [`filled`](#filled) and [`empty`](#empty) instead!
 
 -}
-fromMaybe : Maybe value -> Hand value Possibly Empty
+fromMaybe : Maybe value -> Emptiable value Possibly
 fromMaybe =
     \coreMaybe ->
         case coreMaybe of
@@ -153,7 +139,7 @@ Don't try to use this prematurely.
 Keeping type information as long as possible is always a win.
 
 -}
-toMaybe : Hand fill possiblyOrNever_ Empty -> Maybe fill
+toMaybe : Emptiable fill possiblyOrNever_ -> Maybe fill
 toMaybe =
     \hand ->
         case hand of
@@ -164,36 +150,36 @@ toMaybe =
                 Maybe.Nothing
 
 
-{-| Safely extract the [`filled`](#filled) content from a `Hand fill Never Empty`.
+{-| Safely extract the [`filled`](#filled) content from a `Emptiable fill Never`.
 
-    import Hand exposing (Empty, filled)
+    import Emptiable exposing (filled)
 
     filled (filled (filled "Bami"))
-        |> Hand.fill
-        |> Hand.fill
-        |> Hand.fill
+        |> Emptiable.fill
+        |> Emptiable.fill
+        |> Emptiable.fill
     --> "Bami"
 
-    first : Empty ( first, others_ ) Never Empty -> first
+    first : Empty ( first, others_ ) Never -> first
     first =
-        Hand.fill >> Tuple.first
+        Emptiable.fill >> Tuple.first
 
 -}
-fill : Hand fill Never Empty -> fill
+fill : Emptiable fill Never -> fill
 fill =
     \handFilled ->
         handFilled |> fillElseOnEmpty never
 
 
-{-| Lazily use a fallback value if the [`Hand`](#Hand) is [`empty`](#empty).
+{-| Lazily use a fallback value if the [`Emptiable`](#Emptiable) is [`empty`](#empty).
 
     import Possibly exposing (Possibly(..))
-    import Hand exposing (Hand(..), fillElseOnEmpty)
+    import Emptiable exposing (Emptiable(..), fillElseOnEmpty)
     import Dict
 
     Dict.empty
         |> Dict.get "Hannah"
-        |> Hand.fromMaybe
+        |> Emptiable.fromMaybe
         |> fillElseOnEmpty (\_ -> "unknown")
     --> "unknown"
 
@@ -201,12 +187,12 @@ fill =
         fillElseOnEmpty never
 
     fatten =
-        fillElseOnEmpty Empty
+        fillElseOnEmpty
 
 -}
 fillElseOnEmpty :
     (possiblyOrNever -> fill)
-    -> Hand fill possiblyOrNever Empty
+    -> Emptiable fill possiblyOrNever
     -> fill
 fillElseOnEmpty fallbackWhenEmpty =
     \hand ->
@@ -218,21 +204,21 @@ fillElseOnEmpty fallbackWhenEmpty =
                 possiblyOrNever |> fallbackWhenEmpty
 
 
-{-| If the [`Hand`](#Hand) is [`filled`](#filled), change it based on its current [`fill`](#fill):
+{-| If the [`Emptiable`](#Emptiable) is [`filled`](#filled), change it based on its current [`fill`](#fill):
 
-    import Hand exposing (filled, fillMap)
+    import Emptiable exposing (filled, fillMap)
 
     filled -3 |> fillMap abs
     --> filled 3
 
-    Hand.empty |> fillMap abs
-    --> Hand.empty
+    Emptiable.empty |> fillMap abs
+    --> Emptiable.empty
 
 -}
 fillMap :
     (fill -> fillMapped)
-    -> Hand fill possiblyOrNever Empty
-    -> Hand fillMapped possiblyOrNever Empty
+    -> Emptiable fill possiblyOrNever
+    -> Emptiable fillMapped possiblyOrNever
 fillMap change =
     \hand ->
         case hand of
@@ -246,7 +232,7 @@ fillMap change =
 {-| Chain together operations that may return [`empty`](#empty).
 It's like calling [`fillMap`](#fillMap)`|>`[`flatten`](#flatten):
 
-If the argument [`Hand.Empty`](#Empty) `Never` [`Empty`](Hand#Empty),
+If the argument is `Never` empty,
 a given function takes its [`fill`](#fill)
 and returns a new possibly [`empty`](#empty) value.
 
@@ -254,19 +240,19 @@ Some call it
 [`andThen`](https://package.elm-lang.org/packages/elm/core/latest/Maybe#andThen)
 or [`flatMap`](https://package.elm-lang.org/packages/ccapndave/elm-flat-map/1.2.0/Maybe-FlatMap#flatMap).
 
-    import Hand exposing (Hand, Empty, fillMapFlat)
+    import Emptiable exposing (Emptiable, fillMapFlat)
 
     emptiableString
         |> fillMapFlat parse
         |> fillMapFlat extraValidation
 
-    parse : ( Char, String ) -> Hand Parsed Possibly Empty
-    extraValidation : Parsed -> Hand Parsed Possibly Empty
+    parse : ( Char, String ) -> Emptiable Parsed Possibly
+    extraValidation : Parsed -> Emptiable Parsed Possibly
 
 For any number of arguments:
 [`fillAnd`](#fillAnd)`... |> ... |>`[`fillMapFlat`](#fillMapFlat):
 
-    import Hand exposing (filled, fillMapFlat, fillAnd)
+    import Emptiable exposing (filled, fillMapFlat, fillAnd)
 
     (filled 3)
         |> fillAnd (filled 4)
@@ -277,9 +263,9 @@ For any number of arguments:
 
 -}
 fillMapFlat :
-    (fill -> Hand fillIfBothFilled possiblyOrNever Empty)
-    -> Hand fill possiblyOrNever Empty
-    -> Hand fillIfBothFilled possiblyOrNever Empty
+    (fill -> Emptiable fillIfBothFilled possiblyOrNever)
+    -> Emptiable fill possiblyOrNever
+    -> Emptiable fillIfBothFilled possiblyOrNever
 fillMapFlat tryIfFilled =
     \hand ->
         hand
@@ -287,26 +273,26 @@ fillMapFlat tryIfFilled =
             |> flatten
 
 
-{-| In a nestable [`Hand`](#Hand):
-Only keep it [`filled`](#filled) if the inner [`Hand`](#Hand) is [`filled`](#filled).
+{-| In a nestable [`Emptiable`](#Emptiable):
+Only keep it [`filled`](#filled) if the inner [`Emptiable`](#Emptiable) is [`filled`](#filled).
 
 Some call it [`join`](https://package.elm-lang.org/packages/elm-community/maybe-extra/latest/Maybe-Extra#join).
 
-    import Hand exposing (filled)
+    import Emptiable exposing (filled)
 
-    filled (filled 1) |> Hand.flatten
+    filled (filled 1) |> Emptiable.flatten
     --> filled 1
 
-    filled Hand.empty |> Hand.flatten
-    --> Hand.empty
+    filled Emptiable.empty |> Emptiable.flatten
+    --> Emptiable.empty
 
-    Hand.empty |> Hand.flatten
-    --> Hand.empty
+    Emptiable.empty |> Emptiable.flatten
+    --> Emptiable.empty
 
 -}
 flatten :
-    Hand (Hand fill possiblyOrNever Empty) possiblyOrNever Empty
-    -> Hand fill possiblyOrNever Empty
+    Emptiable (Emptiable fill possiblyOrNever) possiblyOrNever
+    -> Emptiable fill possiblyOrNever
 flatten =
     \hand ->
         hand |> fillElseOnEmpty Empty
@@ -315,11 +301,11 @@ flatten =
 {-| If the incoming food and the given argument are
 [`filled`](#filled), give a [`filled`](#filled) tuple of both [`fill`](#fill)s back.
 
-If any is [`empty`](#empty), give a [`Hand.empty`](#empty) back.
+If any is [`empty`](#empty), give a [`Emptiable.empty`](#empty) back.
 
 [`fillAnd`](#fillAnd) comes in handy when **multiple arguments** need to be [`filled`](#filled):
 
-    import Hand exposing (filled, fillMap, fillAnd)
+    import Emptiable exposing (filled, fillMap, fillAnd)
 
     filled 3
         |> fillAnd (filled 4)
@@ -329,9 +315,9 @@ If any is [`empty`](#empty), give a [`Hand.empty`](#empty) back.
 
 -}
 fillAnd :
-    Hand anotherFill possiblyOrNever Empty
-    -> Hand fill possiblyOrNever Empty
-    -> Hand ( fill, anotherFill ) possiblyOrNever Empty
+    Emptiable anotherFill possiblyOrNever
+    -> Emptiable fill possiblyOrNever
+    -> Emptiable ( fill, anotherFill ) possiblyOrNever
 fillAnd argument =
     \soFar ->
         case ( soFar, argument ) of
@@ -356,31 +342,31 @@ fillAnd argument =
 
 An `Empty possiblyOrNever` can't be used as `Empty Possibly`
 
-    import Hand exposing (Empty)
+    import Emptiable
     import Possibly exposing (Possibly)
     import Stack exposing (Stacked)
 
     type alias Log =
         Empty Possibly (Stacked String)
 
-    fromStack : Hand (Stacked String) possiblyOrNever_ Empty -> Log
+    fromStack : Emptiable (Stacked String) possiblyOrNever_ -> Log
     fromStack stackFilled =
         stackFilled
             --: `possiblyOrNever_` but we need `Possibly`
-            |> Hand.emptyAdapt (always Possible)
+            |> Emptiable.emptyAdapt (always Possible)
 
 
-#### An argument or a type declaration value is `Never Empty`
+#### An argument or a type declaration value is `Never`
 
-The `Never Empty` can't be unified with `Possibly Empty` or a type variable
+The `Never` can't be unified with `Possibly` or a type variable
 
-    import Hand exposing (Empty)
+    import Emptiable
     import Stack exposing (Stacked)
 
     theShorter :
-        Hand (Stacked element) Never Empty
-        -> Hand (Stacked element) possiblyOrNever Empty
-        -> Hand (Stacked element) possiblyOrNever Empty
+        Emptiable (Stacked element) Never
+        -> Emptiable (Stacked element) possiblyOrNever
+        -> Emptiable (Stacked element) possiblyOrNever
     theShorter aStack bStack =
         if Stack.length bStack > Stack.length aStack then
             bStack
@@ -388,15 +374,15 @@ The `Never Empty` can't be unified with `Possibly Empty` or a type variable
         else
             aStack
                 --: `Never` but we need `possiblyOrNever`
-                |> Hand.emptyAdapt never
+                |> Emptiable.emptyAdapt never
 
 makes both branches return `possiblyOrNever`.
 
 -}
 emptyAdapt :
     (possiblyOrNever -> adaptedPossiblyOrNever)
-    -> Hand fill possiblyOrNever Empty
-    -> Hand fill adaptedPossiblyOrNever Empty
+    -> Emptiable fill possiblyOrNever
+    -> Emptiable fill adaptedPossiblyOrNever
 emptyAdapt neverOrAlwaysPossible =
     \handFilled ->
         case handFilled of

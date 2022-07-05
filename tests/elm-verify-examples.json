@@ -2,7 +2,7 @@
   "root": "../src",
   "tests": [
     "Scroll",
-    "Hand",
+    "Emptiable",
     "Stack",
     "./README.md"
   ]

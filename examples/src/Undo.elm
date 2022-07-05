@@ -6,7 +6,7 @@ import Element as Ui exposing (rgb, rgba)
 import Element.Background as UiBack
 import Element.Font as Font
 import Element.Input as UIn
-import Hand exposing (Empty, Hand(..), fill, fillMap, fillElseOnEmpty, filled)
+import Emptiable exposing (Emptiable(..), fill, fillMap, fillElseOnEmpty, filled)
 import Html exposing (Html)
 import Linear exposing (DirectionLinear(..))
 import Scroll exposing (FocusGap, Scroll)
@@ -155,7 +155,7 @@ scrollToEventInterface =
 
 eventScrollToOneSideInterface :
     DirectionLinear
-    -> Hand (Stacked element_) possiblyOrNever_ Empty
+    -> Emptiable (Stacked element_) possiblyOrNever_
     -> Ui.Element Event
 eventScrollToOneSideInterface side =
     \sideStack ->

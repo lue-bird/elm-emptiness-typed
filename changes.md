@@ -6,9 +6,25 @@
 
 ## 6.0.0
 
+  - `Hand` → `Emptiable`
+      - `type Hand filling possiblyOrNever Empty`
+        →
+        `type Emptiable filling possiblyOrNever`
+          - less lines
+          - more intuitive
+          - no ambiguous `exposing (Empty)`
   - `Stack`
       - `toString` → `toText`
       - `fromString` → `fromText`
+      - `sum` corrected
+        ```elm
+        : Emptiable (Stacked number) Never -> number
+        ```
+        →
+        ```elm
+        : Emptiable (Stacked number) possiblyOrNever_ -> number
+        ```
+
 
 ### 5.2.0
 
@@ -155,7 +171,7 @@
         sideAlter :
             ( DirectionLinear
             , Hand (StackFilled item) Possibly Empty
-              -> Hand (StackFilled item) possiblyOrNeverSide_ Empty
+              -> Hand (StackFilled item) possiblyOrNeverSide_
             )
             -> Scroll item possiblyOrNever FocusGap
             -> Scroll item possiblyOrNeverAltered FocusGap

@@ -20,7 +20,7 @@ module Stack exposing
 
 ## create
 
-[`Hand.empty`](Hand#empty) to create an `Empty Possibly` stack.
+[`Emptiable.empty`](Emptiable#empty) to create an `Empty Possibly` stack.
 
 @docs only, topDown, fromTopDown, fromList, fromText
 
@@ -58,7 +58,7 @@ module Stack exposing
 
 -}
 
-import Hand exposing (Empty, Hand(..), empty, fill, fillAnd, fillMapFlat, filled)
+import Emptiable exposing (Emptiable(..), empty, fill, fillAnd, fillMapFlat, filled)
 import Linear exposing (DirectionLinear(..))
 import List.Linear
 import Possibly exposing (Possibly)
@@ -69,24 +69,24 @@ import Possibly exposing (Possibly)
 
 #### in arguments
 
-[`Hand`](Hand) `(StackFilled ...) Never Empty` → `stack` is non-empty:
+[`Emptiable`](Emptiable) `(StackFilled ...) Never` → `stack` is non-empty:
 
-    top : Hand (Stacked element) Never -> element
+    top : Emptiable (Stacked element) Never -> element
 
 
 #### in results
 
-[`Hand`](Hand) `(StackFilled ...)`[`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `Empty` → stack could be empty
+[`Emptiable`](Emptiable) `(StackFilled ...)`[`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `Empty` → stack could be empty
 
-    fromList : List element -> Hand (Stacked element) Possibly Empty
+    fromList : List element -> Emptiable (Stacked element) Possibly
 
-We can treat it like any [`Hand`](Hand):
+We can treat it like any [`Emptiable`](Emptiable):
 
-    import Hand exposing (Hand(..), Empty, filled, fillMap)
+    import Emptiable exposing (Emptiable(..), filled, fillMap)
     import Possibly exposing (Possibly)
     import Stack exposing (Stacked, top, onTopLay)
 
-    Hand.empty |> onTopLay "cherry" -- works
+    Emptiable.empty |> onTopLay "cherry" -- works
 
     toList : Empty possiblyOrNever_ (Stacked element) -> List element
     toList =
@@ -101,7 +101,7 @@ We can treat it like any [`Hand`](Hand):
     [ "hi", "there" ] -- comes in as an argument
         |> Stack.fromList
         |> fillMap (filled >> top)
-    --: Hand String Possibly Empty
+    --: Emptiable String Possibly
 
 Most operations also allow a different type for the top element → see [`StackTopBelow`](#StackTopBelow)
 
@@ -112,7 +112,7 @@ type alias Stacked element =
 
 {-| [`Stacked`](#Stacked) with a different type for the top element:
 
-    top : Hand (StackTopBelow top belowTopElement_) Never Empty -> top
+    top : Emptiable (StackTopBelow top belowTopElement_) Never -> top
 
 it's the result of:
 
@@ -129,14 +129,14 @@ type StackTopBelow topElement belowTopElement
 
 {-| A stack with just 1 single element.
 
-    import Hand
+    import Emptiable
     import Stack exposing (onTopLay)
 
     Stack.only ":)"
-    --> Hand.empty |> onTopLay ":)"
+    --> Emptiable.empty |> onTopLay ":)"
 
 -}
-only : top -> Hand (StackTopBelow top belowTopElement_) never_ Empty
+only : top -> Emptiable (StackTopBelow top belowTopElement_) never_
 only onlyElement =
     topDown onlyElement []
 
@@ -146,7 +146,7 @@ only onlyElement =
 topDown :
     top
     -> List belowElement
-    -> Hand (StackTopBelow top belowElement) never_ Empty
+    -> Emptiable (StackTopBelow top belowElement) never_
 topDown top_ belowTop_ =
     TopDown top_ belowTop_ |> filled
 
@@ -159,7 +159,7 @@ Use [`topDown`](#topDown) if you don't already have a tuple to convert from
 -}
 fromTopDown :
     ( top, List belowElement )
-    -> Hand (StackTopBelow top belowElement) never_ Empty
+    -> Emptiable (StackTopBelow top belowElement) never_
 fromTopDown =
     \( topElement, down ) ->
         topDown topElement down
@@ -169,11 +169,11 @@ fromTopDown =
 The `List`s `head` becomes [`top`](#top), its `tail` is shoved down below.
 
     import Possibly exposing (Possibly)
-    import Hand
+    import Emptiable
     import Stack exposing (topDown)
 
     [] |> Stack.fromList
-    --> Hand.empty
+    --> Emptiable.empty
 
     [ "hello", "emptiness" ] |> Stack.fromList
     --> topDown "hello" [ "emptiness" ]
@@ -186,7 +186,7 @@ When constructing from known elements, always prefer
     topDown "hello" [ "emptiness" ]
 
 -}
-fromList : List element -> Hand (Stacked element) Possibly Empty
+fromList : List element -> Emptiable (Stacked element) Possibly
 fromList =
     \list ->
         case list of
@@ -197,19 +197,19 @@ fromList =
                 topDown top_ belowTop_
 
 
-{-| Convert a `String` to a `Hand (Stacked Char) Possibly Empty`.
+{-| Convert a `String` to a `Emptiable (Stacked Char) Possibly`.
 The `String`s head becomes [`top`](#top), its tail is shoved down below.
 
     import Possibly exposing (Possibly)
-    import Hand
+    import Emptiable
     import Stack exposing (topDown)
 
     "" |> Stack.fromText
-    --> Hand.empty
+    --> Emptiable.empty
 
     "hello" |> Stack.fromText
     --> topDown 'h' [ 'e', 'l', 'l', 'o' ]
-    --: Hand (Stacked Char) Possibly Empty
+    --: Emptiable (Stacked Char) Possibly
 
 When constructing from known elements, always prefer
 
@@ -218,7 +218,7 @@ When constructing from known elements, always prefer
     onTopLay 'h' ("ello" |> Stack.fromText)
 
 -}
-fromText : String -> Hand (Stacked Char) Possibly Empty
+fromText : String -> Emptiable (Stacked Char) Possibly
 fromText =
     \string ->
         string |> String.toList |> fromList
@@ -238,12 +238,12 @@ fromText =
     --> 2
 
 -}
-top : Hand (StackTopBelow top belowTop_) Never Empty -> top
+top : Emptiable (StackTopBelow top belowTop_) Never -> top
 top =
     \stackFilled ->
         let
             (TopDown topElement _) =
-                stackFilled |> Hand.fill
+                stackFilled |> Emptiable.fill
         in
         topElement
 
@@ -259,7 +259,7 @@ top =
 
 -}
 length :
-    Hand (StackTopBelow top_ belowElement_) possiblyOrNever_ Empty
+    Emptiable (StackTopBelow top_ belowElement_) possiblyOrNever_
     -> Int
 length =
     \stack ->
@@ -282,7 +282,7 @@ length =
 
 -}
 indexLast :
-    Hand (StackTopBelow top_ belowElement_) Never Empty
+    Emptiable (StackTopBelow top_ belowElement_) Never
     -> Int
 indexLast =
     \stack ->
@@ -300,20 +300,20 @@ indexLast =
 
 {-| Add an element to the front.
 
-    import Hand
+    import Emptiable
     import Stack exposing (topDown, onTopLay)
 
     topDown 2 [ 3 ] |> onTopLay 1
     --> topDown 1 [ 2, 3 ]
 
-    Hand.empty |> onTopLay 1
+    Emptiable.empty |> onTopLay 1
     --> Stack.only 1
 
 -}
 onTopLay :
     newTop
-    -> Hand (Stacked belowElement) possiblyOrNever_ Empty
-    -> Hand (StackTopBelow newTop belowElement) never_ Empty
+    -> Emptiable (Stacked belowElement) possiblyOrNever_
+    -> Emptiable (StackTopBelow newTop belowElement) never_
 onTopLay toPutOnTopOfAllOtherElements =
     \stack ->
         topDown toPutOnTopOfAllOtherElements (stack |> toList)
@@ -328,17 +328,17 @@ onTopLay toPutOnTopOfAllOtherElements =
         |> onTopStack (topDown 1 [ 0 ])
         |> topRemove
     --> topDown 0 [ 3, 2 ]
-    --: Hand (Stacked number_) Possibly Empty
+    --: Emptiable (Stacked number_) Possibly
 
 -}
 topRemove :
-    Hand (StackTopBelow top_ belowElement) Never Empty
-    -> Hand (Stacked belowElement) Possibly Empty
+    Emptiable (StackTopBelow top_ belowElement) Never
+    -> Emptiable (Stacked belowElement) Possibly
 topRemove =
     \stackFilled ->
         let
             (TopDown _ down) =
-                stackFilled |> Hand.fill
+                stackFilled |> Emptiable.fill
         in
         down |> fromList
 
@@ -353,8 +353,8 @@ topRemove =
 
 -}
 reverse :
-    Hand (Stacked element) possiblyOrNever Empty
-    -> Hand (Stacked element) possiblyOrNever Empty
+    Emptiable (Stacked element) possiblyOrNever
+    -> Emptiable (Stacked element) possiblyOrNever
 reverse =
     \stack ->
         stack
@@ -372,25 +372,25 @@ reverse =
 
 {-| Glue the elements of a `... Empty possiblyOrNever`/`Never` [`Stack`](#Stacked) to the [`top`](#top) of this [`Stack`](Stack).
 
-    import Hand
+    import Emptiable
     import Stack exposing (topDown, onTopStack, onTopStackAdapt)
 
-    Hand.empty
+    Emptiable.empty
         |> onTopStackAdapt (topDown 1 [ 2 ])
         |> onTopStack (topDown -2 [ -1, 0 ])
     --> topDown -2 [ -1, 0, 1, 2 ]
 
-  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever Empty` type of the piped food
-  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the `possiblyOrNever Empty` type of the argument
+  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever` type of the piped food
+  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the `possiblyOrNever` type of the argument
 
 -}
 onTopStackAdapt :
-    Hand (Stacked element) possiblyOrNever Empty
-    -> Hand (Stacked element) possiblyOrNeverIn_ Empty
-    -> Hand (Stacked element) possiblyOrNever Empty
+    Emptiable (Stacked element) possiblyOrNever
+    -> Emptiable (Stacked element) possiblyOrNeverIn_
+    -> Emptiable (Stacked element) possiblyOrNever
 onTopStackAdapt stackToPutAbove =
     \stack ->
-        stackOnTopAndTakeOnType
+        stackOnTopAndAdaptTypeOf
             (\( possiblyOrNever, _ ) -> possiblyOrNever)
             ( stackToPutAbove, stack )
 
@@ -403,29 +403,29 @@ onTopStackAdapt stackToPutAbove =
         |> onTopStack (topDown -1 [ 0 ])
     --> topDown -1 [ 0, 1, 2 ]
 
-  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever Empty` type of the piped food
-  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the `possiblyOrNever Empty` type of the argument
+  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever` type of the piped food
+  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the `possiblyOrNever` type of the argument
 
 -}
 onTopStack :
-    Hand (Stacked element) possiblyOrNeverAppended_ Empty
-    -> Hand (Stacked element) possiblyOrNever Empty
-    -> Hand (Stacked element) possiblyOrNever Empty
+    Emptiable (Stacked element) possiblyOrNeverAppended_
+    -> Emptiable (Stacked element) possiblyOrNever
+    -> Emptiable (Stacked element) possiblyOrNever
 onTopStack stackToPutAbove =
     \stack ->
-        stackOnTopAndTakeOnType
+        stackOnTopAndAdaptTypeOf
             (\( _, possiblyOrNever ) -> possiblyOrNever)
             ( stackToPutAbove, stack )
 
 
-stackOnTopAndTakeOnType :
+stackOnTopAndAdaptTypeOf :
     (( possiblyOrNeverOnTop, possiblyOrNever ) -> possiblyOrNeverTakenOn)
     ->
-        ( Hand (StackTopBelow topElement topElement) possiblyOrNeverOnTop Empty
-        , Hand (Stacked topElement) possiblyOrNever Empty
+        ( Emptiable (StackTopBelow topElement topElement) possiblyOrNeverOnTop
+        , Emptiable (Stacked topElement) possiblyOrNever
         )
-    -> Hand (Stacked topElement) possiblyOrNeverTakenOn Empty
-stackOnTopAndTakeOnType takeOnType stacksDown =
+    -> Emptiable (Stacked topElement) possiblyOrNeverTakenOn
+stackOnTopAndAdaptTypeOf takeOnType stacksDown =
     case stacksDown of
         ( Empty possiblyOrNeverOnTop, Empty possiblyOrNever ) ->
             Empty (takeOnType ( possiblyOrNeverOnTop, possiblyOrNever ))
@@ -447,30 +447,30 @@ stackOnTopAndTakeOnType takeOnType stacksDown =
         |> Stack.onTopGlue [ -1, 0 ]
     --> topDown -1 [ 0, 1, 2 ]
 
-`onTopGlue` only when the piped stack food is already `... Never Empty`.
+`onTopGlue` only when the piped stack food is already `... Never`.
 Glue a stack on top with
 
-  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever Empty` type of the piped food
-  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the **`possiblyOrNever Empty` type of the argument**
+  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever` type of the piped food
+  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the **`possiblyOrNever` type of the argument**
 
 -}
 onTopGlue :
     List element
-    -> Hand (Stacked element) possiblyOrNever Empty
-    -> Hand (Stacked element) possiblyOrNever Empty
+    -> Emptiable (Stacked element) possiblyOrNever
+    -> Emptiable (Stacked element) possiblyOrNever
 onTopGlue stackToPutOnTop =
     onTopStack (stackToPutOnTop |> fromList)
 
 
 {-| Glue together a bunch of stacks.
 
-    import Hand
+    import Emptiable
     import Stack exposing (topDown)
 
     topDown
         (topDown 0 [ 1 ])
         [ topDown 10 [ 11 ]
-        , Hand.empty
+        , Emptiable.empty
         , topDown 20 [ 21, 22 ]
         ]
         |> Stack.flatten
@@ -480,17 +480,16 @@ For this to return a non-empty stack, there must be a non-empty [`top`](#top) st
 
 -}
 flatten :
-    Hand
+    Emptiable
         (StackTopBelow
-            (Hand (Stacked element) possiblyOrNever Empty)
-            (Hand (Stacked element) belowTopListsPossiblyOrNever_ Empty)
+            (Emptiable (Stacked element) possiblyOrNever)
+            (Emptiable (Stacked element) belowTopListsPossiblyOrNever_)
         )
         possiblyOrNever
-        Empty
-    -> Hand (Stacked element) possiblyOrNever Empty
+    -> Emptiable (Stacked element) possiblyOrNever
 flatten stackOfStacks =
     stackOfStacks
-        |> Hand.fillMapFlat
+        |> Emptiable.fillMapFlat
             (\(TopDown topList belowTopLists) ->
                 belowTopLists
                     |> List.concatMap toList
@@ -503,46 +502,44 @@ flatten stackOfStacks =
 --
 
 
-{-| Keep all [`filled`](Hand#filled) elements
-and drop all [`empty`](Hand#empty) elements.
+{-| Keep all [`filled`](Emptiable#filled) elements
+and drop all [`empty`](Emptiable#empty) elements.
 
-    import Hand exposing (filled)
+    import Emptiable exposing (filled)
     import Stack exposing (topDown)
 
-    topDown Hand.empty [ Hand.empty ]
+    topDown Emptiable.empty [ Emptiable.empty ]
         |> Stack.fills
-    --> Hand.empty
+    --> Emptiable.empty
 
-    topDown (filled 1) [ Hand.empty, filled 3 ]
+    topDown (filled 1) [ Emptiable.empty, filled 3 ]
         |> Stack.fills
     --> topDown 1 [ 3 ]
 
-As you can see, if only the top is [`fill`](Hand#fill) a value, the result is non-empty.
+As you can see, if only the top is [`fill`](Emptiable#fill) a value, the result is non-empty.
 
 -}
 fills :
-    Hand
+    Emptiable
         (StackTopBelow
-            (Hand topContent possiblyOrNever Empty)
-            (Hand belowElementContent belowPossiblyOrNever_ Empty)
+            (Emptiable topContent possiblyOrNever)
+            (Emptiable belowElementContent belowPossiblyOrNever_)
         )
         possiblyOrNever
-        Empty
     ->
-        Hand
+        Emptiable
             (StackTopBelow topContent belowElementContent)
             possiblyOrNever
-            Empty
 fills =
     \stackOfHands ->
         stackOfHands
-            |> Hand.fillMapFlat
+            |> Emptiable.fillMapFlat
                 (\(TopDown top_ belowTop_) ->
                     top_
-                        |> Hand.fillMapFlat
+                        |> Emptiable.fillMapFlat
                             (\topElement ->
                                 topDown topElement
-                                    (belowTop_ |> List.filterMap Hand.toMaybe)
+                                    (belowTop_ |> List.filterMap Emptiable.toMaybe)
                             )
                 )
 
@@ -566,12 +563,12 @@ fills =
 -}
 map :
     ({ index : Int } -> element -> elementMapped)
-    -> Hand (Stacked element) possiblyOrNever Empty
-    -> Hand (Stacked elementMapped) possiblyOrNever Empty
+    -> Emptiable (Stacked element) possiblyOrNever
+    -> Emptiable (Stacked elementMapped) possiblyOrNever
 map changeElement =
     \stack ->
         stack
-            |> Hand.fillMapFlat
+            |> Emptiable.fillMapFlat
                 (\(TopDown topElement down) ->
                     topDown
                         (topElement |> changeElement { index = 0 })
@@ -601,9 +598,9 @@ If one stack is longer, the extra elements are dropped.
 
 -}
 and :
-    Hand (Stacked anotherElement) possiblyOrNever Empty
-    -> Hand (Stacked element) possiblyOrNever Empty
-    -> Hand (Stacked ( element, anotherElement )) possiblyOrNever Empty
+    Emptiable (Stacked anotherElement) possiblyOrNever
+    -> Emptiable (Stacked element) possiblyOrNever
+    -> Emptiable (Stacked ( element, anotherElement )) possiblyOrNever
 and anotherStack =
     \stack ->
         stack
@@ -630,15 +627,13 @@ Their type is allowed to change.
 belowTopMap :
     ({ index : Int } -> belowElement -> belowElementMapped)
     ->
-        Hand
+        Emptiable
             (StackTopBelow top belowElement)
             possiblyOrNever
-            Empty
     ->
-        Hand
+        Emptiable
             (StackTopBelow top belowElementMapped)
             possiblyOrNever
-            Empty
 belowTopMap changeTailElement =
     fillMapFlat
         (\(TopDown top_ down_) ->
@@ -665,10 +660,10 @@ Its type is allowed to change.
 -}
 topMap :
     (top -> topMapped)
-    -> Hand (StackTopBelow top belowElement) possiblyOrNever Empty
-    -> Hand (StackTopBelow topMapped belowElement) possiblyOrNever Empty
+    -> Emptiable (StackTopBelow top belowElement) possiblyOrNever
+    -> Emptiable (StackTopBelow topMapped belowElement) possiblyOrNever
 topMap changeTop =
-    Hand.fillMapFlat
+    Emptiable.fillMapFlat
         (\(TopDown top_ down_) ->
             topDown (top_ |> changeTop) down_
         )
@@ -698,7 +693,7 @@ foldFrom :
     , DirectionLinear
     , element -> accumulationValue -> accumulationValue
     )
-    -> Hand (Stacked element) possiblyOrNever_ Empty
+    -> Emptiable (Stacked element) possiblyOrNever_
     -> accumulationValue
 foldFrom ( initialAccumulationValue, direction, reduce ) =
     \stack ->
@@ -726,7 +721,7 @@ as an argument because at the time of writing, the best implementation would inc
 -}
 fold :
     (belowElement -> top -> top)
-    -> Hand (StackTopBelow top belowElement) Never Empty
+    -> Emptiable (StackTopBelow top belowElement) Never
     -> top
 fold reduce =
     \stackFilled ->
@@ -739,15 +734,17 @@ fold reduce =
 
 {-| ∑ Total each element number.
 
+    import Emptiable
+
     topDown 1 [ 2, 3 ] |> Stack.sum
     --> 6
     topDown 1 (List.repeat 5 1) |> Stack.sum
     --> 6
-    Stack.sum Hand.empty
+    Stack.sum Emptiable.empty
     --> 0
 
 -}
-sum : Hand (Stacked number) Never Empty -> number
+sum : Emptiable (Stacked number) possiblyOrNever_ -> number
 sum =
     foldFrom ( 0, Up, \current soFar -> soFar + current )
 
@@ -764,7 +761,7 @@ Keeping type information as long as possible is always a win.
 
 -}
 toList :
-    Hand (Stacked element) possiblyOrNever_ Empty
+    Emptiable (Stacked element) possiblyOrNever_
     -> List element
 toList =
     \stack ->
@@ -787,7 +784,7 @@ Don't try to use this prematurely.
 Keeping type information as long as possible is always a win.
 
 -}
-toText : Hand (Stacked Char) possiblyOrNever_ Empty -> String
+toText : Emptiable (Stacked Char) possiblyOrNever_ -> String
 toText =
     \stack ->
         stack |> toList |> String.fromList
@@ -795,7 +792,7 @@ toText =
 
 {-| Convert to a non-empty list tuple `( top, List belowElement )`.
 
-Currently equivalent to [`fill`](Hand#fill).
+Currently equivalent to [`fill`](Emptiable#fill).
 
     import Stack exposing (topDown, toTopDown)
 
@@ -805,12 +802,12 @@ Currently equivalent to [`fill`](Hand#fill).
 
 -}
 toTopDown :
-    Hand (StackTopBelow top belowElement) Never Empty
+    Emptiable (StackTopBelow top belowElement) Never
     -> ( top, List belowElement )
 toTopDown =
     \filledStack ->
         let
             (TopDown top_ below_) =
-                filledStack |> Hand.fill
+                filledStack |> Emptiable.fill
         in
         ( top_, below_ )

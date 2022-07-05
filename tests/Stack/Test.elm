@@ -1,8 +1,8 @@
 module Stack.Test exposing (expectEqualStack, stackFilledFuzz, stackFuzz, tests)
 
+import Emptiable exposing (Emptiable)
 import Expect
 import Fuzz exposing (Fuzzer)
-import Hand exposing (Empty, Hand)
 import Possibly exposing (Possibly)
 import Stack exposing (Stacked, top, topDown, topRemove)
 import Test exposing (Test, describe)
@@ -79,8 +79,8 @@ reverseTest =
 
 
 expectEqualStack :
-    Hand (Stacked element) possiblyOrNeverExpected_ Empty
-    -> Hand (Stacked element) possiblyOrNeverActual_ Empty
+    Emptiable (Stacked element) possiblyOrNeverExpected_
+    -> Emptiable (Stacked element) possiblyOrNeverActual_
     -> Expect.Expectation
 expectEqualStack expectedStack =
     \actualStack ->
@@ -91,7 +91,7 @@ expectEqualStack expectedStack =
 
 stackFilledFuzz :
     Fuzzer element
-    -> Fuzzer (Hand (Stacked element) never_ Empty)
+    -> Fuzzer (Emptiable (Stacked element) never_)
 stackFilledFuzz elementFuzz =
     Fuzz.constant topDown
         |> Fuzz.andMap elementFuzz
@@ -100,7 +100,7 @@ stackFilledFuzz elementFuzz =
 
 stackFuzz :
     Fuzzer element
-    -> Fuzzer (Hand (Stacked element) Possibly Empty)
+    -> Fuzzer (Emptiable (Stacked element) Possibly)
 stackFuzz elementFuzz =
     Fuzz.list elementFuzz
         |> Fuzz.map Stack.fromList
