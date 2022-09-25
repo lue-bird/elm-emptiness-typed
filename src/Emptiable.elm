@@ -141,10 +141,10 @@ Keeping type information as long as possible is always a win
 -}
 toMaybe : Emptiable fill possiblyOrNever_ -> Maybe fill
 toMaybe =
-    \hand ->
-        case hand of
+    \emptiable ->
+        case emptiable of
             Filled fillContent ->
-                Maybe.Just fillContent
+                fillContent |> Maybe.Just
 
             Empty _ ->
                 Maybe.Nothing
@@ -167,8 +167,8 @@ toMaybe =
 -}
 fill : Emptiable fill Never -> fill
 fill =
-    \handFilled ->
-        handFilled |> fillElseOnEmpty never
+    \emptiableFilled ->
+        emptiableFilled |> fillElseOnEmpty never
 
 
 {-| Lazily use a fallback value if the [`Emptiable`](#Emptiable) is [`empty`](#empty)
@@ -192,11 +192,13 @@ fill =
 -}
 fillElseOnEmpty :
     (possiblyOrNever -> fill)
-    -> Emptiable fill possiblyOrNever
-    -> fill
+    ->
+        (Emptiable fill possiblyOrNever
+         -> fill
+        )
 fillElseOnEmpty fallbackWhenEmpty =
-    \hand ->
-        case hand of
+    \emptiable ->
+        case emptiable of
             Filled fill_ ->
                 fill_
 
@@ -217,13 +219,15 @@ fillElseOnEmpty fallbackWhenEmpty =
 -}
 fillMap :
     (fill -> fillMapped)
-    -> Emptiable fill possiblyOrNever
-    -> Emptiable fillMapped possiblyOrNever
-fillMap change =
-    \hand ->
-        case hand of
+    ->
+        (Emptiable fill possiblyOrNever
+         -> Emptiable fillMapped possiblyOrNever
+        )
+fillMap fillChange =
+    \emptiable ->
+        case emptiable of
             Filled fillingValue ->
-                fillingValue |> change |> Filled
+                fillingValue |> fillChange |> Filled
 
             Empty emptiableOrFilled ->
                 Empty emptiableOrFilled
@@ -264,12 +268,14 @@ For any number of arguments:
 -}
 fillMapFlat :
     (fill -> Emptiable fillIfBothFilled possiblyOrNever)
-    -> Emptiable fill possiblyOrNever
-    -> Emptiable fillIfBothFilled possiblyOrNever
-fillMapFlat tryIfFilled =
-    \hand ->
-        hand
-            |> fillMap tryIfFilled
+    ->
+        (Emptiable fill possiblyOrNever
+         -> Emptiable fillIfBothFilled possiblyOrNever
+        )
+fillMapFlat onFillTry =
+    \emptiable ->
+        emptiable
+            |> fillMap onFillTry
             |> flatten
 
 
@@ -294,8 +300,8 @@ flatten :
     Emptiable (Emptiable fill possiblyOrNever) possiblyOrNever
     -> Emptiable fill possiblyOrNever
 flatten =
-    \hand ->
-        hand |> fillElseOnEmpty Empty
+    \emptiable ->
+        emptiable |> fillElseOnEmpty Empty
 
 
 {-| If the incoming food and the given argument are
@@ -316,8 +322,10 @@ If any is [`empty`](#empty), give a [`Emptiable.empty`](#empty) back
 -}
 fillAnd :
     Emptiable anotherFill possiblyOrNever
-    -> Emptiable fill possiblyOrNever
-    -> Emptiable ( fill, anotherFill ) possiblyOrNever
+    ->
+        (Emptiable fill possiblyOrNever
+         -> Emptiable ( fill, anotherFill ) possiblyOrNever
+        )
 fillAnd argument =
     \soFar ->
         case ( soFar, argument ) of
@@ -332,7 +340,7 @@ fillAnd argument =
 
 
 
---
+-- type-level
 
 
 {-| Change the `possiblyOrNever` type
@@ -381,11 +389,13 @@ makes both branches return `possiblyOrNever`
 -}
 emptyAdapt :
     (possiblyOrNever -> adaptedPossiblyOrNever)
-    -> Emptiable fill possiblyOrNever
-    -> Emptiable fill adaptedPossiblyOrNever
+    ->
+        (Emptiable fill possiblyOrNever
+         -> Emptiable fill adaptedPossiblyOrNever
+        )
 emptyAdapt neverOrAlwaysPossible =
-    \handFilled ->
-        case handFilled of
+    \emptiableFilled ->
+        case emptiableFilled of
             Empty possiblyOrNever ->
                 Empty (possiblyOrNever |> neverOrAlwaysPossible)
 
