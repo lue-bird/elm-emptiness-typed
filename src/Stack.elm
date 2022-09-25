@@ -2,7 +2,7 @@ module Stack exposing
     ( Stacked, StackTopBelow(..)
     , only, topDown, fromTopDown, fromList, fromText
     , top
-    , length, indexLast
+    , length
     , onTopLay, topRemove
     , reverse
     , fills
@@ -30,7 +30,7 @@ are `O(n)`
 ## scan
 
 @docs top
-@docs length, indexLast
+@docs length
 
 [`topRemove`](#topRemove) brings out everything below the [`top`](#top)
 
@@ -150,8 +150,8 @@ topDown :
     top
     -> List belowElement
     -> Emptiable (StackTopBelow top belowElement) never_
-topDown top_ belowTop_ =
-    TopDown top_ belowTop_ |> filled
+topDown topElement belowTopElements =
+    TopDown topElement belowTopElements |> filled
 
 
 {-| Take a tuple `( top, List belowElement )`
@@ -165,8 +165,10 @@ fromTopDown :
     ( top, List belowElement )
     -> Emptiable (StackTopBelow top belowElement) never_
 fromTopDown =
-    \( topElement, down ) ->
-        topDown topElement down
+    \topDownTuple ->
+        topDown
+            (topDownTuple |> Tuple.first)
+            (topDownTuple |> Tuple.second)
 
 
 {-| Convert a `List element` to a `Empty Possibly (Stacked element)`.
@@ -197,8 +199,8 @@ fromList =
             [] ->
                 empty
 
-            top_ :: belowTop_ ->
-                topDown top_ belowTop_
+            listTop :: listBelowTop ->
+                topDown listTop listBelowTop
 
 
 {-| Convert a `String` to a `Emptiable (Stacked Char) Possibly`.
@@ -261,6 +263,8 @@ top =
         |> Stack.length
     --> 2
 
+`O(n)` like `List.length`
+
 -}
 length :
     Emptiable (StackTopBelow top_ belowElement_) possiblyOrNever_
@@ -271,31 +275,8 @@ length =
             Empty _ ->
                 0
 
-            Filled stacked ->
-                1 + (stacked |> filled |> indexLast)
-
-
-{-| The position of the element at the bottom
-
-    import Stack exposing (onTopLay)
-
-    Stack.only 3
-        |> onTopLay 2
-        |> Stack.indexLast
-    --> 1
-
--}
-indexLast :
-    Emptiable (StackTopBelow top_ belowElement_) Never
-    -> Int
-indexLast =
-    \stack ->
-        case stack of
-            Empty _ ->
-                0
-
             Filled (TopDown _ belowTop_) ->
-                belowTop_ |> List.length
+                1 + (belowTop_ |> List.length)
 
 
 
@@ -370,7 +351,7 @@ reverse =
 
                         -- doesnt happen
                         [] ->
-                            topDown top_ []
+                            only top_
                 )
 
 
@@ -391,8 +372,10 @@ to the [`top`](#top) of this [`Stack`](Stack)
 -}
 onTopStackAdapt :
     Emptiable (Stacked element) possiblyOrNever
-    -> Emptiable (Stacked element) possiblyOrNeverIn_
-    -> Emptiable (Stacked element) possiblyOrNever
+    ->
+        (Emptiable (Stacked element) possiblyOrNeverIn_
+         -> Emptiable (Stacked element) possiblyOrNever
+        )
 onTopStackAdapt stackToPutAbove =
     \stack ->
         stackOnTopAndAdaptTypeOf
@@ -414,8 +397,10 @@ onTopStackAdapt stackToPutAbove =
 -}
 onTopStack :
     Emptiable (Stacked element) possiblyOrNeverAppended_
-    -> Emptiable (Stacked element) possiblyOrNever
-    -> Emptiable (Stacked element) possiblyOrNever
+    ->
+        (Emptiable (Stacked element) possiblyOrNever
+         -> Emptiable (Stacked element) possiblyOrNever
+        )
 onTopStack stackToPutAbove =
     \stack ->
         stackOnTopAndAdaptTypeOf
@@ -461,8 +446,10 @@ Glue a stack on top with
 -}
 onTopGlue :
     List element
-    -> Emptiable (Stacked element) possiblyOrNever
-    -> Emptiable (Stacked element) possiblyOrNever
+    ->
+        (Emptiable (Stacked element) possiblyOrNever
+         -> Emptiable (Stacked element) possiblyOrNever
+        )
 onTopGlue stackToPutOnTop =
     onTopStack (stackToPutOnTop |> fromList)
 
@@ -568,8 +555,10 @@ fills =
 -}
 map :
     ({ index : Int } -> element -> elementMapped)
-    -> Emptiable (Stacked element) possiblyOrNever
-    -> Emptiable (Stacked elementMapped) possiblyOrNever
+    ->
+        (Emptiable (Stacked element) possiblyOrNever
+         -> Emptiable (Stacked elementMapped) possiblyOrNever
+        )
 map changeElement =
     \stack ->
         stack
@@ -604,8 +593,10 @@ If one stack is longer, the extra elements are dropped
 -}
 and :
     Emptiable (Stacked anotherElement) possiblyOrNever
-    -> Emptiable (Stacked element) possiblyOrNever
-    -> Emptiable (Stacked ( element, anotherElement )) possiblyOrNever
+    ->
+        (Emptiable (Stacked element) possiblyOrNever
+         -> Emptiable (Stacked ( element, anotherElement )) possiblyOrNever
+        )
 and anotherStack =
     \stack ->
         stack
@@ -632,13 +623,14 @@ Their type is allowed to change
 belowTopMap :
     ({ index : Int } -> belowElement -> belowElementMapped)
     ->
-        Emptiable
+        (Emptiable
             (StackTopBelow top belowElement)
             possiblyOrNever
-    ->
-        Emptiable
-            (StackTopBelow top belowElementMapped)
-            possiblyOrNever
+         ->
+            Emptiable
+                (StackTopBelow top belowElementMapped)
+                possiblyOrNever
+        )
 belowTopMap changeTailElement =
     fillMapFlat
         (\(TopDown top_ down_) ->
@@ -664,8 +656,10 @@ Its type is allowed to change
 -}
 topMap :
     (top -> topMapped)
-    -> Emptiable (StackTopBelow top belowElement) possiblyOrNever
-    -> Emptiable (StackTopBelow topMapped belowElement) possiblyOrNever
+    ->
+        (Emptiable (StackTopBelow top belowElement) possiblyOrNever
+         -> Emptiable (StackTopBelow topMapped belowElement) possiblyOrNever
+        )
 topMap changeTop =
     Emptiable.fillMapFlat
         (\(TopDown top_ down_) ->
@@ -696,8 +690,10 @@ foldFrom :
     accumulationValue
     -> Linear.Direction
     -> (element -> accumulationValue -> accumulationValue)
-    -> Emptiable (Stacked element) possiblyOrNever_
-    -> accumulationValue
+    ->
+        (Emptiable (Stacked element) possiblyOrNever_
+         -> accumulationValue
+        )
 foldFrom initialAccumulationValue direction reduce =
     \stack ->
         stack
@@ -726,8 +722,10 @@ Be aware:
 fold :
     Linear.Direction
     -> (element -> element -> element)
-    -> Emptiable (Stacked element) Never
-    -> element
+    ->
+        (Emptiable (Stacked element) Never
+         -> element
+        )
 fold direction reduce =
     -- doesn't use a native implementation for performance reasons
     \stackFilled ->

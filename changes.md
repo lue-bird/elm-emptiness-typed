@@ -1,8 +1,9 @@
+# changes log
+
 ## 7.0.0 plans
 
-  - add `bounded-nat` for `length`, `Stack.repeat`, `Stack.range`, `Location`, `Stack.map` etc.
-
-# changelog
+  - `linear-direction` version → 7.0.0
+  - `Stack.indexLast` remove
 
 ## 6.0.0
 
