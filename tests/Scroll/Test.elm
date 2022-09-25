@@ -3,7 +3,7 @@ module Scroll.Test exposing (tests)
 import Emptiable exposing (fillMapFlat, filled)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
-import Linear exposing (DirectionLinear(..))
+import Linear exposing (Direction(..))
 import Possibly exposing (Possibly)
 import Scroll exposing (FocusGap, Scroll)
 import Stack exposing (top, topRemove)
@@ -97,7 +97,7 @@ focusItemTest =
     describe "Scroll.to"
         [ Test.fuzz
             (sideAndScrollFuzz scrollFocusSideFuzz)
-            "items exist on the DirectionLinear"
+            "items exist on the Linear.Direction"
             (\{ scroll, side } ->
                 scroll
                     |> Scroll.to (side |> Scroll.nearest)
@@ -110,7 +110,7 @@ focusItemTest =
             )
         , Test.fuzz
             (sideAndScrollFuzz scrollFocusSideFuzz)
-            "no items on the DirectionLinear"
+            "no items on the Linear.Direction"
             (\{ scroll, side } ->
                 scroll
                     |> Scroll.to
@@ -119,7 +119,7 @@ focusItemTest =
             )
         , Test.fuzz
             (sideAndScrollFuzz scrollFocusSideFuzz)
-            "`(Scroll.toEndGap DirectionLinear >> Scroll.to (DirectionLinear |> Linear.opposite)) == Scroll.toEnd DirectionLinear`"
+            "`(Scroll.toEndGap Linear.Direction >> Scroll.to (Linear.Direction |> Linear.opposite)) == Scroll.toEnd Linear.Direction`"
             (\{ scroll, side } ->
                 scroll
                     |> Scroll.toEndGap side
@@ -130,7 +130,7 @@ focusItemTest =
             )
         , Test.fuzz
             (sideAndScrollFuzz scrollFocusSideFuzz)
-            "`(Scroll.toGap DirectionLinear >> Scroll.to DirectionLinear) == Scroll.to DirectionLinear`"
+            "`(Scroll.toGap Linear.Direction >> Scroll.to Linear.Direction) == Scroll.to Linear.Direction`"
             (\{ scroll, side } ->
                 scroll
                     |> Scroll.toGap side
@@ -140,7 +140,7 @@ focusItemTest =
             )
         , Test.fuzz
             (sideAndScrollFuzz scrollFocusSideFuzz)
-            "`(Scroll.toEnd DirectionLinear >> Scroll.to DirectionLinear) == Emptiable.empty`"
+            "`(Scroll.toEnd Linear.Direction >> Scroll.to Linear.Direction) == Emptiable.empty`"
             (\{ scroll, side } ->
                 scroll
                     |> Scroll.toEnd side
@@ -149,7 +149,7 @@ focusItemTest =
             )
         , Test.fuzz
             (sideAndScrollFuzz scrollFocusSideFuzz)
-            "repeating `Scroll.to (DirectionLinear |> Scroll.nearest)` length times results in empty"
+            "repeating `Scroll.to (Linear.Direction |> Scroll.nearest)` length times results in empty"
             (\{ scroll, side } ->
                 Scroll.to (side |> Scroll.nearest)
                     |> List.repeat
@@ -196,7 +196,7 @@ expectEqualScroll expectedScroll =
             |> Expect.equal expectedScroll
 
 
-sideFuzz : Fuzzer DirectionLinear
+sideFuzz : Fuzzer Linear.Direction
 sideFuzz =
     Fuzz.oneOf
         [ Down |> Fuzz.constant

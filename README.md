@@ -27,9 +27,14 @@ maybeFirst =
 
 ## 📚 [`Stack`](Stack)
 
-Handle lists that are [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) or `Never` [`Emptiable`](Emptiable#Emptiable) in one go.
+Handle lists that are
+[`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
+or `Never` [`Emptiable`](Emptiable#Emptiable)
+in one go
 
-`Emptiable ... Never` allows safe `Maybe`-free [`top`](Stack#top), [`topRemove`](Stack#topRemove), [`fold`](Stack#fold) (for finding the maximum etc.; some call it "fold1"), ...
+`Emptiable ... Never` allows safe `Maybe`-free
+[`top`](Stack#top), [`topRemove`](Stack#topRemove),
+[`fold`](Stack#fold) (for finding the maximum etc.; some call it "fold1"), ...
 
 ```elm
 import Emptiable exposing (Emptiable)
@@ -52,11 +57,13 @@ Items rolled up on both sides of a focus
 → good fit for dynamic choice selection: tabs, playlist, ...
 [↑ examples](https://github.com/lue-bird/elm-emptiness-typed/tree/master/examples)
 
-`Scroll` can even focus a gap [`Down` or `Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) from every item.
+`Scroll` can even focus a gap
+[`Down` or `Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/)
+from every item
 
 
 ```elm
-import Linear exposing (DirectionLinear(..))
+import Linear exposing (Direction(..))
 import Emptiable exposing (filled)
 import Stack exposing (topDown)
 import Scroll exposing (Scroll, FocusGap)
@@ -83,4 +90,4 @@ Scroll.empty
 ## you like type-safety?
 
 [typesafe-array](https://dark.elm.dmy.fr/packages/lue-bird/elm-typesafe-array/latest/) takes it to the extreme.
-The possible length range is part of its type, allowing safe access for some elements.
+The possible length range is part of its type, allowing safe access for some elements

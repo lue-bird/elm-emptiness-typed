@@ -8,7 +8,7 @@ import Element.Font as Font
 import Element.Input as UIn
 import Emptiable exposing (fillMap)
 import Html exposing (Html)
-import Linear exposing (DirectionLinear(..))
+import Linear exposing (Direction(..))
 import List.Linear
 import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
 import Scroll exposing (FocusGap, Scroll)

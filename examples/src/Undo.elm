@@ -8,13 +8,13 @@ import Element.Font as Font
 import Element.Input as UIn
 import Emptiable exposing (Emptiable(..), fill, fillMap, fillElseOnEmpty, filled)
 import Html exposing (Html)
-import Linear exposing (DirectionLinear(..))
+import Linear exposing (Direction(..))
 import Scroll exposing (FocusGap, Scroll)
 import Stack exposing (Stacked)
 
 
 
--- This was the model before.
+-- This was the model before
 
 
 type alias CountersModel =
@@ -85,7 +85,7 @@ countersUpdate countersEvent counters =
 
 type Event
     = CountersChanged CountersEvent
-    | ReturnToState DirectionLinear
+    | ReturnToState Linear.Direction
 
 
 update : Event -> Model -> Model
@@ -154,7 +154,7 @@ scrollToEventInterface =
 
 
 eventScrollToOneSideInterface :
-    DirectionLinear
+    Linear.Direction
     -> Emptiable (Stacked element_) possiblyOrNever_
     -> Ui.Element Event
 eventScrollToOneSideInterface side =
@@ -188,14 +188,14 @@ eventScrollToOneSideInterface side =
             |> Ui.column []
 
 
-timeMovementInterface : DirectionLinear -> Ui.Element event_
+timeMovementInterface : Linear.Direction -> Ui.Element event_
 timeMovementInterface side =
     side
         |> timeMovementSymbol
         |> Ui.text
 
 
-timeMovementSymbol : DirectionLinear -> String
+timeMovementSymbol : Linear.Direction -> String
 timeMovementSymbol =
     \side ->
         case side of

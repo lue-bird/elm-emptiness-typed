@@ -32,7 +32,7 @@ module Emptiable exposing
             }
 
 where [`RecordWithoutConstructorFunction`](https://dark.elm.dmy.fr/packages/lue-bird/elm-no-record-type-alias-constructor-function/latest/)
-stops the compiler from creating a constructor function for `Model`.
+stops the compiler from creating a constructor function for `Model`
 
 @docs Emptiable
 
@@ -60,7 +60,7 @@ stops the compiler from creating a constructor function for `Model`.
 import Possibly exposing (Possibly(..))
 
 
-{-| 📦 Like `Maybe`, but able to know at type-level whether `Empty` is a possibility.
+{-| 📦 Like `Maybe`, but able to know at type-level whether `Empty` is a possibility
 
     import Emptiable exposing (Emptiable, filled, fill)
 
@@ -80,7 +80,7 @@ but it can make data structures type-safely non-emptiable:
     --: Emptiable (NonEmptyDict comparable v) possiblyOrNever
     --: -> Emptiable ( comparable, v ) possiblyOrNever
 
-Go take a look at all the data structures in this package.
+Go take a look at all the data structures in this package
 
 -}
 type Emptiable fill possiblyOrNever
@@ -88,7 +88,7 @@ type Emptiable fill possiblyOrNever
     | Filled fill
 
 
-{-| Insert joke about life here.
+{-| Insert joke about life here
 
     Emptiable.empty
         |> Emptiable.fillMap (\x -> x / 0)
@@ -100,7 +100,7 @@ empty =
     Empty Possible
 
 
-{-| [`Emptiable`](#Emptiable) that certainly exists, allowing type-safe extraction.
+{-| [`Emptiable`](#Emptiable) that certainly exists, allowing type-safe extraction
 
     import Emptiable exposing (filled, fill)
 
@@ -113,7 +113,7 @@ filled =
     \fillContent -> Filled fillContent
 
 
-{-| Convert a `Maybe` to an [`Emptiable`](#Emptiable) `Possibly`.
+{-| Convert a `Maybe` to an [`Emptiable`](#Emptiable) `Possibly`
 
 To _create_ new [`Emptiable`](#Emptiable)s, use [`filled`](#filled) and [`empty`](#empty) instead!
 
@@ -133,10 +133,10 @@ fromMaybe =
 --
 
 
-{-| Convert to a `Maybe`.
+{-| Convert to a `Maybe`
 
 Don't try to use this prematurely.
-Keeping type information as long as possible is always a win.
+Keeping type information as long as possible is always a win
 
 -}
 toMaybe : Emptiable fill possiblyOrNever_ -> Maybe fill
@@ -150,7 +150,7 @@ toMaybe =
                 Maybe.Nothing
 
 
-{-| Safely extract the [`filled`](#filled) content from a `Emptiable fill Never`.
+{-| Safely extract the [`filled`](#filled) content from a `Emptiable fill Never`
 
     import Emptiable exposing (filled)
 
@@ -171,7 +171,7 @@ fill =
         handFilled |> fillElseOnEmpty never
 
 
-{-| Lazily use a fallback value if the [`Emptiable`](#Emptiable) is [`empty`](#empty).
+{-| Lazily use a fallback value if the [`Emptiable`](#Emptiable) is [`empty`](#empty)
 
     import Possibly exposing (Possibly(..))
     import Emptiable exposing (Emptiable(..), fillElseOnEmpty)
@@ -234,11 +234,11 @@ It's like calling [`fillMap`](#fillMap)`|>`[`flatten`](#flatten):
 
 If the argument is `Never` empty,
 a given function takes its [`fill`](#fill)
-and returns a new possibly [`empty`](#empty) value.
+and returns a new possibly [`empty`](#empty) value
 
 Some call it
 [`andThen`](https://package.elm-lang.org/packages/elm/core/latest/Maybe#andThen)
-or [`flatMap`](https://package.elm-lang.org/packages/ccapndave/elm-flat-map/1.2.0/Maybe-FlatMap#flatMap).
+or [`flatMap`](https://package.elm-lang.org/packages/ccapndave/elm-flat-map/1.2.0/Maybe-FlatMap#flatMap)
 
     import Emptiable exposing (Emptiable, fillMapFlat)
 
@@ -274,9 +274,9 @@ fillMapFlat tryIfFilled =
 
 
 {-| In a nestable [`Emptiable`](#Emptiable):
-Only keep it [`filled`](#filled) if the inner [`Emptiable`](#Emptiable) is [`filled`](#filled).
+Only keep it [`filled`](#filled) if the inner [`Emptiable`](#Emptiable) is [`filled`](#filled)
 
-Some call it [`join`](https://package.elm-lang.org/packages/elm-community/maybe-extra/latest/Maybe-Extra#join).
+Some call it [`join`](https://package.elm-lang.org/packages/elm-community/maybe-extra/latest/Maybe-Extra#join)
 
     import Emptiable exposing (filled)
 
@@ -299,11 +299,11 @@ flatten =
 
 
 {-| If the incoming food and the given argument are
-[`filled`](#filled), give a [`filled`](#filled) tuple of both [`fill`](#fill)s back.
+[`filled`](#filled), give a [`filled`](#filled) tuple of both [`fill`](#fill)s back
 
-If any is [`empty`](#empty), give a [`Emptiable.empty`](#empty) back.
+If any is [`empty`](#empty), give a [`Emptiable.empty`](#empty) back
 
-[`fillAnd`](#fillAnd) comes in handy when **multiple arguments** need to be [`filled`](#filled):
+[`fillAnd`](#fillAnd) comes in handy when **multiple arguments** need to be [`filled`](#filled)
 
     import Emptiable exposing (filled, fillMap, fillAnd)
 
@@ -335,7 +335,7 @@ fillAnd argument =
 --
 
 
-{-| Change the `possiblyOrNever` type.
+{-| Change the `possiblyOrNever` type
 
 
 #### Returning a type declaration value or argument that is `Empty Possibly`
@@ -376,7 +376,7 @@ The `Never` can't be unified with `Possibly` or a type variable
                 --: `Never` but we need `possiblyOrNever`
                 |> Emptiable.emptyAdapt never
 
-makes both branches return `possiblyOrNever`.
+makes both branches return `possiblyOrNever`
 
 -}
 emptyAdapt :

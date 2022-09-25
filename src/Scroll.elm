@@ -22,9 +22,11 @@ module Scroll exposing
 
 → good fit for dynamic choice selection: tabs, playlist, timeline...
 
-[`Scroll`](#Scroll) can even focus a gap [`Down` or `Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) from every item.
+[`Scroll`](#Scroll) can even focus a gap
+[`Down` or `Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/)
+from every item
 
-Not what you were looking for? Check out [alternatives](#alternatives).
+Not what you were looking for? Check out [alternatives](#alternatives)
 
 @docs Scroll, FocusGap
 
@@ -100,7 +102,7 @@ Not what you were looking for? Check out [alternatives](#alternatives).
 -}
 
 import Emptiable exposing (Emptiable(..), emptyAdapt, fill, fillMap, fillMapFlat, filled)
-import Linear exposing (DirectionLinear(..))
+import Linear exposing (Direction(..))
 import Possibly exposing (Possibly(..))
 import Stack exposing (Stacked, onTopLay, onTopStack, onTopStackAdapt, top, topRemove)
 
@@ -134,7 +136,7 @@ import Stack exposing (Stacked, onTopLay, onTopStack, onTopStackAdapt, top, topR
             }
 
 where [`RecordWithoutConstructorFunction`](https://dark.elm.dmy.fr/packages/lue-bird/elm-no-record-type-alias-constructor-function/latest/)
-stops the compiler from creating a constructor function for `Model`.
+stops the compiler from creating a constructor function for `Model`
 
 -}
 type Scroll item focusedOnGapTag possiblyOrNever
@@ -167,9 +169,9 @@ type FocusGap
 -- position
 
 
-{-| Position in a [`Scroll`](#Scroll) relative to its focus.
+{-| Position in a [`Scroll`](#Scroll) relative to its focus
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (Emptiable, filled, fillMap, fillMapFlat)
     import Stack exposing (topDown)
 
@@ -183,16 +185,17 @@ type FocusGap
 
 -}
 type Location
-    = AtSide DirectionLinear Int
+    = AtSide Linear.Direction Int
     | AtFocus
 
 
-{-| The [`Location`](#Location) directly [`Down`|`Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) the focus.
+{-| The [`Location`](#Location) directly
+[`Down`|`Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) the focus
 
     import Emptiable exposing (Emptiable, filled, fillMap)
     import Stack exposing (onTopLay, topDown)
     import Scroll exposing (Scroll, FocusGap)
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     Scroll.only "hello"
         |> Scroll.sideAlter
@@ -225,7 +228,7 @@ type Location
             Scroll.AtSide side 0
 
 -}
-nearest : DirectionLinear -> Location
+nearest : Linear.Direction -> Location
 nearest =
     \side_ ->
         AtSide side_ 0
@@ -237,7 +240,7 @@ nearest =
 
 {-| An empty `Scroll` on a gap
 with nothing before and after it.
-It's the loneliest of all [`Scroll`](#Scroll)s.
+It's the loneliest of all [`Scroll`](#Scroll)s
 
 ```monospace
 <>
@@ -255,7 +258,7 @@ empty =
 
 
 {-| A `Scroll` with a single focussed item in it,
-nothing `Down` and `Up` it.
+nothing `Down` and `Up` it
 
 ```monospace
 🍊  ->  <🍊>
@@ -279,14 +282,14 @@ only currentItem =
 --
 
 
-{-| The focused item.
+{-| The focused item
 
 ```monospace
 🍍 🍓 <🍊> 🍉 🍇  ->  🍊
 ```
 
     import Stack exposing (topDown)
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     Scroll.only "hi there" |> Scroll.focusItem
     --> "hi there"
@@ -304,7 +307,7 @@ focusItem =
     \scroll -> scroll |> focus |> Emptiable.fill
 
 
-{-| The focused item or gap.
+{-| The focused item or gap
 
 ```monospace
 🍍 🍓 <🍊> 🍉 🍇  ->  🍊
@@ -319,7 +322,7 @@ focusItem =
     Scroll.only "hi there" |> Scroll.focus |> fill
     --> "hi there"
 
-[`focusItem`](#focusItem) is short for `focus |> fill`.
+[`focusItem`](#focusItem) is short for `focus |> fill`
 
 -}
 focus :
@@ -329,7 +332,7 @@ focus =
     \(BeforeFocusAfter _ focus_ _) -> focus_
 
 
-{-| The [`Stack`](Stack) to one [side](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) of the focus.
+{-| The [`Stack`](Stack) to one [side](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) of the focus
 
 `Down`
 
@@ -345,7 +348,7 @@ focus =
 
     import Emptiable exposing (Emptiable, fillMapFlat)
     import Stack exposing (Stacked, topDown)
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     Scroll.only 0
         |> Scroll.sideAlter
@@ -366,7 +369,7 @@ focus =
 
 -}
 side :
-    DirectionLinear
+    Linear.Direction
     -> Scroll item FocusGap possiblyOrNever_
     -> Emptiable (Stacked item) Possibly
 side sideToAccess =
@@ -383,10 +386,10 @@ side sideToAccess =
                 sideAfter
 
 
-{-| Counting all contained items.
+{-| Counting all contained items
 
     import Stack exposing (topDown)
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     Scroll.only 0
         |> Scroll.sideAlter
@@ -423,13 +426,13 @@ length =
 --
 
 
-{-| Try to move the focus to the nearest item [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/).
+{-| Try to move the focus to the nearest item [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/)
 
 **Should not be exposed**
 
 -}
 toItemNearest :
-    DirectionLinear
+    Linear.Direction
     -> Scroll item FocusGap possiblyOrNever_
     -> Emptiable (Scroll item FocusGap never_) Possibly
 toItemNearest side_ =
@@ -457,7 +460,7 @@ toItemNearest side_ =
                 )
 
 
-{-| Try to move the [`focus`](#focus) to the item at a given [`Scroll.Location`](#Location).
+{-| Try to move the [`focus`](#focus) to the item at a given [`Scroll.Location`](#Location)
 
 
 #### `Scroll.to (Down |> Scroll.nearest)`
@@ -466,7 +469,7 @@ toItemNearest side_ =
 🍊 <🍉> 🍇  ->  <🍊> 🍉 🍇
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (Emptiable, filled, fillMap)
     import Scroll exposing (Scroll, FocusGap)
 
@@ -488,7 +491,7 @@ This also works from within gaps:
 🍊 🍉 <> 🍇  ->  🍊 <🍉> 🍇
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (Emptiable, filled)
     import Stack exposing (onTopLay)
     import Scroll exposing (Scroll, FocusGap)
@@ -507,7 +510,7 @@ This also works from within gaps:
 <🍊> 🍉 🍇  ->  🍊 <🍉> 🍇
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (Emptiable, filled, fillMap)
     import Scroll exposing (Scroll, FocusGap)
 
@@ -525,7 +528,7 @@ This also works from within gaps:
 🍊 <> 🍉 🍇  ->  🍊 <🍉> 🍇
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (Emptiable, filled)
     import Stack exposing (onTopLay)
     import Scroll exposing (Scroll, FocusGap)
@@ -537,9 +540,9 @@ This also works from within gaps:
     --> filled (Scroll.only "foo")
     --: Emptiable (Scroll String FocusGap Never) Possibly
 
-If there is no next item, the result is [`empty`](Emptiable#empty).
+If there is no next item, the result is [`empty`](Emptiable#empty)
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable
     import Stack exposing (topDown)
 
@@ -655,7 +658,7 @@ Feel free to [plug](#focusAlter) that gap right up!
 🍍 <🍊> 🍉  ->  🍍 <> 🍊 🍉
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (filled)
     import Stack exposing (topDown)
 
@@ -672,7 +675,7 @@ Feel free to [plug](#focusAlter) that gap right up!
 🍍 <🍊> 🍉  ->  🍍 🍊 <> 🍉
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (filled)
     import Stack exposing (topDown)
 
@@ -686,7 +689,7 @@ Feel free to [plug](#focusAlter) that gap right up!
 
 -}
 toGap :
-    DirectionLinear
+    Linear.Direction
     -> Scroll item FocusGap Never
     -> Scroll item FocusGap Possibly
 toGap side_ =
@@ -705,7 +708,7 @@ toGap side_ =
                     after
 
 
-{-| Focus the furthest item [`Down/Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) the focus.
+{-| Focus the furthest item [`Down/Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) the focus
 
 `Down`
 
@@ -719,7 +722,7 @@ toGap side_ =
 🍓 <🍊> 🍉 🍇  ->  🍓 🍊 🍉 <🍇>
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (Emptiable)
     import Stack exposing (Stacked, topDown)
 
@@ -749,7 +752,7 @@ toGap side_ =
 
 -}
 toEnd :
-    DirectionLinear
+    Linear.Direction
     -> Scroll item FocusGap possiblyOrNever
     -> Scroll item FocusGap possiblyOrNever
 toEnd end =
@@ -791,7 +794,7 @@ Remember that gaps surround everything!
 🍓 <🍊> 🍉  ->  🍓 🍊 🍉 <>
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (filled)
     import Stack exposing (topDown)
 
@@ -825,7 +828,7 @@ Remember that gaps surround everything!
 
 -}
 toEndGap :
-    DirectionLinear
+    Linear.Direction
     -> Scroll item FocusGap possiblyOrNever_
     -> Scroll item FocusGap Possibly
 toEndGap side_ =
@@ -852,12 +855,12 @@ toEndGap side_ =
 
 
 {-| Move the focus to the nearest item [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) that matches a predicate.
-If no such item was found return with [`Emptiable.empty`](Emptiable#empty).
+If no such item was found return with [`Emptiable.empty`](Emptiable#empty)
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
     import Stack exposing (topDown)
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     Scroll.only 4
         |> Scroll.sideAlter
@@ -882,7 +885,7 @@ If no such item was found return with [`Emptiable.empty`](Emptiable#empty).
 
 -}
 toWhere :
-    ( DirectionLinear
+    ( Linear.Direction
     , { index : Int } -> item -> Bool
     )
     -> Scroll item FocusGap possiblyOrNever_
@@ -916,7 +919,8 @@ toWhere ( side_, isFound ) =
     toWhereFrom { index = 0 }
 
 
-{-| Try to move the focus to the nearest item [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/).
+{-| Try to move the focus to the nearest item
+[`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/)
 
 `Down`
 
@@ -932,7 +936,7 @@ toWhere ( side_, isFound ) =
 🍊 <> 🍉 🍇  ->  🍊 🍉 <> 🍇
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (Emptiable, fillMapFlat)
     import Scroll exposing (Scroll, FocusGap)
 
@@ -952,9 +956,9 @@ toWhere ( side_, isFound ) =
     --> topDown 1 [ 0, 2, 3 ]
     --: Emptiable (Stacked number_) Possibly
 
-If there is no nearest item, the result is [`empty`](Emptiable#empty).
+If there is no nearest item, the result is [`empty`](Emptiable#empty)
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable
     import Stack exposing (topDown)
 
@@ -972,7 +976,7 @@ If there is no nearest item, the result is [`empty`](Emptiable#empty).
 
 -}
 focusDrag :
-    DirectionLinear
+    Linear.Direction
     -> Scroll item FocusGap possiblyOrNever
     -> Emptiable (Scroll item FocusGap possiblyOrNever) Possibly
 focusDrag side_ =
@@ -1008,10 +1012,11 @@ focusDrag side_ =
 --
 
 
-{-| Look [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) the [`focus`](#focus) and operate directly an the [`Stack`](Stack) you see.
+{-| Look [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/)
+the [`focus`](#focus) and operate directly an the [`Stack`](Stack) you see
 
 
-#### `sideAlter ( DirectionLinear, \_ -> 🍒🍋 )`
+#### `sideAlter ( Linear.Direction, \_ -> 🍒🍋 )`
 
 `Down`
 
@@ -1029,7 +1034,7 @@ focusDrag side_ =
 🍍 🍓 <🍊> 🍒 🍋
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable
     import Stack exposing (topDown)
 
@@ -1044,9 +1049,9 @@ focusDrag side_ =
     --> topDown "enutai" [ "agua", "earlee", "selectoo" ]
 
 
-#### `sideAlter ( DirectionLinear, Stack.map ... )`
+#### `sideAlter ( Linear.Direction, Stack.map ... )`
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Stack exposing (topDown)
 
     Scroll.only "second"
@@ -1066,10 +1071,10 @@ focusDrag side_ =
     --> topDown "zeroth" [ "FIRST", "SECOND" ]
 
 Look to one [side](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) from the focus
-and slide items in directly at the nearest location.
+and slide items in directly at the nearest location
 
 
-#### `sideAlter ( DirectionLinear, Stack.onTopGlue/onTopStack 🍒🍋 )`
+#### `sideAlter ( Linear.Direction, Stack.onTopGlue/onTopStack 🍒🍋 )`
 
 `Down`
 
@@ -1085,7 +1090,7 @@ and slide items in directly at the nearest location.
 🍓 <🍊> \↓/ 🍉 🍇
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Stack exposing (topDown)
 
     Scroll.only 0
@@ -1105,7 +1110,7 @@ and slide items in directly at the nearest location.
     --> topDown 0 [ 1, 2, 3, 4, 5 ]
 
 
-#### `Scroll.sideAlter ( DirectionLinear, \side -> 🍒🍋 |> onTopStack side )`
+#### `Scroll.sideAlter ( Linear.Direction, \side -> 🍒🍋 |> onTopStack side )`
 
 `Down`
 
@@ -1121,7 +1126,7 @@ and slide items in directly at the nearest location.
 🍓 <🍊> 🍉 🍇 ↓/
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Stack exposing (topDown, onTopStack)
 
     Scroll.only 1
@@ -1142,7 +1147,7 @@ and slide items in directly at the nearest location.
     --> topDown 123 [ 456, 789, 0 ]
 
 
-#### `sideAlter ( DirectionLinear,`[`Stack.onTopLay`](Stack#onTopLay) `... )`
+#### `sideAlter ( Linear.Direction,`[`Stack.onTopLay`](Stack#onTopLay) `... )`
 
 `Down`
 
@@ -1159,7 +1164,7 @@ and slide items in directly at the nearest location.
 🍓 <🍊> ↓ 🍉 🍇
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Stack exposing (topDown, onTopLay)
 
     Scroll.only 123
@@ -1178,7 +1183,7 @@ and slide items in directly at the nearest location.
 
 -}
 sideAlter :
-    ( DirectionLinear
+    ( Linear.Direction
     , Emptiable (Stacked item) Possibly
       -> Emptiable (Stacked item) possiblyOrNever_
     )
@@ -1203,13 +1208,13 @@ sideAlter ( facedSide, sideStackAlter ) =
 
 
 {-| Swap the [stack](Stack) on the [`side Down`](#side) the [`focus`](#focus)
-with the [stack](Stack) on the [`side Up`](#side).
+with the [stack](Stack) on the [`side Up`](#side)
 
 ```monospace
 🍓 <🍊> 🍉 🍇  <->  🍇 🍉 <🍊> 🍓
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Stack exposing (topDown)
 
     Scroll.only 1
@@ -1218,7 +1223,7 @@ with the [stack](Stack) on the [`side Up`](#side).
         |> Scroll.sideAlter
             ( Down, \_ -> topDown 4 [ 3, 2 ] )
 
-In contrast to `List` or [stack](Stack), this can be done in `O(1)` time.
+In contrast to `List` or [stack](Stack), this can be done in `O(1)` time
 
 -}
 mirror :
@@ -1233,9 +1238,9 @@ mirror =
 -- transform
 
 
-{-| Change every item based on its current value.
+{-| Change every item based on its current value
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Stack exposing (topDown)
 
     Scroll.only "first"
@@ -1247,7 +1252,7 @@ mirror =
         |> Scroll.toStack
     --> topDown "ZEROTH" [ "FIRST", "SECOND", "THIRD" ]
 
-[`focusSidesMap`](#focusSidesMap) allows changing the individual parts separately.
+[`focusSidesMap`](#focusSidesMap) allows changing the individual parts separately
 
 -}
 map :
@@ -1270,9 +1275,9 @@ map changeItem =
 
 {-| Fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 from the first item [`Up|Down`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-as the initial accumulation value.
+as the initial accumulation value
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Stack exposing (topDown)
 
     Scroll.only 234
@@ -1283,7 +1288,7 @@ as the initial accumulation value.
 
 -}
 fold :
-    DirectionLinear
+    Linear.Direction
     -> (item -> item -> item)
     -> Scroll item FocusGap Never
     -> item
@@ -1299,9 +1304,9 @@ fold direction reduce =
             |> Stack.fold direction reduce
 
 
-{-| Reduce in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+{-| Reduce in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Stack exposing (topDown)
 
     Scroll.only 'e'
@@ -1319,7 +1324,7 @@ fold direction reduce =
 -}
 foldFrom :
     accumulationValue
-    -> DirectionLinear
+    -> Linear.Direction
     -> (item -> accumulationValue -> accumulationValue)
     -> Scroll item FocusGap Never
     -> accumulationValue
@@ -1338,7 +1343,7 @@ foldFrom accumulationValueInitial direction reduce =
                 reduce
 
 
-{-| Alter the focus – [item or gap](Emptiable) – based on its current value.
+{-| Alter the focus – [item or gap](Emptiable) – based on its current value
 
 
 #### `Scroll.focusAlter (\_ -> 🍊 |> filled)`
@@ -1347,7 +1352,7 @@ foldFrom accumulationValueInitial direction reduce =
 🍊  ->  🍓 <?> 🍉  ->  🍓 <🍊> 🍉
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
     import Stack exposing (topDown, onTopLay)
 
@@ -1371,7 +1376,7 @@ foldFrom accumulationValueInitial direction reduce =
 🍓 <?> 🍉  ->  🍓 <> 🍉
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
     import Stack exposing (topDown)
 
@@ -1390,7 +1395,7 @@ foldFrom accumulationValueInitial direction reduce =
 (?🍒 -> ?🍊)  ->  🍓 <?🍒> 🍉  ->  🍓 <?🍊> 🍉
 ```
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
     import Stack exposing (topDown, onTopLay)
 
@@ -1434,9 +1439,9 @@ focusAlter focusHandAlter =
 
 {-| Change the [`focus`](#focus),
 the [`side`](#side)s `Down` and `Up`
-using different functions.
+using different functions
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
     import Stack exposing (topDown)
 
@@ -1473,7 +1478,7 @@ using different functions.
                 Up ->
                     "after"
 
-[`map`](#map) transforms every item.
+[`map`](#map) transforms every item
 
 -}
 focusSidesMap :
@@ -1481,7 +1486,7 @@ focusSidesMap :
         Emptiable item possiblyOrNever
         -> Emptiable mappedItem possiblyOrNeverMapped
     , side :
-        DirectionLinear
+        Linear.Direction
         -> Emptiable (Stacked item) Possibly
         -> Emptiable (Stacked mappedItem) possiblyOrNeverMappedBefore_
     }
@@ -1503,7 +1508,7 @@ focusSidesMap changeFocusAndSideStacks =
 
 {-| Converts it to a `List`, rolled out to both ends:
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Stack
 
     Scroll.only 456
@@ -1515,7 +1520,7 @@ focusSidesMap changeFocusAndSideStacks =
     --> [ 123, 456, 789 ]
 
 Only use this if you need a list in the end.
-Otherwise, use [`toStack`](#toStack) to preserve some information about its length.
+Otherwise, use [`toStack`](#toStack) to preserve some information about its length
 
 -}
 toList : Scroll item FocusGap possiblyOrNever_ -> List item
@@ -1528,7 +1533,7 @@ toList =
 
 {-| Roll out the `Scroll` to both ends into a [`Stack`](Stack):
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import Emptiable exposing (filled)
     import Stack exposing (topDown)
 
@@ -1567,11 +1572,11 @@ toStack =
 
 
 {-| [`Emptiable.empty`](Emptiable#empty) if the current focussed thing is a gap,
-[`Emptiable.filled`](Emptiable#filled) if it's an item.
+[`Emptiable.filled`](Emptiable#filled) if it's an item
 
     import Emptiable
     import Stack exposing (topDown)
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     Scroll.only 3
         |> Scroll.sideAlter
@@ -1611,7 +1616,7 @@ focusItemTry =
 
         Scroll.focusGapAdapt never
 
-Please read more at [`Emptiable.emptyAdapt`](Emptiable#emptyAdapt).
+Please read more at [`Emptiable.emptyAdapt`](Emptiable#emptyAdapt)
 
 -}
 focusGapAdapt :

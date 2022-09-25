@@ -11,7 +11,7 @@ import Element.Input as UIn
 import Emptiable exposing (Emptiable(..), fill, fillMap, fillMapFlat, fillElseOnEmpty, filled)
 import Html exposing (Html)
 import Html.Attributes as Html
-import Linear exposing (DirectionLinear(..))
+import Linear exposing (Direction(..))
 import Possibly exposing (Possibly(..))
 import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
 import Scroll exposing (FocusGap, Scroll)
@@ -104,11 +104,11 @@ main =
 
 
 type Event
-    = TrackFocused ( DirectionLinear, Int )
+    = TrackFocused ( Linear.Direction, Int )
     | FocusTrackRemoveClicked
     | TrackToAddUrlChanged String
     | TrackAddSubmitted Track
-    | FocusTrackDrag DirectionLinear
+    | FocusTrackDrag Linear.Direction
 
 
 subscribe : Model -> Sub event_
@@ -358,7 +358,7 @@ trackToUrl =
 
 
 trackOnSideInterface :
-    ( DirectionLinear, Int )
+    ( Linear.Direction, Int )
     -> Track
     -> Ui.Element Event
 trackOnSideInterface ( side, index ) =
@@ -398,7 +398,7 @@ urlToTrack =
 
 
 dragInterface :
-    DirectionLinear
+    Linear.Direction
     -> Ui.Element Event
 dragInterface side =
     actionUi
