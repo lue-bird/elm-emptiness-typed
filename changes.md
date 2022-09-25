@@ -2,6 +2,7 @@
 
 ## 7.0.0 plans
 
+  - `Scroll.sideAlter ( dir, change )` → `sideAlter dir change`
   - `linear-direction` version → 7.0.0
   - `Stack.indexLast` remove
 

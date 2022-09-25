@@ -48,8 +48,8 @@ glueToEndTest =
                 "Down"
                 (\stack ->
                     Scroll.only (stack |> top)
-                        |> Scroll.sideAlter
-                            ( Down, \_ -> stack |> topRemove )
+                        |> Scroll.sideAlter Down
+                            (\_ -> stack |> topRemove)
                         |> Scroll.toStack
                         |> expectEqualStack (stack |> Stack.reverse)
                 )
@@ -58,8 +58,8 @@ glueToEndTest =
                 "Up"
                 (\stack ->
                     Scroll.only (stack |> top)
-                        |> Scroll.sideAlter
-                            ( Up, \_ -> stack |> topRemove )
+                        |> Scroll.sideAlter Up
+                            (\_ -> stack |> topRemove)
                         |> Scroll.toStack
                         |> expectEqualStack stack
                 )
@@ -78,8 +78,8 @@ focusItemTest =
             Fuzz.constant
                 (\focus_ sideStack side ->
                     Scroll.only focus_
-                        |> Scroll.sideAlter
-                            ( side, \_ -> sideStack )
+                        |> Scroll.sideAlter side
+                            (\_ -> sideStack)
                 )
                 |> Fuzz.andMap Fuzz.int
                 |> Fuzz.andMap (stackFilledFuzz Fuzz.int)
@@ -209,10 +209,10 @@ scrollFuzz itemFuzz =
     Fuzz.constant
         (\before focusOnly after ->
             focusOnly
-                |> Scroll.sideAlter
-                    ( Down, \_ -> before )
-                |> Scroll.sideAlter
-                    ( Up, \_ -> after )
+                |> Scroll.sideAlter Down
+                    (\_ -> before)
+                |> Scroll.sideAlter Up
+                    (\_ -> after)
         )
         |> Fuzz.andMap (stackFuzz itemFuzz)
         |> Fuzz.andMap

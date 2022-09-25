@@ -8,7 +8,7 @@ import Element.Border as UiBorder
 import Element.Events as UIn
 import Element.Font as Font
 import Element.Input as UIn
-import Emptiable exposing (Emptiable(..), fill, fillMap, fillMapFlat, fillElseOnEmpty, filled)
+import Emptiable exposing (Emptiable(..), fill, fillElseOnEmpty, fillMap, fillMapFlat, filled)
 import Html exposing (Html)
 import Html.Attributes as Html
 import Linear exposing (Direction(..))
@@ -54,9 +54,8 @@ scrollInitial =
         , set = Individual
         , titleInUrl = "can-we-fly-away-i-love-u"
         }
-        |> Scroll.sideAlter
-            ( Down
-            , \_ ->
+        |> Scroll.sideAlter Down
+            (\_ ->
                 topDown
                     { artistInUrl = "culprate"
                     , set = Individual
@@ -72,9 +71,8 @@ scrollInitial =
                       }
                     ]
             )
-        |> Scroll.sideAlter
-            ( Up
-            , \_ ->
+        |> Scroll.sideAlter Up
+            (\_ ->
                 topDown
                     { artistInUrl = "canopy_music"
                     , set = Individual

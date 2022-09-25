@@ -72,8 +72,8 @@ Scroll.empty
         --: Scroll item_ FocusGap Possibly
     |> Scroll.focusAlter (\_ -> -1 |> filled)
         --: Scroll number_ FocusGap never_
-    |> Scroll.sideAlter
-        ( Up, \_ -> topDown 1 [ 2, 3 ] )
+    |> Scroll.sideAlter Up
+        (\_ -> topDown 1 [ 2, 3 ])
         --: Scroll number_ FocusGap never_
     |> Scroll.toGap Up
         --: Scroll number_ FocusGap Possibly
