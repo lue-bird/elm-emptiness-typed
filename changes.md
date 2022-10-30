@@ -1,6 +1,6 @@
 # changes log
 
-## 7.0.0 plans
+## 7.0.0
 
   - `Scroll.sideAlter ( dir, change )` → `sideAlter dir change`
   - `linear-direction` version → 7.0.0
