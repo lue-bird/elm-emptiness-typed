@@ -115,11 +115,11 @@ import Stack exposing (Stacked, onTopLay, onTopStack, onTopStackAdapt, top, topR
 
   - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... FocusGap Never`
 
-  - `🍍 🍓 <?> 🍉 🍇`: `Scroll ...` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `FocusGap`
+  - `🍍 🍓 <?> 🍉 🍇`: `Scroll ... FocusGap` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
 
     `<?>` means both are possible:
 
-      - `🍍 🍓 <> 🍉 🍇`: a gap between items ... Heh.
+      - `🍍 🍓 <> 🍉 🍇`: a gap between items ... heh
       - `🍍 🍓 <🍊> 🍉 🍇`
 
 
@@ -153,7 +153,7 @@ type Scroll item focusedOnGapTag possiblyOrNever
 
   - `🍍 🍓 <🍊> 🍉 🍇`: `Scroll ... FocusGap Never`
 
-  - `🍍 🍓 <?> 🍉 🍇`: `Scroll ...` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly) `FocusGap`
+  - `🍍 🍓 <?> 🍉 🍇`: `Scroll ... FocusGap` [`Possibly`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/Possibly)
 
     `<?>` means both are possible:
 
@@ -1582,10 +1582,10 @@ toList =
         |> Scroll.toStack
     --> topDown 123 [ 456, 789 ]
 
-the type information gets carried over, so
+its type information gets carried over, so
 
-    Never Scroll.FocusGap -> Stacked Never
-    Possibly Scroll.FocusGap -> Stacked Possibly
+    Scroll.FocusGap Never -> Emptiable Never
+    Scroll.FocusGap Possibly -> Emptiable Possibly
 
 -}
 toStack :
@@ -1645,7 +1645,7 @@ focusItemTry =
         Scroll.focusGapAdapt (always Possible)
 
   - A `Scroll ... FocusGap Never`
-    can't be unified with `Scroll ... Possibly` or `FocusGap possiblyOrNever`?
+    can't be unified with `Scroll ... FocusGap Possibly` or an argument variable `FocusGap possiblyOrNever`?
 
         Scroll.focusGapAdapt never
 
@@ -1653,10 +1653,10 @@ Please read more at [`Emptiable.emptyAdapt`](Emptiable#emptyAdapt)
 
 -}
 focusGapAdapt :
-    (possiblyOrNever -> adaptedPossiblyOrNever)
+    (possiblyOrNever -> possiblyOrNeverAdapted)
     ->
         (Scroll item FocusGap possiblyOrNever
-         -> Scroll item FocusGap adaptedPossiblyOrNever
+         -> Scroll item FocusGap possiblyOrNeverAdapted
         )
 focusGapAdapt neverOrAlwaysPossible =
     \scroll ->
