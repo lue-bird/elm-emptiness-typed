@@ -1,5 +1,9 @@
 # changes log
 
+#### 7.0.1
+
+  - documentation `Scroll` argument order correct
+
 ## 7.0.0
 
   - `Scroll.sideAlter ( dir, change )` → `sideAlter dir change`
