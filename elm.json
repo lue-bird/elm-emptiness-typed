@@ -3,7 +3,7 @@
     "name": "lue-bird/elm-emptiness-typed",
     "summary": "one type for emptiable and safe non-empty",
     "license": "MIT",
-    "version": "7.0.1",
+    "version": "7.0.2",
     "exposed-modules": [
         "Scroll",
         "Emptiable",
