@@ -22,7 +22,7 @@ tests =
                     |> Expect.equalLists list
             )
         , Test.fuzz
-            (Fuzz.tuple ( Fuzz.int, Fuzz.list Fuzz.int ))
+            (Fuzz.pair Fuzz.int (Fuzz.list Fuzz.int))
             "topDown = fromList"
             (\( head, tail ) ->
                 Stack.topDown head tail
