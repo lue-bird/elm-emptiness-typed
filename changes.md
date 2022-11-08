@@ -1,5 +1,9 @@
 # changes log
 
+#### 7.0.2
+
+  - `linear-direction` → >= 8.0.0
+
 #### 7.0.1
 
   - documentation `Scroll` argument order correct
