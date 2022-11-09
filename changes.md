@@ -1,5 +1,20 @@
 # changes log
 
+## 8.0.0
+
+  - `Stack`
+      - `topMap`, `belowTopMap` remove
+      - `StackTopBelow` remove
+          - to simplify API
+          - better error messages
+      - `Stacked` redefine as `type element = TopBelow ( element, List element )`
+      - `String` conversions call `-String` instead of `-Text` for clarity and searchability
+      - `topDown`, `fromTopDown`, `toTopDown` name → `topBelow`, `fromTopBelow`, `toTopBelow`
+      - `foldOnto` add
+  - `Scroll`
+      - `foldFrom` type broaden
+      - `foldOnto` add
+
 #### 7.0.2
 
   - `linear-direction` → >= 8.0.0
