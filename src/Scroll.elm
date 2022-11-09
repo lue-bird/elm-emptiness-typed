@@ -104,7 +104,7 @@ Not what you were looking for? Check out [alternatives](#alternatives)
 import Emptiable exposing (Emptiable(..), emptyAdapt, fill, fillMap, fillMapFlat, filled)
 import Linear exposing (Direction(..))
 import Possibly exposing (Possibly(..))
-import Stack exposing (Stacked, onTopLay, onTopStack, onTopStackAdapt, top, topRemove)
+import Stack exposing (Stacked, onTopLay, onTopStack, top, topRemove)
 
 
 {-| 📜 Items rolled up on both sides of a focus
