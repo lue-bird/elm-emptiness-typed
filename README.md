@@ -38,15 +38,15 @@ in one go
 
 ```elm
 import Emptiable exposing (Emptiable)
-import Stack exposing (Stacked, topDown, onTopStack, onTopLay, toTopDown)
+import Stack exposing (Stacked, topBelow, onTopStack, onTopLay, toTopBelow)
 
 Emptiable.empty
-        --: Emptiable (Stacked element_) Possibly
+    --: Emptiable (Stacked element_) Possibly
     |> onTopLay 0
-        --: Emptiable (Stacked number_) never_
-    |> onTopStack (topDown 1 [ 2, 3 ])
-        --: Emptiable (Stacked number_) never_
-    |> toTopDown
+    --: Emptiable (Stacked number_) never_
+    |> onTopStack (topBelow 1 [ 2, 3 ])
+    --: Emptiable (Stacked number_) never_
+    |> toTopBelow
 --> ( 1, [ 2, 3, 0 ] )
 ```
 
@@ -65,22 +65,22 @@ from every item
 ```elm
 import Linear exposing (Direction(..))
 import Emptiable exposing (filled)
-import Stack exposing (topDown)
+import Stack exposing (topBelow)
 import Scroll exposing (Scroll, FocusGap)
 
 Scroll.empty
-        --: Scroll item_ FocusGap Possibly
+    --: Scroll item_ FocusGap Possibly
     |> Scroll.focusAlter (\_ -> -1 |> filled)
-        --: Scroll number_ FocusGap never_
+    --: Scroll number_ FocusGap never_
     |> Scroll.sideAlter Up
-        (\_ -> topDown 1 [ 2, 3 ])
-        --: Scroll number_ FocusGap never_
+        (\_ -> topBelow 1 [ 2, 3 ])
+    --: Scroll number_ FocusGap never_
     |> Scroll.toGap Up
-        --: Scroll number_ FocusGap Possibly
+    --: Scroll number_ FocusGap Possibly
     |> Scroll.focusAlter (\_ -> 0 |> filled)
-        --: Scroll number_ FocusGap never_
+    --: Scroll number_ FocusGap never_
     |> Scroll.toStack
---> topDown -1 [ 0, 1, 2, 3 ]
+--> topBelow -1 [ 0, 1, 2, 3 ]
 ```
 
 ## suggestions?

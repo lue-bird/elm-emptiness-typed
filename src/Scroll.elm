@@ -11,7 +11,7 @@ module Scroll exposing
     , focusDrag
     , focusItemTry
     , map, focusSidesMap
-    , foldFrom, fold
+    , foldFrom, fold, foldOnto
     , toStack, toList
     , mirror
     , focusAlter, sideAlter
@@ -60,7 +60,7 @@ Not what you were looking for? Check out [alternatives](#alternatives)
 
 @docs focusItemTry
 @docs map, focusSidesMap
-@docs foldFrom, fold
+@docs foldFrom, fold, foldOnto
 @docs toStack, toList
 
 
@@ -173,11 +173,11 @@ type FocusGap
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (Emptiable, filled, fillMap, fillMapFlat)
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only 0
         |> Scroll.sideAlter Up
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.to (Scroll.AtSide Up 2)
         |> fillMap Scroll.focusItem
     --> filled 3
@@ -193,13 +193,13 @@ type Location
 [`Down`|`Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) the focus
 
     import Emptiable exposing (Emptiable, filled, fillMap)
-    import Stack exposing (onTopLay, topDown)
+    import Stack exposing (onTopLay, topBelow)
     import Scroll exposing (Scroll, FocusGap)
     import Linear exposing (Direction(..))
 
     Scroll.only "hello"
         |> Scroll.sideAlter Up
-            (\_ -> topDown "scrollable" [ "world" ])
+            (\_ -> topBelow "scrollable" [ "world" ])
         |> Scroll.toEnd Up
         |> Scroll.to (Down |> Scroll.nearest)
         |> fillMap Scroll.focusItem
@@ -208,7 +208,7 @@ type Location
 
     Scroll.empty
         |> Scroll.sideAlter Down
-            (\_ -> topDown "world" [ "scrollable" ])
+            (\_ -> topBelow "world" [ "scrollable" ])
         |> Scroll.to (Down |> Scroll.nearest)
     --> Scroll.only "world"
     -->     |> Scroll.sideAlter Down
@@ -288,7 +288,7 @@ only currentItem =
 🍍 🍓 <🍊> 🍉 🍇  ->  🍊
 ```
 
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
     import Linear exposing (Direction(..))
 
     Scroll.only "hi there" |> Scroll.focusItem
@@ -296,7 +296,7 @@ only currentItem =
 
     Scroll.only 1
         |> Scroll.sideAlter Up
-            (\_ -> topDown 2 [ 3, 4 ])
+            (\_ -> topBelow 2 [ 3, 4 ])
         |> Scroll.toEnd Up
         |> Scroll.focusItem
     --> 4
@@ -347,24 +347,24 @@ focus =
 ```
 
     import Emptiable exposing (Emptiable, fillMapFlat)
-    import Stack exposing (Stacked, topDown)
+    import Stack exposing (Stacked, topBelow)
     import Linear exposing (Direction(..))
 
     Scroll.only 0
         |> Scroll.sideAlter Up
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.to (Up |> Scroll.nearest)
         |> fillMapFlat (Scroll.to (Up |> Scroll.nearest))
         |> fillMapFlat (Scroll.side Down)
-    --> topDown 1 [ 0 ]
+    --> topBelow 1 [ 0 ]
     --: Emptiable (Stacked number_) Possibly
 
     Scroll.only 0
         |> Scroll.sideAlter Up
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.to (Up |> Scroll.nearest)
         |> fillMapFlat (Scroll.side Up)
-    --> topDown 2 [ 3 ]
+    --> topBelow 2 [ 3 ]
     --: Emptiable (Stacked number_) Possibly
 
 -}
@@ -390,22 +390,22 @@ side sideToAccess =
 
 {-| Counting all contained items
 
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
     import Linear exposing (Direction(..))
 
     Scroll.only 0
         |> Scroll.sideAlter Down
-            (\_ -> topDown -1 [ -2 ])
+            (\_ -> topBelow -1 [ -2 ])
         |> Scroll.sideAlter Up
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.length
     --> 6
 
     Scroll.empty
         |> Scroll.sideAlter Down
-            (\_ -> topDown -1 [ -2 ])
+            (\_ -> topBelow -1 [ -2 ])
         |> Scroll.sideAlter Up
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.length
     --> 5
 
@@ -484,7 +484,7 @@ toItemNearest side_ =
 
     Scroll.only "hello"
         |> Scroll.sideAlter Up
-            (\_ -> topDown "scrollable" [ "world" ])
+            (\_ -> topBelow "scrollable" [ "world" ])
         |> Scroll.toEnd Up
         |> Scroll.to (Down |> Scroll.nearest)
         |> fillMap Scroll.focusItem
@@ -522,7 +522,7 @@ This also works from within gaps:
 
     Scroll.only 0
         |> Scroll.sideAlter Up
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.to (Up |> Scroll.nearest)
         |> fillMap Scroll.focusItem
     --> filled 1
@@ -550,14 +550,14 @@ If there is no next item, the result is [`empty`](Emptiable#empty)
 
     import Linear exposing (Direction(..))
     import Emptiable
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.empty |> Scroll.to (Up |> Scroll.nearest)
     --> Emptiable.empty
 
     Scroll.only 0
         |> Scroll.sideAlter Up
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.toEnd Up
         |> Scroll.to (Up |> Scroll.nearest)
     --> Emptiable.empty
@@ -668,13 +668,13 @@ Feel free to [plug](#focusAlter) that gap right up!
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (filled)
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only "world"
         |> Scroll.toGap Down
         |> Scroll.focusAlter (\_ -> "hello" |> filled)
         |> Scroll.toStack
-    --> topDown "hello" [ "world" ]
+    --> topBelow "hello" [ "world" ]
 
 
 #### `Scroll.toGap Up`
@@ -685,7 +685,7 @@ Feel free to [plug](#focusAlter) that gap right up!
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (filled)
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only "hello"
         |> Scroll.sideAlter Up
@@ -693,7 +693,7 @@ Feel free to [plug](#focusAlter) that gap right up!
         |> Scroll.toGap Up
         |> Scroll.focusAlter (\_ -> filled "scrollable")
         |> Scroll.toStack
-    --> topDown "hello" [ "scrollable", "world" ]
+    --> topBelow "hello" [ "scrollable", "world" ]
 
 -}
 toGap :
@@ -734,30 +734,30 @@ toGap side_ =
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (Emptiable)
-    import Stack exposing (Stacked, topDown)
+    import Stack exposing (Stacked, topBelow)
 
     Scroll.only 1
         |> Scroll.sideAlter Up
-            (\_ -> topDown 2 [ 3, 4 ])
+            (\_ -> topBelow 2 [ 3, 4 ])
         |> Scroll.sideAlter Down
-            (\_ -> topDown 4 [ 3, 2 ])
+            (\_ -> topBelow 4 [ 3, 2 ])
         |> Scroll.toEnd Down
         |> Scroll.focusItem
     --> 2
 
     Scroll.only 1
         |> Scroll.sideAlter Up
-            (\_ -> topDown 2 [ 3, 4 ])
+            (\_ -> topBelow 2 [ 3, 4 ])
         |> Scroll.toEnd Up
         |> Scroll.focusItem
     --> 4
 
     Scroll.only 1
         |> Scroll.sideAlter Up
-            (\_ -> topDown 2 [ 3, 4 ])
+            (\_ -> topBelow 2 [ 3, 4 ])
         |> Scroll.toEnd Up
         |> Scroll.side Down
-    --> topDown 3 [ 2, 1 ]
+    --> topBelow 3 [ 2, 1 ]
     --: Emptiable (Stacked number_) Possibly
 
 -}
@@ -773,22 +773,28 @@ toEnd end =
             stackWithEndOnTop =
                 case end of
                     Up ->
-                        mirror >> toStack
+                        mirror
 
                     Down ->
-                        toStack
+                        identity
         in
-        case stackWithEndOnTop scroll of
+        case scroll |> stackWithEndOnTop |> toStack |> fillMap filled of
             Empty possiblyOrNever ->
                 empty |> focusGapAdapt (\_ -> possiblyOrNever)
 
-            Filled (Stack.TopDown top_ down) ->
+            Filled stackFilled ->
                 case end of
                     Down ->
-                        BeforeFocusAfter Emptiable.empty (top_ |> filled) (down |> Stack.fromList)
+                        BeforeFocusAfter
+                            Emptiable.empty
+                            (stackFilled |> Stack.top |> filled)
+                            (stackFilled |> Stack.topRemove)
 
                     Up ->
-                        BeforeFocusAfter (down |> Stack.fromList) (top_ |> filled) Emptiable.empty
+                        BeforeFocusAfter
+                            (stackFilled |> Stack.topRemove)
+                            (stackFilled |> Stack.top |> filled)
+                            Emptiable.empty
 
 
 {-| Focus the gap beyond the furthest item [`Down|Up`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/).
@@ -808,12 +814,12 @@ Remember that gaps surround everything!
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (filled)
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only 1
             -- <1>
         |> Scroll.sideAlter Up
-            (\_ -> topDown 3 [ 4 ])
+            (\_ -> topBelow 3 [ 4 ])
             -- <1> 3 4
         |> Scroll.toGap Up
             -- 1 <> 3 4
@@ -824,19 +830,19 @@ Remember that gaps surround everything!
         |> Scroll.focusAlter (\_ -> filled 0)
             -- <0> 1 2 3 4
         |> Scroll.toStack
-    --> topDown 0 [ 1, 2, 3, 4 ]
+    --> topBelow 0 [ 1, 2, 3, 4 ]
 
     Scroll.only 1
             -- <1>
         |> Scroll.sideAlter Up
-            (\_ -> topDown 2 [ 3 ])
+            (\_ -> topBelow 2 [ 3 ])
             -- <1> 2 3
         |> Scroll.toEndGap Up
             -- 1 2 3 <>
         |> Scroll.focusAlter (\_ -> filled 4)
             -- 1 2 3 <4>
         |> Scroll.toStack
-    --> topDown 1 [ 2, 3, 4 ]
+    --> topBelow 1 [ 2, 3, 4 ]
 
 -}
 toEndGap :
@@ -873,26 +879,26 @@ If no such item was found return with [`Emptiable.empty`](Emptiable#empty)
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
     import Linear exposing (Direction(..))
 
     Scroll.only 4
         |> Scroll.sideAlter Down
-            (\_ -> topDown 2 [ -1, 0, 3 ])
+            (\_ -> topBelow 2 [ -1, 0, 3 ])
         |> Scroll.toWhere ( Down, \_ item -> item < 0 )
         |> Emptiable.fillMap Scroll.focusItem
     --> filled -1
 
     Scroll.only 4
         |> Scroll.sideAlter Up
-            (\_ -> topDown 2 [ -1, 0, 3 ])
+            (\_ -> topBelow 2 [ -1, 0, 3 ])
         |> Scroll.toWhere ( Up, \_ item -> item < 0 )
         |> fillMap focusItem
     --> filled -1
 
     Scroll.only -4
         |> Scroll.sideAlter Up
-            (\_ -> topDown 2 [ -1, 0, 3 ])
+            (\_ -> topBelow 2 [ -1, 0, 3 ])
         |> Scroll.toWhere ( Up, \_ item -> item < 0 )
         |> fillMap focusItem
     --> filled -4
@@ -958,35 +964,35 @@ toWhere ( side_, isFound ) =
 
     Scroll.only 0
         |> Scroll.sideAlter Down
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.focusDrag Down
         |> fillMapFlat Scroll.toStack
-    --> topDown 3 [ 2, 0, 1 ]
+    --> topBelow 3 [ 2, 0, 1 ]
     --: Emptiable (Stacked number_) Possibly
 
     Scroll.only 0
         |> Scroll.sideAlter Up
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.focusDrag Up
         |> fillMapFlat Scroll.toStack
-    --> topDown 1 [ 0, 2, 3 ]
+    --> topBelow 1 [ 0, 2, 3 ]
     --: Emptiable (Stacked number_) Possibly
 
 If there is no nearest item, the result is [`empty`](Emptiable#empty)
 
     import Linear exposing (Direction(..))
     import Emptiable
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only 0
         |> Scroll.sideAlter Up
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.focusDrag Down
     --> Emptiable.empty
 
     Scroll.only 0
         |> Scroll.sideAlter Down
-            (\_ -> topDown 1 [ 2, 3 ])
+            (\_ -> topBelow 1 [ 2, 3 ])
         |> Scroll.focusDrag Up
     --> Emptiable.empty
 
@@ -1054,39 +1060,39 @@ the [`focus`](#focus) and operate directly an the [`Stack`](Stack) you see
 
     import Linear exposing (Direction(..))
     import Emptiable
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only "selectoo"
         |> Scroll.sideAlter Down
-            (\_ -> topDown "earlee" [ "agua", "enutai" ])
+            (\_ -> topBelow "earlee" [ "agua", "enutai" ])
         |> Scroll.sideAlter Up
-            (\_ -> topDown "orangloo" [ "iquipy", "oice" ])
+            (\_ -> topBelow "orangloo" [ "iquipy", "oice" ])
         |> Scroll.sideAlter Up
             (\_ -> Emptiable.empty)
         |> Scroll.toStack
-    --> topDown "enutai" [ "agua", "earlee", "selectoo" ]
+    --> topBelow "enutai" [ "agua", "earlee", "selectoo" ]
 
 
 #### `sideAlter Linear.Direction (Stack.map ...)`
 
     import Linear exposing (Direction(..))
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only "second"
         |> Scroll.sideAlter Down
-            (\_ -> topDown "first" [ "zeroth" ])
+            (\_ -> topBelow "first" [ "zeroth" ])
         |> Scroll.sideAlter Down
             (Stack.map (\_ -> String.toUpper))
         |> Scroll.toStack
-    --> topDown "ZEROTH" [ "FIRST", "second" ]
+    --> topBelow "ZEROTH" [ "FIRST", "second" ]
 
     Scroll.only "zeroth"
         |> Scroll.sideAlter Up
-            (\_ -> topDown "first" [ "second" ])
+            (\_ -> topBelow "first" [ "second" ])
         |> Scroll.sideAlter Up
             (Stack.map (\_ -> String.toUpper))
         |> Scroll.toStack
-    --> topDown "zeroth" [ "FIRST", "SECOND" ]
+    --> topBelow "zeroth" [ "FIRST", "SECOND" ]
 
 Look to one [side](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/) from the focus
 and slide items in directly at the nearest location
@@ -1109,23 +1115,23 @@ and slide items in directly at the nearest location
 ```
 
     import Linear exposing (Direction(..))
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only 0
         |> Scroll.sideAlter Down
             (Stack.onTopGlue [ -4, -5 ])
         |> Scroll.sideAlter Down
-            (Stack.onTopStack (topDown -1 [ -2, -3 ]))
+            (Stack.onTopStack (topBelow -1 [ -2, -3 ]))
         |> Scroll.toStack
-    --> topDown -5 [ -4, -3, -2, -1, 0 ]
+    --> topBelow -5 [ -4, -3, -2, -1, 0 ]
 
     Scroll.only 0
         |> Scroll.sideAlter Up
             (Stack.onTopGlue [ 4, 5 ])
         |> Scroll.sideAlter Up
-            (Stack.onTopStack (topDown 1 [ 2, 3 ]))
+            (Stack.onTopStack (topBelow 1 [ 2, 3 ]))
         |> Scroll.toStack
-    --> topDown 0 [ 1, 2, 3, 4, 5 ]
+    --> topBelow 0 [ 1, 2, 3, 4, 5 ]
 
 
 #### `Scroll.sideAlter Linear.Direction (\side -> 🍒🍋 |> onTopStack side)`
@@ -1145,24 +1151,24 @@ and slide items in directly at the nearest location
 ```
 
     import Linear exposing (Direction(..))
-    import Stack exposing (topDown, onTopStack)
+    import Stack exposing (topBelow, onTopStack)
 
     Scroll.only 1
         |> Scroll.sideAlter Up
-            (\after -> topDown 2 [ 3, 4 ] |> onTopStack after)
+            (\after -> topBelow 2 [ 3, 4 ] |> onTopStack after)
         |> Scroll.toEnd Up
         |> Scroll.sideAlter Down
-            (\before -> topDown 7 [ 6, 5 ] |> onTopStack before)
+            (\before -> topBelow 7 [ 6, 5 ] |> onTopStack before)
         |> Scroll.toStack
-    --> topDown 5 [ 6, 7, 1, 2, 3, 4 ]
+    --> topBelow 5 [ 6, 7, 1, 2, 3, 4 ]
 
     Scroll.only 123
         |> Scroll.sideAlter Up
             (\after -> Stack.only 456 |> onTopStack after)
         |> Scroll.sideAlter Up
-            (\after -> topDown 789 [ 0 ] |> onTopStack after)
+            (\after -> topBelow 789 [ 0 ] |> onTopStack after)
         |> Scroll.toStack
-    --> topDown 123 [ 456, 789, 0 ]
+    --> topBelow 123 [ 456, 789, 0 ]
 
 
 #### `sideAlter Linear.Direction (`[`Stack.onTopLay`](Stack#onTopLay) `...)`
@@ -1183,13 +1189,13 @@ and slide items in directly at the nearest location
 ```
 
     import Linear exposing (Direction(..))
-    import Stack exposing (topDown, onTopLay)
+    import Stack exposing (topBelow, onTopLay)
 
     Scroll.only 123
         |> Scroll.sideAlter Down
             (onTopLay 456)
         |> Scroll.toStack
-    --> topDown 456 [ 123 ]
+    --> topBelow 456 [ 123 ]
 
     Scroll.only 123
         |> Scroll.sideAlter Up
@@ -1197,7 +1203,7 @@ and slide items in directly at the nearest location
         |> Scroll.sideAlter Up
             (onTopLay 456)
         |> Scroll.toStack
-    --> topDown 123 [ 456, 789 ]
+    --> topBelow 123 [ 456, 789 ]
 
 -}
 sideAlter :
@@ -1236,13 +1242,13 @@ with the [stack](Stack) on the [`side Up`](#side)
 ```
 
     import Linear exposing (Direction(..))
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only 1
         |> Scroll.sideAlter Up
-            (\_ -> topDown 2 [ 3, 4 ])
+            (\_ -> topBelow 2 [ 3, 4 ])
         |> Scroll.sideAlter Down
-            (\_ -> topDown 4 [ 3, 2 ])
+            (\_ -> topBelow 4 [ 3, 2 ])
 
 In contrast to `List` or [stack](Stack), this can be done in `O(1)` time
 
@@ -1262,16 +1268,16 @@ mirror =
 {-| Change every item based on its current value
 
     import Linear exposing (Direction(..))
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only "first"
         |> Scroll.sideAlter Down
             (\_ -> Stack.only "zeroth")
         |> Scroll.sideAlter Up
-            (\_ -> topDown "second" [ "third" ])
+            (\_ -> topBelow "second" [ "third" ])
         |> Scroll.map (\_ -> String.toUpper)
         |> Scroll.toStack
-    --> topDown "ZEROTH" [ "FIRST", "SECOND", "THIRD" ]
+    --> topBelow "ZEROTH" [ "FIRST", "SECOND", "THIRD" ]
 
 [`focusSidesMap`](#focusSidesMap) allows changing the individual parts separately
 
@@ -1296,18 +1302,19 @@ map changeItem =
                 }
 
 
-{-| Fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-from the first item [`Up|Down`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-as the initial accumulation value
+{-| Fold, starting from one end item as the initial accumulation value,
+reducing in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only 234
         |> Scroll.sideAlter Up
-            (\_ -> topDown 345 [ 543 ])
+            (\_ -> topBelow 345 [ 543 ])
         |> Scroll.fold Up max
     --> 543
+
+To accumulate into anything that doesn't have the same type as the [`Scroll`]s items, [`foldOnto`](#foldOnto)
 
 -}
 fold :
@@ -1319,32 +1326,79 @@ fold :
         )
 fold direction reduce =
     \scroll ->
-        (scroll |> side (direction |> Linear.opposite))
-            |> onTopLay
+        scroll |> foldOnto identity direction reduce
+
+
+{-| Fold, starting from one end item transformed to the initial accumulation value,
+reducing in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+
+    import Linear exposing (Direction(..))
+    import Stack exposing (topBelow)
+
+    Scroll.only 234
+        |> Scroll.sideAlter Up
+            (\_ -> topBelow 345 [ 543 ])
+        |> Scroll.foldOnto Stack.only Down Stack.onTopLay
+    --> topBelow 234 [ 345, 543 ]
+
+A simpler version is
+
+    Scroll.fold =
+        Scroll.foldOnto identity
+
+-}
+foldOnto :
+    (item -> accumulated)
+    -> Linear.Direction
+    -> (item -> (accumulated -> accumulated))
+    ->
+        (Scroll item FocusGap Never
+         -> accumulated
+        )
+foldOnto endInitialToAccumulator direction reduce =
+    \scroll ->
+        scroll
+            |> side direction
+            |> Stack.foldFrom
                 (scroll
-                    |> side direction
+                    |> side (direction |> Linear.opposite)
                     |> onTopLay (scroll |> focusItem)
-                    |> Stack.fold direction reduce
+                    |> Stack.foldOnto endInitialToAccumulator
+                        direction
+                        reduce
                 )
-            |> Stack.fold direction reduce
+                (direction |> Linear.opposite)
+                reduce
 
 
 {-| Reduce in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
-    Scroll.only 'e'
+    Scroll.only 'i'
         |> Scroll.sideAlter Down
-            (\_ -> topDown 'v' [ 'i', 'l' ])
+            (\_ -> topBelow 'v' [ 'e' ])
+        |> Scroll.sideAlter Up
+            (\_ -> Stack.only 'l')
         |> Scroll.foldFrom "" Down String.cons
+    --> "evil"
+
+    Scroll.only 'v'
+        |> Scroll.sideAlter Down
+            (\_ -> Stack.only 'e')
+        |> Scroll.sideAlter Up
+            (\_ -> topBelow  'i' [ 'l' ])
+        |> Scroll.foldFrom "" Up String.cons
     --> "live"
 
-    Scroll.only 'e'
+    Scroll.empty
         |> Scroll.sideAlter Down
-            (\_ -> topDown 'v' [ 'i', 'l' ])
+            (\_ -> topBelow 'v' [ 'e' ])
+        |> Scroll.sideAlter Up
+            (\_ -> topBelow  'i' [ 'l' ])
         |> Scroll.foldFrom "" Up String.cons
-    --> "evil"
+    --> "live"
 
 -}
 foldFrom :
@@ -1352,21 +1406,30 @@ foldFrom :
     -> Linear.Direction
     -> (item -> (accumulationValue -> accumulationValue))
     ->
-        (Scroll item FocusGap Never
+        (Scroll item FocusGap possiblyOrNever_
          -> accumulationValue
         )
 foldFrom accumulationValueInitial direction reduce =
-    \(BeforeFocusAfter before focus_ after) ->
-        after
+    -- opposite side first in direction
+    -- then side in opposite direction
+    \scroll ->
+        scroll
+            |> side direction
+            |> (case scroll |> focus of
+                    Empty _ ->
+                        identity
+
+                    Filled focusItem_ ->
+                        onTopLay focusItem_
+               )
             |> Stack.foldFrom
-                (before
-                    |> onTopLay (focus_ |> fill)
-                    |> Stack.foldFrom
-                        accumulationValueInitial
-                        (direction |> Linear.opposite)
+                (scroll
+                    |> side (direction |> Linear.opposite)
+                    |> Stack.foldFrom accumulationValueInitial
+                        Down
                         reduce
                 )
-                direction
+                Up
                 reduce
 
 
@@ -1381,7 +1444,7 @@ foldFrom accumulationValueInitial direction reduce =
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
-    import Stack exposing (topDown, onTopLay)
+    import Stack exposing (topBelow, onTopLay)
 
     Scroll.empty
             -- <>
@@ -1394,7 +1457,7 @@ foldFrom accumulationValueInitial direction reduce =
         |> Scroll.focusAlter (\_ -> "🍊" |> filled)
             -- "🍓" <"🍊"> "🍉"
         |> Scroll.toStack
-    --> topDown "🍓" [ "🍊", "🍉" ]
+    --> topBelow "🍓" [ "🍊", "🍉" ]
 
 
 #### `Scroll.focusAlter (\_ -> Emptiable.empty)`
@@ -1405,11 +1468,11 @@ foldFrom accumulationValueInitial direction reduce =
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only "hello"
         |> Scroll.sideAlter Up
-            (\_ -> topDown "scrollable" [ "world" ])
+            (\_ -> topBelow "scrollable" [ "world" ])
         |> Scroll.to (Up |> Scroll.nearest)
         |> fillMap (Scroll.focusAlter (\_ -> Emptiable.empty))
         |> fillMap Scroll.toList
@@ -1424,7 +1487,7 @@ foldFrom accumulationValueInitial direction reduce =
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
-    import Stack exposing (topDown, onTopLay)
+    import Stack exposing (topBelow, onTopLay)
 
     Scroll.empty
             -- <>
@@ -1438,16 +1501,16 @@ foldFrom accumulationValueInitial direction reduce =
             (\_ -> filled "🍊")
             -- "🍓" <"🍊"> "🍉"
         |> Scroll.toStack
-    --> topDown "🍓" [ "🍊", "🍉" ]
+    --> topBelow "🍓" [ "🍊", "🍉" ]
 
     Scroll.only "first"
         |> Scroll.sideAlter Down
             (\_ -> Stack.only "zeroth")
         |> Scroll.sideAlter Up
-            (\_ -> topDown "second" [ "third" ])
+            (\_ -> topBelow "second" [ "third" ])
         |> Scroll.focusAlter (fillMap String.toUpper)
         |> Scroll.toStack
-    --> topDown "zeroth" [ "FIRST", "second", "third" ]
+    --> topBelow "zeroth" [ "FIRST", "second", "third" ]
 
 -}
 focusAlter :
@@ -1472,7 +1535,7 @@ using different functions
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (filled, fillMap)
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.only "first"
         |> Scroll.sideAlter Up
@@ -1492,7 +1555,7 @@ using different functions
             }
         |> Scroll.toStack
     --→
-    topDown
+    topBelow
         "before: first"
         [ "focused item: one-and-a-halfth"
         , "after: second"
@@ -1568,7 +1631,7 @@ toList =
 
     import Linear exposing (Direction(..))
     import Emptiable exposing (filled)
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
 
     Scroll.empty
         |> Scroll.toStack
@@ -1580,7 +1643,7 @@ toList =
         |> Scroll.toGap Up
         |> Scroll.focusAlter (\_-> filled 456)
         |> Scroll.toStack
-    --> topDown 123 [ 456, 789 ]
+    --> topBelow 123 [ 456, 789 ]
 
 its type information gets carried over, so
 
@@ -1592,12 +1655,16 @@ toStack :
     Scroll item FocusGap possiblyOrNever
     -> Emptiable (Stacked item) possiblyOrNever
 toStack =
-    \(BeforeFocusAfter before_ focus_ after_) ->
-        after_
-            |> onTopStackAdapt
-                (focus_ |> fillMapFlat Stack.only)
-            |> onTopStack
-                (before_ |> Stack.reverse)
+    \scroll ->
+        case scroll |> focus of
+            Filled focusItem_ ->
+                scroll
+                    |> focusAlter (\_ -> focusItem_ |> filled)
+                    |> foldOnto Stack.only Down Stack.onTopLay
+
+            Empty emptiable ->
+                scroll
+                    |> foldFrom (Empty emptiable) Down Stack.onTopLay
 
 
 
@@ -1608,12 +1675,12 @@ toStack =
 [`Emptiable.filled`](Emptiable#filled) if it's an item
 
     import Emptiable
-    import Stack exposing (topDown)
+    import Stack exposing (topBelow)
     import Linear exposing (Direction(..))
 
     Scroll.only 3
         |> Scroll.sideAlter Up
-            (\_ -> topDown 2 [ 1 ])
+            (\_ -> topBelow 2 [ 1 ])
         |> Scroll.toGap Up
         |> Scroll.focusItemTry
     --> Emptiable.empty

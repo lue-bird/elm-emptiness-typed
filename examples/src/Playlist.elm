@@ -15,7 +15,7 @@ import Linear exposing (Direction(..))
 import Possibly exposing (Possibly(..))
 import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
 import Scroll exposing (FocusGap, Scroll)
-import Stack exposing (Stacked, topDown)
+import Stack exposing (Stacked, topBelow)
 
 
 type alias Model =
@@ -56,7 +56,7 @@ scrollInitial =
         }
         |> Scroll.sideAlter Down
             (\_ ->
-                topDown
+                topBelow
                     { artistInUrl = "culprate"
                     , set = Individual
                     , titleInUrl = "aqueous"
@@ -73,7 +73,7 @@ scrollInitial =
             )
         |> Scroll.sideAlter Up
             (\_ ->
-                topDown
+                topBelow
                     { artistInUrl = "canopy_music"
                     , set = Individual
                     , titleInUrl = "caustics"

@@ -4,7 +4,7 @@ import Emptiable exposing (Emptiable)
 import Expect
 import Fuzz exposing (Fuzzer)
 import Possibly exposing (Possibly)
-import Stack exposing (Stacked, top, topDown, topRemove)
+import Stack exposing (Stacked, top, topBelow, topRemove)
 import Test exposing (Test, describe)
 
 
@@ -23,9 +23,9 @@ tests =
             )
         , Test.fuzz
             (Fuzz.pair Fuzz.int (Fuzz.list Fuzz.int))
-            "topDown = fromList"
+            "topBelow = fromList"
             (\( head, tail ) ->
-                Stack.topDown head tail
+                Stack.topBelow head tail
                     |> Stack.toList
                     |> Expect.equalLists
                         ((head :: tail)
@@ -35,11 +35,11 @@ tests =
             )
         , Test.fuzz
             (stackFilledFuzz Fuzz.int)
-            "topDown: top=head topRemove=tail"
+            "topBelow: top=head topRemove=tail"
             (\stackFilled ->
                 stackFilled
                     |> Expect.equal
-                        (topDown (stackFilled |> top)
+                        (topBelow (stackFilled |> top)
                             (stackFilled |> topRemove |> Stack.toList)
                         )
             )
@@ -93,7 +93,7 @@ stackFilledFuzz :
     Fuzzer element
     -> Fuzzer (Emptiable (Stacked element) never_)
 stackFilledFuzz elementFuzz =
-    Fuzz.constant topDown
+    Fuzz.constant topBelow
         |> Fuzz.andMap elementFuzz
         |> Fuzz.andMap (Fuzz.list elementFuzz)
 
