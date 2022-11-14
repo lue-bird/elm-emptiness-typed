@@ -1,3 +1,7 @@
+# 9.0.0 plans
+
+  - `elementRemove` name → `remove`
+
 # changes log
 
 ## 8.0.0
