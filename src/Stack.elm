@@ -634,7 +634,7 @@ then reducing what's accumulated in a given [`Direction`](https://package.elm-la
         |> Stack.fold Up max
     --> 543
 
-Feel limited by the fact that the accumulated value is of the same type as an element?
+Limited by the fact that the accumulated value must be of the same type as an element?
 → [`Stack.foldOnto`](#foldOnto)
 
 Be aware:
