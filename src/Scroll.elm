@@ -1314,7 +1314,8 @@ reducing in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird
         |> Scroll.fold Up max
     --> 543
 
-To accumulate into anything that doesn't have the same type as the [`Scroll`]s items, [`foldOnto`](#foldOnto)
+To accumulate into anything that doesn't have the same type as the [`Scroll`]s items,
+[`foldOnto`](#foldOnto)
 
 -}
 fold :
