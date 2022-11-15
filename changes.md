@@ -1,6 +1,8 @@
 # 9.0.0 plans
 
   - `elementRemove` name → `remove`
+  - `Stack`
+      - `onTopGlue` name → `onTopList`
 
 # changes log
 
