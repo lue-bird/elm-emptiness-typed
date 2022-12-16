@@ -2,14 +2,15 @@
 
 # 9.0.0
 
-  - `elementRemove` name → `remove`
-  - `only` name → `one`
-      - shorter, symmetrical to `foldFromOne`
   - `Stack`
       - `onTopGlue`/`onTopStack` → `attach : Linear.Direction -> Stack -> (Stack -> Stack)`
           - more ergonomic, simpler, more consistent API, more power, more obvious
       - `onTopStackAdapt` → `attachAdapt : Linear.Direction -> Stack -> (Stack -> Stack)`
           - more power, more obvious
+      - `elementRemove` name → `remove`
+          - operation on structure, not element
+      - `only` name → `one`
+          - shorter, symmetrical to `foldFromOne`
       - `topRemove` name → `removeTop`
           - structure operation more important
       - `foldOnto` name → `foldFromOne`
