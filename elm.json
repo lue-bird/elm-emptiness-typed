@@ -15,8 +15,5 @@
         "lue-bird/elm-allowable-state": "1.0.0 <= v < 2.0.0",
         "lue-bird/elm-linear-direction": "9.0.0 <= v < 10.0.0"
     },
-    "test-dependencies": {
-        "lue-bird/elm-no-record-type-alias-constructor-function": "1.0.3 <= v < 2.0.0",
-        "mdgriffith/elm-ui": "1.1.8 <= v < 2.0.0"
-    }
+    "test-dependencies": {}
 }
