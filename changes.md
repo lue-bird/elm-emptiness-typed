@@ -1,6 +1,11 @@
 # changes log
 
-# 9.0.0
+### 9.1.0
+
+  - `Emptiable`
+      - `fuzz` add
+
+## 9.0.0
 
   - `Stack`
       - `onTopGlue`/`onTopStack` → `attach : Linear.Direction -> Stack -> (Stack -> Stack)`

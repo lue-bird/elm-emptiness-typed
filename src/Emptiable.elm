@@ -1,6 +1,8 @@
 module Emptiable exposing
     ( Emptiable(..)
-    , empty, filled, fromMaybe
+    , empty, filled
+    , fromMaybe
+    , fuzz
     , map, mapFlat
     , and
     , flatten
@@ -39,7 +41,9 @@ stops the compiler from creating a constructor function for `Model`
 
 ## create
 
-@docs empty, filled, fromMaybe
+@docs empty, filled
+@docs fromMaybe
+@docs fuzz
 
 
 ## transform
@@ -57,6 +61,7 @@ stops the compiler from creating a constructor function for `Model`
 
 -}
 
+import Fuzz exposing (Fuzzer)
 import Possibly exposing (Possibly(..))
 
 
@@ -127,6 +132,25 @@ fromMaybe =
 
             Maybe.Nothing ->
                 empty
+
+
+{-| `Emptiable fill Possibly`
+[`Fuzzer`](https://dark.elm.dmy.fr/packages/elm-explorations/test/latest/Fuzz#Fuzzer)
+of a given fill
+
+    import Fuzz
+
+    Emptiable.fuzz Fuzz.char
+        |> Fuzz.examples 4
+    --> [ filled 'U', empty, filled 'M', empty ]
+
+-}
+fuzz : Fuzzer fill -> Fuzzer (Emptiable fill Possibly)
+fuzz fillFuzz =
+    Fuzz.oneOf
+        [ empty |> Fuzz.constant
+        , fillFuzz |> Fuzz.map filled
+        ]
 
 
 
