@@ -1,8 +1,8 @@
 module Emptiable exposing
     ( Emptiable(..)
     , empty, filled, fromMaybe
-    , fillMap, fillMapFlat
-    , fillAnd
+    , map, mapFlat
+    , and
     , flatten
     , fill, fillElseOnEmpty
     , toMaybe
@@ -44,8 +44,8 @@ stops the compiler from creating a constructor function for `Model`
 
 ## transform
 
-@docs fillMap, fillMapFlat
-@docs fillAnd
+@docs map, mapFlat
+@docs and
 @docs flatten
 @docs fill, fillElseOnEmpty
 @docs toMaybe
@@ -72,11 +72,11 @@ import Possibly exposing (Possibly(..))
 [`Emptiable`](#Emptiable) by itself probably won't be that useful,
 but it can make data structures type-safely non-emptiable:
 
-    import Emptiable exposing (fillMap)
+    import Emptiable exposing (map)
 
     top : Emptiable (Stacked element) Never -> element
 
-    fillMap Dict.NonEmpty.head
+    map Dict.NonEmpty.head
     --: Emptiable (NonEmptyDict comparable v) possiblyOrNever
     --: -> Emptiable ( comparable, v ) possiblyOrNever
 
@@ -91,7 +91,7 @@ type Emptiable fill possiblyOrNever
 {-| Insert joke about life here
 
     Emptiable.empty
-        |> Emptiable.fillMap (\x -> x / 0)
+        |> Emptiable.map (\x -> x / 0)
     --> Emptiable.empty
 
 -}
@@ -208,22 +208,22 @@ fillElseOnEmpty fallbackWhenEmpty =
 
 {-| If the [`Emptiable`](#Emptiable) is [`filled`](#filled), change it based on its current [`fill`](#fill):
 
-    import Emptiable exposing (filled, fillMap)
+    import Emptiable exposing (filled, map)
 
-    filled -3 |> fillMap abs
+    filled -3 |> map abs
     --> filled 3
 
-    Emptiable.empty |> fillMap abs
+    Emptiable.empty |> map abs
     --> Emptiable.empty
 
 -}
-fillMap :
-    (fill -> fillMapped)
+map :
+    (fill -> mapped)
     ->
         (Emptiable fill possiblyOrNever
-         -> Emptiable fillMapped possiblyOrNever
+         -> Emptiable mapped possiblyOrNever
         )
-fillMap fillChange =
+map fillChange =
     \emptiable ->
         case emptiable of
             Filled fillingValue ->
@@ -234,7 +234,7 @@ fillMap fillChange =
 
 
 {-| Chain together operations that may return [`empty`](#empty).
-It's like calling [`fillMap`](#fillMap)`|>`[`flatten`](#flatten):
+It's like calling [`map`](#map)`|>`[`flatten`](#flatten):
 
 If the argument is `Never` empty,
 a given function takes its [`fill`](#fill)
@@ -244,38 +244,38 @@ Some call it
 [`andThen`](https://package.elm-lang.org/packages/elm/core/latest/Maybe#andThen)
 or [`flatMap`](https://package.elm-lang.org/packages/ccapndave/elm-flat-map/1.2.0/Maybe-FlatMap#flatMap)
 
-    import Emptiable exposing (Emptiable, fillMapFlat)
+    import Emptiable exposing (Emptiable, mapFlat)
 
     emptiableString
-        |> fillMapFlat parse
-        |> fillMapFlat extraValidation
+        |> mapFlat parse
+        |> mapFlat extraValidation
 
     parse : ( Char, String ) -> Emptiable Parsed Possibly
     extraValidation : Parsed -> Emptiable Parsed Possibly
 
 For any number of arguments:
-[`fillAnd`](#fillAnd)`... |> ... |>`[`fillMapFlat`](#fillMapFlat):
+[`and`](#and)`... |> ... |>`[`mapFlat`](#mapFlat):
 
-    import Emptiable exposing (filled, fillMapFlat, fillAnd)
+    import Emptiable exposing (filled, mapFlat, and)
 
     (filled 3)
-        |> fillAnd (filled 4)
-        |> fillAnd (filled 5)
-        |> fillMapFlat
+        |> and (filled 4)
+        |> and (filled 5)
+        |> mapFlat
             (\( ( a, b ), c ) -> filled ( a, b, c ))
     --> filled ( 3, 4, 5 )
 
 -}
-fillMapFlat :
+mapFlat :
     (fill -> Emptiable fillIfBothFilled possiblyOrNever)
     ->
         (Emptiable fill possiblyOrNever
          -> Emptiable fillIfBothFilled possiblyOrNever
         )
-fillMapFlat onFillTry =
+mapFlat onFillTry =
     \emptiable ->
         emptiable
-            |> fillMap onFillTry
+            |> map onFillTry
             |> flatten
 
 
@@ -309,24 +309,24 @@ flatten =
 
 If any is [`empty`](#empty), give a [`Emptiable.empty`](#empty) back
 
-[`fillAnd`](#fillAnd) comes in handy when **multiple arguments** need to be [`filled`](#filled)
+[`and`](#and) comes in handy when **multiple arguments** need to be [`filled`](#filled)
 
-    import Emptiable exposing (filled, fillMap, fillAnd)
+    import Emptiable exposing (filled, map, and)
 
     filled 3
-        |> fillAnd (filled 4)
-        |> fillAnd (filled 5)
-        |> fillMap (\( ( a0, a1 ), a2 ) -> a0^a1 - a2^2)
+        |> and (filled 4)
+        |> and (filled 5)
+        |> map (\( ( a0, a1 ), a2 ) -> a0^a1 - a2^2)
     --> filled 56
 
 -}
-fillAnd :
+and :
     Emptiable anotherFill possiblyOrNever
     ->
         (Emptiable fill possiblyOrNever
          -> Emptiable ( fill, anotherFill ) possiblyOrNever
         )
-fillAnd argument =
+and argument =
     \soFar ->
         case ( soFar, argument ) of
             ( Filled soFarFill, Filled argumentFill ) ->

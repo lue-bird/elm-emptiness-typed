@@ -8,7 +8,7 @@ import Element.Border as UiBorder
 import Element.Events as UIn
 import Element.Font as Font
 import Element.Input as UIn
-import Emptiable exposing (Emptiable(..), fill, fillElseOnEmpty, fillMap, fillMapFlat, filled)
+import Emptiable exposing (Emptiable(..), fill, fillElseOnEmpty, map, mapFlat, filled)
 import Html exposing (Html)
 import Html.Attributes as Html
 import Linear exposing (Direction(..))
@@ -49,7 +49,7 @@ scrollInitial : Scroll Track FocusGap never_
 scrollInitial =
     -- add your own track urls
     -- PR your fav art :)
-    Scroll.only
+    Scroll.one
         { artistInUrl = "prrrrrrr-records"
         , set = Individual
         , titleInUrl = "can-we-fly-away-i-love-u"
@@ -121,7 +121,7 @@ update event model =
             { model
                 | playlist =
                     model.playlist
-                        |> fillMapFlat
+                        |> mapFlat
                             (Scroll.to (Scroll.AtSide side index))
             }
 
@@ -129,12 +129,12 @@ update event model =
             { model
                 | playlist =
                     model.playlist
-                        |> fillMap (Scroll.focusAlter (\_ -> Emptiable.empty))
-                        |> fillMapFlat
+                        |> map (Scroll.focusAlter (\_ -> Emptiable.empty))
+                        |> mapFlat
                             (\playlist ->
                                 playlist
                                     |> Scroll.to (Down |> Scroll.nearest)
-                                    |> fillMap filled
+                                    |> map filled
                                     |> fillElseOnEmpty
                                         (\_ ->
                                             playlist
@@ -154,7 +154,7 @@ update event model =
                 | urlOfTrackToAdd = ""
                 , playlist =
                     model.playlist
-                        |> fillMap
+                        |> map
                             (\playlist ->
                                 playlist
                                     |> Scroll.toGap Up
@@ -167,7 +167,7 @@ update event model =
             { model
                 | playlist =
                     model.playlist
-                        |> fillMapFlat (Scroll.focusDrag side)
+                        |> mapFlat (Scroll.focusDrag side)
             }
 
 

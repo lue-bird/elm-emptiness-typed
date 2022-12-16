@@ -1,10 +1,9 @@
-module Stack.Test exposing (expectEqualStack, stackFilledFuzz, stackFuzz, tests)
+module Stack.Test exposing (tests)
 
 import Emptiable exposing (Emptiable)
 import Expect
-import Fuzz exposing (Fuzzer)
-import Possibly exposing (Possibly)
-import Stack exposing (Stacked, top, topBelow, topRemove)
+import Fuzz
+import Stack exposing (Stacked, removeTop, top, topBelow)
 import Test exposing (Test, describe)
 
 
@@ -34,13 +33,13 @@ tests =
                         )
             )
         , Test.fuzz
-            (stackFilledFuzz Fuzz.int)
-            "topBelow: top=head topRemove=tail"
+            (Stack.filledFuzz Fuzz.int)
+            "topBelow: top=head removeTop=tail"
             (\stackFilled ->
                 stackFilled
                     |> Expect.equal
                         (topBelow (stackFilled |> top)
-                            (stackFilled |> topRemove |> Stack.toList)
+                            (stackFilled |> removeTop |> Stack.toList)
                         )
             )
         ]
@@ -50,7 +49,7 @@ reverseTest : Test
 reverseTest =
     describe "reverse"
         [ Test.fuzz
-            (stackFuzz Fuzz.int)
+            (Stack.fuzz Fuzz.int)
             "(reverse >> toList) = (toList >> reverse)"
             (\stack ->
                 stack
@@ -63,7 +62,7 @@ reverseTest =
                         )
             )
         , Test.fuzz
-            (stackFuzz Fuzz.int)
+            (Stack.fuzz Fuzz.int)
             "(reverse >> reverse) = identity"
             (\stack ->
                 stack
@@ -87,20 +86,3 @@ expectEqualStack expectedStack =
         (actualStack |> Stack.toList)
             |> Expect.equalLists
                 (expectedStack |> Stack.toList)
-
-
-stackFilledFuzz :
-    Fuzzer element
-    -> Fuzzer (Emptiable (Stacked element) never_)
-stackFilledFuzz elementFuzz =
-    Fuzz.constant topBelow
-        |> Fuzz.andMap elementFuzz
-        |> Fuzz.andMap (Fuzz.list elementFuzz)
-
-
-stackFuzz :
-    Fuzzer element
-    -> Fuzzer (Emptiable (Stacked element) Possibly)
-stackFuzz elementFuzz =
-    Fuzz.list elementFuzz
-        |> Fuzz.map Stack.fromList

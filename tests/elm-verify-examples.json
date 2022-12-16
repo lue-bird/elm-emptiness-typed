@@ -1,7 +1,6 @@
 {
   "root": "../src",
   "tests": [
-    "Scroll",
     "Emptiable",
     "Stack",
     "./README.md"

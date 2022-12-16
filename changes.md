@@ -1,10 +1,20 @@
-# 9.0.0 plans
+# changes log
+
+# 9.0.0
 
   - `elementRemove` name → `remove`
+  - `only` name → `one`
+      - shorter, symmetrical to `foldFromOne`
   - `Stack`
-      - `onTopGlue` name → `onTopList`
-
-# changes log
+      - `onTopGlue`/`onTopStack` → `attach : Linear.Direction -> Stack -> (Stack -> Stack)`
+          - more ergonomic, simpler, more consistent API, more power, more obvious
+      - `onTopStackAdapt` → `attachAdapt : Linear.Direction -> Stack -> (Stack -> Stack)`
+          - more power, more obvious
+      - `topRemove` name → `removeTop`
+          - structure operation more important
+      - `foldOnto` name → `foldFromOne`
+          - to hint at `one` constructors
+  - `Scroll` move to `lue-bird/elm-scroll`
 
 ## 8.0.0
 

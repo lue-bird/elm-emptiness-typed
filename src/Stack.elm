@@ -1,20 +1,22 @@
 module Stack exposing
     ( Stacked(..)
-    , only, topBelow, fromTopBelow, fromList, fromString
+    , one, topBelow
+    , fromTopBelow, fromList, fromString
+    , fuzz, filledFuzz
     , top
     , length
-    , onTopLay, topRemove
+    , onTopLay, removeTop
     , reverse
     , fills
-    , onTopGlue, onTopStack, onTopStackAdapt
+    , attach, attachAdapt
     , flatten
     , map, and
-    , foldFrom, foldOnto, fold, sum
+    , foldFrom, foldFromOne, fold, sum
     , toTopBelow, toList, toString
     )
 
 {-| 📚 An **emptiable or non-empty** structure where
-[`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) are `O(n)`
+[`top`](#top), [`removeTop`](#removeTop), [`onTopLay`](#onTopLay) are `O(n)`
 
 @docs Stacked
 
@@ -23,7 +25,9 @@ module Stack exposing
 
 [`Emptiable.empty`](Emptiable#empty) to create an `Empty Possibly` stack
 
-@docs only, topBelow, fromTopBelow, fromList, fromString
+@docs one, topBelow
+@docs fromTopBelow, fromList, fromString
+@docs fuzz, filledFuzz
 
 
 ## scan
@@ -31,12 +35,12 @@ module Stack exposing
 @docs top
 @docs length
 
-[`topRemove`](#topRemove) brings out everything below the [`top`](#top)
+[`removeTop`](#removeTop) brings out everything below the [`top`](#top)
 
 
 ## alter
 
-@docs onTopLay, topRemove
+@docs onTopLay, removeTop
 @docs reverse
 
 
@@ -45,28 +49,29 @@ module Stack exposing
 @docs fills
 
 
-### glue
+### attaching
 
-@docs onTopGlue, onTopStack, onTopStackAdapt
+@docs attach, attachAdapt
 @docs flatten
 
 
 ## transform
 
 @docs map, and
-@docs foldFrom, foldOnto, fold, sum
+@docs foldFrom, foldFromOne, fold, sum
 @docs toTopBelow, toList, toString
 
 -}
 
-import Emptiable exposing (Emptiable(..), empty, fill, fillAnd, fillMapFlat, filled)
+import Emptiable exposing (Emptiable(..), empty, fill, filled)
+import Fuzz exposing (Fuzzer)
 import Linear exposing (Direction(..))
 import List.Linear
 import Possibly exposing (Possibly)
 
 
 {-| The representation of a non-empty stack on the `Filled` case.
-[`top`](#top), [`topRemove`](#topRemove), [`onTopLay`](#onTopLay) are `O(n)`
+[`top`](#top), [`removeTop`](#removeTop), [`onTopLay`](#onTopLay) are `O(n)`
 
 
 #### in arguments
@@ -84,7 +89,7 @@ import Possibly exposing (Possibly)
 
 We can treat it like any [`Emptiable`](Emptiable):
 
-    import Emptiable exposing (Emptiable(..), filled, fillMap)
+    import Emptiable exposing (Emptiable(..), filled, map)
     import Possibly exposing (Possibly)
     import Stack exposing (Stacked, top, onTopLay)
 
@@ -102,7 +107,7 @@ We can treat it like any [`Emptiable`](Emptiable):
 
     [ "hi", "there" ] -- comes in as an argument
         |> Stack.fromList
-        |> fillMap (filled >> top)
+        |> map (filled >> top)
     --: Emptiable String Possibly
 
 -}
@@ -115,16 +120,21 @@ type Stacked element
     import Emptiable
     import Stack exposing (onTopLay)
 
-    Stack.only ":)"
+    Stack.one ":)"
     --> Emptiable.empty |> onTopLay ":)"
 
 -}
-only : element -> Emptiable (Stacked element) never_
-only onlyElement =
+one : element -> Emptiable (Stacked element) never_
+one onlyElement =
     topBelow onlyElement []
 
 
 {-| A stack from a top element and a `List` of elements below
+
+    Stack.topBelow ":)" [ "wait", "a", "moment" ]
+    --> Stack.topBelow "wait" [ "a", "moment" ]
+    -->     |> onTopLay ":)"
+
 -}
 topBelow :
     element
@@ -152,7 +162,7 @@ fromTopBelow =
 
 
 {-| Convert a `List element` to a `Empty Possibly (Stacked element)`.
-The `List`s `head` becomes [`top`](#top), its `tail` is glued below
+The `List`s `head` becomes [`top`](#top), its `tail` is attachd below
 
     import Possibly exposing (Possibly)
     import Emptiable
@@ -184,16 +194,16 @@ fromList =
 
 
 {-| Convert to an `Emptiable (Stacked Char) Possibly`.
-The `String`s head becomes [`top`](#top), its tail is glued below
+The `String`s head becomes [`top`](#top), its tail is attachd below
 
     import Possibly exposing (Possibly)
     import Emptiable
     import Stack exposing (topBelow)
 
-    "" |> Stack.fromText
+    "" |> Stack.fromString
     --> Emptiable.empty
 
-    "hello" |> Stack.fromText
+    "hello" |> Stack.fromString
     --> topBelow 'h' [ 'e', 'l', 'l', 'o' ]
     --: Emptiable (Stacked Char) Possibly
 
@@ -201,13 +211,59 @@ When constructing from known elements, always prefer
 
     import Stack exposing (topBelow)
 
-    onTopLay 'h' ("ello" |> Stack.fromText)
+    onTopLay 'h' ("ello" |> Stack.fromString)
 
 -}
 fromString : String -> Emptiable (Stacked Char) Possibly
 fromString =
     \string ->
         string |> String.toList |> fromList
+
+
+{-| `Emptiable Stacked Never` [`Fuzzer`](https://dark.elm.dmy.fr/packages/elm-explorations/test/latest/Fuzz#Fuzzer).
+Generates stacks of varying length <= 32
+
+    import Stack exposing (topBelow)
+    import Fuzz
+
+    Stack.filledFuzz (Fuzz.intRange 0 9)
+        |> Fuzz.examples 3
+    --> [ topBelow 4 [ 2, 2, 5, 3, 8, 9, 4, 1, 0, 6, 6, 4, 7, 2, 6, 5 ]
+    --> , topBelow 3 [ 4, 4, 5, 1, 7, 4, 2, 5, 6, 9, 7, 0, 1, 4, 1, 3, 2, 9, 6, 9, 0, 8, 3, 3, 3, 1, 5, 4, 9, 5, 2, 8 ]
+    --> , topBelow 5 [ 4, 9, 8, 9 ]
+    --> ]
+
+-}
+filledFuzz :
+    Fuzzer element
+    -> Fuzzer (Emptiable (Stacked element) never_)
+filledFuzz elementFuzz =
+    Fuzz.constant topBelow
+        |> Fuzz.andMap elementFuzz
+        |> Fuzz.andMap (Fuzz.list elementFuzz)
+
+
+{-| `Emptiable (Stacked ...) Possibly` [`Fuzzer`](https://dark.elm.dmy.fr/packages/elm-explorations/test/latest/Fuzz#Fuzzer).
+Generates stacks of varying length <= 32
+
+    import Stack exposing (topBelow)
+    import Fuzz
+
+    Stack.fuzz (Fuzz.intRange 0 9)
+        |> Fuzz.examples 3
+    --> [ topBelow 2 [ 2, 5, 3, 8, 9, 4, 1, 0, 6, 6, 4, 7, 2, 6, 5 ]
+    --> , topBelow 8 [ 8, 0, 9, 8, 1, 0, 4, 1, 4, 6, 3, 4 ]
+    --> , topBelow 9 [ 7, 1, 5, 8, 2, 8, 3, 7, 4, 7 ]
+    --> ]
+    --: List (Emptiable (Stacked Int) Possibly)
+
+-}
+fuzz :
+    Fuzzer element
+    -> Fuzzer (Emptiable (Stacked element) Possibly)
+fuzz elementFuzz =
+    Fuzz.list elementFuzz
+        |> Fuzz.map fromList
 
 
 
@@ -218,7 +274,7 @@ fromString =
 
     import Stack exposing (top, onTopLay)
 
-    Stack.only 3
+    Stack.one 3
         |> onTopLay 2
         |> top
     --> 2
@@ -238,7 +294,7 @@ top =
 
     import Stack exposing (onTopLay)
 
-    Stack.only 3
+    Stack.one 3
         |> onTopLay 2
         |> Stack.length
     --> 2
@@ -272,7 +328,7 @@ length =
     --> topBelow 1 [ 2, 3 ]
 
     Emptiable.empty |> onTopLay 1
-    --> Stack.only 1
+    --> Stack.one 1
 
 -}
 onTopLay :
@@ -284,22 +340,23 @@ onTopLay toPutOnTopOfAllOtherElements =
         topBelow toPutOnTopOfAllOtherElements (stack |> toList)
 
 
-{-| Everything after the first value
+{-| Everything after the [first element](#top)
 
-    import Stack exposing (topBelow, onTopLay, onTopStack, topRemove)
+    import Stack exposing (topBelow)
+    import Linear exposing (Direction(..))
 
-    Stack.only 2
-        |> onTopLay 3
-        |> onTopStack (topBelow 1 [ 0 ])
-        |> topRemove
+    Stack.one 2
+        |> Stack.onTopLay 3
+        |> Stack.attach Down (topBelow 1 [ 0 ])
+        |> Stack.removeTop
     --> topBelow 0 [ 3, 2 ]
     --: Emptiable (Stacked number_) Possibly
 
 -}
-topRemove :
+removeTop :
     Emptiable (Stacked element) Never
     -> Emptiable (Stacked element) Possibly
-topRemove =
+removeTop =
     \stackFilled ->
         let
             (TopBelow ( _, belowTop )) =
@@ -323,7 +380,7 @@ reverse :
 reverse =
     \stack ->
         stack
-            |> fillMapFlat
+            |> Emptiable.mapFlat
                 (\(TopBelow ( top_, belowTop )) ->
                     case top_ :: belowTop |> List.reverse of
                         bottom :: upAboveBottom ->
@@ -331,107 +388,123 @@ reverse =
 
                         -- shouldn't happen
                         [] ->
-                            only top_
+                            one top_
                 )
 
 
-{-| Glue the elements of a `... Empty possiblyOrNever`/`Never` [`Stack`](#Stacked)
-to the [`top`](#top) of this [`Stack`](Stack)
+{-| Glue the elements of a given stack to the end
+in a given [direction](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/)
+of the stack
 
-    import Emptiable
-    import Stack exposing (topBelow, onTopStack, onTopStackAdapt)
-
-    Emptiable.empty
-        |> onTopStackAdapt (topBelow 1 [ 2 ])
-        |> onTopStack (topBelow -2 [ -1, 0 ])
-    --> topBelow -2 [ -1, 0, 1, 2 ]
-
-  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever` type of the piped food
-  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the `possiblyOrNever` type of the argument
-
--}
-onTopStackAdapt :
-    Emptiable (Stacked element) possiblyOrNever
-    ->
-        (Emptiable (Stacked element) possiblyOrNeverIn_
-         -> Emptiable (Stacked element) possiblyOrNever
-        )
-onTopStackAdapt stackToPutAbove =
-    \stack ->
-        stackOnTopAndAdaptTypeOf
-            (\( possiblyOrNever, _ ) -> possiblyOrNever)
-            ( stackToPutAbove, stack )
-
-
-{-| Glue the elements of a stack to the end of the stack
-
-    import Stack exposing (topBelow, onTopStack)
+    import Linear exposing (Direction(..))
+    import Stack exposing (topBelow)
 
     topBelow 1 [ 2 ]
-        |> onTopStack (topBelow -1 [ 0 ])
+        |> Stack.attach Down (topBelow -1 [ 0 ])
     --> topBelow -1 [ 0, 1, 2 ]
 
-  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever` type of the piped food
-  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the `possiblyOrNever` type of the argument
+    topBelow 1 [ 2 ]
+        |> Stack.attach Down ([ -1, 0 ] |> Stack.fromList)
+    --> topBelow -1 [ 0, 1, 2 ]
+
+Be aware:
+
+  - `Down` = indexes decreasing, not: from the [`top`](#top) lower
+  - `Up` = indexes increasing, not: from the bottom up
+
+Compared to [`attachAdapt`](#attachAdapt)
+
+  - [`attach`](#attach) takes on the `possiblyOrNever` type of the incoming attachment Stack
+  - [`attachAdapt`](#attachAdapt) takes on the `possiblyOrNever` type of the argument
 
 -}
-onTopStack :
-    Emptiable (Stacked element) possiblyOrNeverAppended_
+attach :
+    Linear.Direction
+    -> Emptiable (Stacked element) attachmentPossiblyOrNever_
     ->
         (Emptiable (Stacked element) possiblyOrNever
          -> Emptiable (Stacked element) possiblyOrNever
         )
-onTopStack stackToPutAbove =
+attach direction stackAttachment =
     \stack ->
-        stackOnTopAndAdaptTypeOf
+        stackGlueAdaptFrom direction
             (\( _, possiblyOrNever ) -> possiblyOrNever)
-            ( stackToPutAbove, stack )
+            ( stackAttachment, stack )
 
 
-stackOnTopAndAdaptTypeOf :
-    (( possiblyOrNeverOnTop, possiblyOrNever ) -> possiblyOrNeverTakenOn)
+{-| Glue the elements of a given stack
+to the end in a given [direction](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/)
+of the stack, taking on the emptiness knowledge of the given stack
+
+    import Linear exposing (Direction(..))
+    import Emptiable
+    import Stack exposing (topBelow)
+
+    Emptiable.empty
+        |> Stack.attachAdapt Down (topBelow 1 [ 2 ])
+        |>  Stack.attachAdapt Down (topBelow -2 [ -1, 0 ])
+    --> topBelow -2 [ -1, 0, 1, 2 ]
+
+Be aware:
+
+  - `Down` = indexes decreasing, not: from the [`top`](#top) lower
+  - `Up` = indexes increasing, not: from the bottom up
+
+Compared to [`attach`](#attach)
+
+  - [`attach`](#attach) takes on the `possiblyOrNever` type of the incoming attachment Stack
+  - [`attachAdapt`](#attachAdapt) takes on the `possiblyOrNever` type of the argument
+
+-}
+attachAdapt :
+    Linear.Direction
+    -> Emptiable (Stacked element) possiblyOrNever
+    ->
+        (Emptiable (Stacked element) possiblyOrNeverIn_
+         -> Emptiable (Stacked element) possiblyOrNever
+        )
+attachAdapt direction stackToGlue =
+    \stack ->
+        stackGlueAdaptFrom direction
+            (\( possiblyOrNever, _ ) -> possiblyOrNever)
+            ( stackToGlue, stack )
+
+
+stackGlueAdaptFrom :
+    Linear.Direction
+    -> (( possiblyOrNeverOnTop, possiblyOrNever ) -> possiblyOrNeverTakenOn)
     ->
         ( Emptiable (Stacked element) possiblyOrNeverOnTop
         , Emptiable (Stacked element) possiblyOrNever
         )
     -> Emptiable (Stacked element) possiblyOrNeverTakenOn
-stackOnTopAndAdaptTypeOf takeOnType stacksDown =
-    case stacksDown of
-        ( Empty possiblyOrNeverOnTop, Empty possiblyOrNever ) ->
-            Empty (takeOnType ( possiblyOrNeverOnTop, possiblyOrNever ))
+stackGlueAdaptFrom direction takeOnType stacksDown =
+    case direction of
+        Down ->
+            case stacksDown of
+                ( Empty possiblyOrNeverOnTop, Empty possiblyOrNever ) ->
+                    Empty (takeOnType ( possiblyOrNeverOnTop, possiblyOrNever ))
 
-        ( Empty _, Filled stackFilled ) ->
-            stackFilled |> filled
+                ( Empty _, Filled stackFilled ) ->
+                    stackFilled |> filled
 
-        ( Filled (TopBelow ( top_, belowTop_ )), stackToPutBelow ) ->
-            topBelow
-                top_
-                (belowTop_ ++ (stackToPutBelow |> toList))
+                ( Filled (TopBelow ( top_, belowTop_ )), stackToPutBelow ) ->
+                    topBelow
+                        top_
+                        (belowTop_ ++ (stackToPutBelow |> toList))
 
+        Up ->
+            case stacksDown of
+                ( Empty possiblyOrNeverOnTop, Empty possiblyOrNever ) ->
+                    Empty (takeOnType ( possiblyOrNeverOnTop, possiblyOrNever ))
 
-{-| Put the elements of a `List` on [`top`](#top)
+                ( Filled stackFilled, Empty _ ) ->
+                    stackFilled |> filled
 
-    import Stack exposing (topBelow, onTopStack)
-
-    topBelow 1 [ 2 ]
-        |> Stack.onTopGlue [ -1, 0 ]
-    --> topBelow -1 [ 0, 1, 2 ]
-
-`onTopGlue` only when the piped stack food is already `... Never`.
-Glue a stack on top with
-
-  - [`onTopStack`](#onTopStack) takes on the `possiblyOrNever` type of the piped food
-  - [`onTopStackAdapt`](#onTopStackAdapt) takes on the **`possiblyOrNever` type of the argument**
-
--}
-onTopGlue :
-    List element
-    ->
-        (Emptiable (Stacked element) possiblyOrNever
-         -> Emptiable (Stacked element) possiblyOrNever
-        )
-onTopGlue stackToPutOnTop =
-    onTopStack (stackToPutOnTop |> fromList)
+                ( stackToPutBelow, Filled (TopBelow ( top_, belowTop_ )) ) ->
+                    topBelow
+                        top_
+                        (belowTop_ ++ (stackToPutBelow |> toList))
 
 
 {-| Glue together a bunch of stacks
@@ -448,7 +521,7 @@ onTopGlue stackToPutOnTop =
         |> Stack.flatten
     --> topBelow 0 [ 1, 10, 11, 20, 21, 22 ]
 
-For this to return a non-empty stack, all stacks must be non-empty
+For this to return a filled stack, all stacks must be filled
 
 -}
 flatten :
@@ -460,12 +533,12 @@ flatten :
     -> Emptiable (Stacked element) possiblyOrNever
 flatten stackOfStacks =
     stackOfStacks
-        |> Emptiable.fillMapFlat
+        |> Emptiable.mapFlat
             (\(TopBelow ( topList, belowTopLists )) ->
                 belowTopLists
                     |> List.concatMap toList
                     |> fromList
-                    |> onTopStackAdapt topList
+                    |> attachAdapt Down topList
             )
 
 
@@ -503,10 +576,10 @@ fills :
 fills =
     \stackOfHands ->
         stackOfHands
-            |> Emptiable.fillMapFlat
+            |> Emptiable.mapFlat
                 (\(TopBelow ( top_, belowTop_ )) ->
                     top_
-                        |> Emptiable.fillMapFlat
+                        |> Emptiable.mapFlat
                             (\topElement ->
                                 topBelow topElement
                                     (belowTop_ |> List.filterMap Emptiable.toMaybe)
@@ -540,7 +613,7 @@ map :
 map changeElement =
     \stack ->
         stack
-            |> Emptiable.fillMapFlat
+            |> Emptiable.mapFlat
                 (\(TopBelow ( topElement, belowTop )) ->
                     topBelow
                         (topElement |> changeElement { index = 0 })
@@ -578,8 +651,8 @@ and :
 and anotherStack =
     \stack ->
         stack
-            |> fillAnd anotherStack
-            |> fillMapFlat
+            |> Emptiable.and anotherStack
+            |> Emptiable.mapFlat
                 (\( TopBelow ( topElement, belowTop ), TopBelow ( anotherTop, anotherBelowTop ) ) ->
                     topBelow
                         ( topElement, anotherTop )
@@ -634,8 +707,7 @@ then reducing what's accumulated in a given [`Direction`](https://package.elm-la
         |> Stack.fold Up max
     --> 543
 
-Limited by the fact that the accumulated value must be of the same type as an element?
-→ [`Stack.foldOnto`](#foldOnto)
+To fold into a different non-empty structure → [`Stack.foldFromOne`](#foldFromOne)
 
 Be aware:
 
@@ -653,22 +725,56 @@ fold :
 fold direction reduce =
     \stack ->
         stack
-            |> foldOnto identity direction reduce
+            |> foldFromOne identity direction reduce
 
 
 {-| Fold, starting from one end element transformed to the initial accumulation value,
 then reducing what's accumulated in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
+Usually used to convert to a different non-empty structure
+
+    -- module SetFilled exposing (SetFilled, fromStack, insert, one)
+
     import Linear exposing (Direction(..))
+    import Emptiable exposing (Emptiable)
     import Stack exposing (topBelow)
+    import Set exposing (Set)
 
-    topBelow 234 [ 345, 543 ]
-        |> Stack.foldOnto SetFilled.only Up SetFilled.insert
+    fromStack : Emptiable (Stacked comparable) Never -> SetFilled comparable
+    fromStack =
+        Stack.foldFromOne one Up insert
 
-A simpler version is
+    type alias SetFilled comparable =
+        { anElement : comparable
+        , otherElements : Set comparable
+        }
+
+    one : comparable -> SetFilled comparable
+    one onlyElement =
+        { anElement = onlyElement, otherElements = Set.empty }
+
+    insert : comparable -> (SetFilled comparable -> SetFilled comparable)
+    insert toInsert =
+        \setFilled ->
+            if toInsert == setFilled.anElement then
+                setFilled
+            else
+                -- new element
+                { setFilled
+                    | otherElements =
+                        setFilled.otherElements |> Set.insert toInsert
+                }
+
+    topBelow 3 [ 4, 5, 4, 3 ]
+        |> fromStack
+    --> { anElement = 3, otherElements = Set.fromList [ 5, 4 ] }
+
+(Know there's is something better than `SetFilled`: [`KeySet`](https://dark.elm.dmy.fr/packages/lue-bird/elm-keysset/latest/KeySet))
+
+[`fold`](#fold) is a simple version that folds directly from the start element:
 
     Stack.fold =
-        Stack.foldOnto identity
+        Stack.foldFromOne identity
 
 Be aware:
 
@@ -676,7 +782,7 @@ Be aware:
   - `Up` = indexes increasing, not: from the bottom up
 
 -}
-foldOnto :
+foldFromOne :
     (element -> accumulated)
     -> Linear.Direction
     -> (element -> (accumulated -> accumulated))
@@ -684,7 +790,7 @@ foldOnto :
         (Emptiable (Stacked element) Never
          -> accumulated
         )
-foldOnto initialEndToAccumulator direction reduce =
+foldFromOne initialEndToAccumulator direction reduce =
     -- doesn't use a native implementation for performance reasons
     -- or maybe I'm just lazy. Decide for yourself :)
     \stackFilled ->
@@ -778,7 +884,7 @@ to be used by another library
     --> ( "hi", [ "there", "👋" ] )
 
 Don't use [`toTopBelow`](#toTopBelow) to destructure a stack.
-Instead: [`Stack.top`](Stack#top), [`Stack.topRemove`](#topRemove)
+Instead: [`Stack.top`](Stack#top), [`Stack.removeTop`](#removeTop)
 
 -}
 toTopBelow :

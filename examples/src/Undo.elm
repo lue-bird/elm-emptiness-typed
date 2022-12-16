@@ -6,7 +6,7 @@ import Element as Ui exposing (rgb, rgba)
 import Element.Background as UiBack
 import Element.Font as Font
 import Element.Input as UIn
-import Emptiable exposing (Emptiable(..), fill, fillMap, fillElseOnEmpty, filled)
+import Emptiable exposing (Emptiable(..), fill, map, fillElseOnEmpty, filled)
 import Html exposing (Html)
 import Linear exposing (Direction(..))
 import Scroll exposing (FocusGap, Scroll)
@@ -41,7 +41,7 @@ type alias Model =
 modelInitial : Model
 modelInitial =
     countersInitial
-        |> Scroll.only
+        |> Scroll.one
 
 
 main : Program () Model Event
