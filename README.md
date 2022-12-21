@@ -36,6 +36,8 @@ in one go
 [`top`](Stack#top), [`removeTop`](Stack#removeTop),
 [`fold`](Stack#fold) (for finding the maximum etc.; some call it "fold1"), ...
 
+That's more useful than you might think.
+
 ```elm
 import Linear exposing (Direction(..))
 import Emptiable exposing (Emptiable)
@@ -53,8 +55,8 @@ Emptiable.empty
 
 ## where `emptiness-typed` is already being used
 
-- [🗃️ `KeySet` and  🦄 `KeysSet`](https://dark.elm.dmy.fr/packages/lue-bird/elm-keysset/latest/)
-- [📜 `Scroll`](https://dark.elm.dmy.fr/packages/lue-bird/elm-scroll/latest/)
+- [🗃️ `elm-keysSet`](https://dark.elm.dmy.fr/packages/lue-bird/elm-keysset/latest/)
+- [📜 `elm-scroll`](https://dark.elm.dmy.fr/packages/lue-bird/elm-scroll/latest/)
 
 ## suggestions?
 
