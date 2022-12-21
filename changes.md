@@ -1,5 +1,9 @@
 # changes log
 
+#### 9.1.1
+
+  - `linear-direction` → >= 10.0.0
+
 ### 9.1.0
 
   - `Emptiable`
