@@ -57,12 +57,8 @@ Emptiable.empty
 
 - [🗃️ `elm-keysSet`](https://dark.elm.dmy.fr/packages/lue-bird/elm-keysset/latest/)
 - [📜 `elm-scroll`](https://dark.elm.dmy.fr/packages/lue-bird/elm-scroll/latest/)
+- [🚥 `typesafe-array`](https://dark.elm.dmy.fr/packages/lue-bird/elm-typesafe-array/latest/)
 
 ## suggestions?
 
 → See [contributing.md](https://github.com/lue-bird/elm-emptiness-typed/blob/master/contributing.md)
-
-## you like length type-safety?
-
-[typesafe-array](https://dark.elm.dmy.fr/packages/lue-bird/elm-typesafe-array/latest/) takes it to the extreme.
-The possible length range is part of its type, allowing safe access for some elements
