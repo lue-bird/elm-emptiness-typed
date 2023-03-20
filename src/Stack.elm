@@ -5,7 +5,7 @@ module Stack exposing
     , fuzz, filledFuzz
     , top
     , length
-    , onTopLay, removeTop
+    , onTopLay, removeTop, topAlter
     , reverse
     , fills
     , attach, attachAdapt
@@ -40,7 +40,7 @@ module Stack exposing
 
 ## alter
 
-@docs onTopLay, removeTop
+@docs onTopLay, removeTop, topAlter
 @docs reverse
 
 
@@ -363,6 +363,26 @@ removeTop =
                 stackFilled |> Emptiable.fill
         in
         belowTop |> fromList
+
+
+{-| Change the [first element](#top) based on its current value
+
+    import Stack
+
+    Stack.topBelow "Helpy IQ 4000 – the amazing vacuum cleaner"
+        [ "faster and more thorough than ever seen before!" ]
+        |> Stack.topAlter (\firstLine -> "Introducing: " ++ firstLine)
+    --> Stack.topBelow "Introducing: Helpy IQ 4000 – the amazing vacuum cleaner" [ "faster and more thorough than ever seen before!" ]
+
+-}
+topAlter : (element -> element) -> Emptiable (Stacked element) possiblyOrNever -> Emptiable (Stacked element) possiblyOrNever
+topAlter topChange =
+    \stack ->
+        stack
+            |> Emptiable.map
+                (\(TopBelow ( stackTop, stackBelow )) ->
+                    TopBelow ( stackTop |> topChange, stackBelow )
+                )
 
 
 {-| Flip the order of the elements
