@@ -1,5 +1,9 @@
 # changes log
 
+### 9.2.0
+
+  - `Stack.topAlter` add
+
 #### 9.1.2
 
   - `linear-direction` → >= 11.0.0
