@@ -401,14 +401,8 @@ reverse =
     \stack ->
         stack
             |> Emptiable.mapFlat
-                (\(TopBelow ( top_, belowTop )) ->
-                    case top_ :: belowTop |> List.reverse of
-                        bottom :: upAboveBottom ->
-                            topBelow bottom upAboveBottom
-
-                        -- shouldn't happen
-                        [] ->
-                            one top_
+                (\stacked ->
+                    stacked |> filled |> foldFromOne one Up onTopLay
                 )
 
 
@@ -751,7 +745,10 @@ fold direction reduce =
 {-| Fold, starting from one end element transformed to the initial accumulation value,
 then reducing what's accumulated in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
-Usually used to convert to a different non-empty structure
+Usually used to convert to or operate on a different non-empty structure
+
+    stackFilledReverse =
+        Stack.foldFromOne Stack.one Up Stack.onTopLay
 
     -- module SetFilled exposing (SetFilled, fromStack, insert, one)
 
