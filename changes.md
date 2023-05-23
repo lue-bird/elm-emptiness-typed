@@ -1,5 +1,9 @@
 # changes log
 
+#### 9.2.1
+
+  - `Stack.fills` bug correct
+
 ### 9.2.0
 
   - `Stack.topAlter` add
