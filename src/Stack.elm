@@ -579,26 +579,35 @@ As you can see, if only the top is [`fill`](Emptiable#fill) a value, the result 
 -}
 fills :
     Emptiable
-        (Stacked
-            (Emptiable element possiblyOrNever)
-        )
+        (Stacked (Emptiable element possiblyOrNever))
         possiblyOrNever
-    ->
-        Emptiable
-            (Stacked element)
-            possiblyOrNever
+    -> Emptiable (Stacked element) possiblyOrNever
 fills =
-    \stackOfHands ->
-        stackOfHands
+    \stackOfEmptiables ->
+        stackOfEmptiables
             |> Emptiable.mapFlat
-                (\(TopBelow ( top_, belowTop_ )) ->
-                    top_
-                        |> Emptiable.mapFlat
-                            (\topElement ->
-                                topBelow topElement
-                                    (belowTop_ |> List.filterMap Emptiable.toMaybe)
-                            )
+                (\stacked ->
+                    stacked
+                        |> filled
+                        |> removeTop
+                        |> toList
+                        |> List.filterMap Emptiable.toMaybe
+                        |> fromList
+                        |> onTopLayEmptiable (stacked |> filled |> top)
                 )
+
+
+onTopLayEmptiable :
+    Emptiable element newTopPossiblyOrNever
+    -> Emptiable (Stacked element) possiblyOrNever
+    -> Emptiable (Stacked element) newTopPossiblyOrNever
+onTopLayEmptiable newTopOfFilled =
+    case newTopOfFilled of
+        Emptiable.Filled topElement ->
+            \stack -> stack |> onTopLay topElement
+
+        Emptiable.Empty emptyPossibleOrNever ->
+            \stack -> stack |> Emptiable.emptyAdapt (\_ -> emptyPossibleOrNever)
 
 
 
